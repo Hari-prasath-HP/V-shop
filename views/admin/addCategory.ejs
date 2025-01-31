@@ -1,0 +1,140 @@
+<%- include('header') %>
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+  <div class="container">
+    <a href="#" class="navbar-brand">Admin Dashboard</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mx-auto">
+        <li class="nav-item"><a href="/admin/dashboard" class="nav-link">Dashboard</a></li>
+        <li class="nav-item"><a href="/admin/users" class="nav-link">Users</a></li>
+        <li class="nav-item"><a href="/admin/banner" class="nav-link">Banner</a></li>
+        <li class="nav-item"><a href="/admin/categories" class="nav-link">Categories</a></li>
+        <li class="nav-item"><a href="/admin/product" class="nav-link">Products</a></li>
+        <li class="nav-item"><a href="/admin/orders" class="nav-link">Orders</a></li>
+        <li class="nav-item"><a href="/admin/coupons" class="nav-link">Coupons</a></li>
+        <li class="nav-item"><a href="/admin/product-offers" class="nav-link">Offers</a></li>
+      </ul>
+      <a href="/admin/login" class="btn btn-outline-danger fw-bold">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <!-- Card Container -->
+      <div class="card shadow-lg rounded-3">
+        <div class="card-header text-white text-center" style="background-color: #eb543b;">
+          <h3>Add Category</h3>
+        </div>
+        
+        <div class="card-body">
+          <!-- Form -->
+          <form id="categoryForm" action="/admin/add" method="POST" onsubmit="validateCategory(event)" enctype="multipart/form-data">
+            <!-- Category Name -->
+            <div class="mb-3">
+              <label for="name" class="form-label">Category Name</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                class="form-control"
+                placeholder="Enter category name"
+                required
+              />
+              <span id="nameError" class="error"></span>
+            </div>
+            
+            <!-- Category Description -->
+            <div class="mb-3">
+              <label for="description" class="form-label">Category Description</label>
+              <textarea
+                id="description"
+                name="description"
+                class="form-control"
+                placeholder="Enter category description"
+                rows="4"
+                required
+              ></textarea>
+              <span id="descriptionError" class="error"></span>
+            </div>
+              <!-- Category Images -->
+            <div class="mb-3">
+              <label for="images" class="form-label">Product Images</label>
+              <input type="file" name="image" class="form-control mb-2" accept="image/*" required />
+            </div>
+            <!-- Submit Button -->
+            <div class="d-grid">
+              <button type="submit" class="btn btn-custom">Add Category</button>
+            </div>
+          </form>
+          
+        </div>
+        <!-- Card Footer -->
+        <div class="card-footer text-center">
+          <a href="/admin/categories" class="btn btn-outline-secondary">Back to Categories</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Form Validation Script -->
+<script>
+  function validateCategory(event) {
+    event.preventDefault();  // Prevent form submission if validation fails
+
+    const name = document.getElementById("name").value.trim();
+    const description = document.getElementById("description").value.trim();
+
+    const nameError = document.getElementById("nameError");
+    const descriptionError = document.getElementById("descriptionError");
+
+    // Clear previous error messages
+    nameError.textContent = "";
+    descriptionError.textContent = "";
+
+    let isValid = true;
+
+    // Validation Logic
+    if (name === "") {
+      nameError.textContent = "Category name is required.";
+      isValid = false;
+    } else if (name.length < 3) {
+      nameError.textContent = "Category name must be at least 3 characters.";
+      isValid = false;
+    }
+
+    if (description === "") {
+      descriptionError.textContent = "Category description is required.";
+      isValid = false;
+    } else if (description.length < 5) {
+      descriptionError.textContent = "Description must be at least 5 characters.";
+      isValid = false;
+    }
+
+    if (isValid) {
+      document.getElementById("categoryForm").submit();
+    }
+  }
+
+  // Real-time validation (removes error when user types)
+  document.getElementById("name").addEventListener("input", function() {
+    if (this.value.trim().length >= 3) {
+      document.getElementById("nameError").textContent = "";
+    }
+  });
+
+  document.getElementById("description").addEventListener("input", function() {
+    if (this.value.trim().length >= 5) {
+      document.getElementById("descriptionError").textContent = "";
+    }
+  });
+</script>
+
+<%- include('footer') %>

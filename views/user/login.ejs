@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | V-Shop</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #fbbf3b, #eb543b);
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #eb543b, #fbbf3b);
+            color: white;
+            width: 100%;
+        }
+        .btn-custom:hover {
+            background: linear-gradient(45deg, #fbbf3b, #eb543b);
+        }
+        .error {
+            color: red;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-complementary py-3">
+        <div class="container">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h1 class="logo">V-shop</h1> <!-- Logo aligned with your project (Milky) -->
+            </div>
+          </div>
+        </div>
+      </header>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="login-container">
+                    <h2 >Welcome Back</h2>
+                    <p class=" mb-2">Signin to continue</p>
+                    <% if (error) { %>
+                        <div class="alert alert-danger text-center"><%= error %></div>
+                    <% } %>
+
+                    <form id="loginForm" action="/login" method="post" onsubmit="validateLogin(event)">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email:</label>
+                            <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email">
+                            <span id="emailError" class="error"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password:</label>
+                            <div class="input-group">
+                                <input type="password" id="password" name="password" class="form-control" placeholder="Enter password">
+                                <button type="button" class="btn btn-outline-secondary" id="togglePassword">Show</button>
+                            </div>
+                            <span id="passwordError" class="error"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-custom">Login</button>
+
+                        <div class="d-flex justify-content-between pt-3">
+                            <a href="/forgot-password">Forgot Password?</a>
+                            <a href="/signup">Create an account</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("togglePassword").addEventListener("click", function () {
+            const passwordField = document.getElementById("password");
+            const toggleButton = this;
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                toggleButton.textContent = "Hide";
+            } else {
+                passwordField.type = "password";
+                toggleButton.textContent = "Show";
+            }
+        });
+
+        function validateLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById("email").value.trim();  
+            const password = document.getElementById("password").value.trim();
+            const emailError = document.getElementById("emailError");
+            const passwordError = document.getElementById("passwordError");
+            emailError.textContent = "";
+            passwordError.textContent = "";
+            let isValid = true;
+            if (email === "") {
+                emailError.textContent = "Email is required.";
+                isValid = false;
+            }
+            if (password === "") {
+                passwordError.textContent = "Password is required.";
+                isValid = false;
+            }
+            if (isValid) {
+                document.getElementById("loginForm").submit();
+            }
+        }
+    </script>
+</body>
+</html>

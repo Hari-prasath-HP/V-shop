@@ -1,0 +1,77 @@
+<%- include('header') %>
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <!-- Card Container -->
+        <div class="card shadow-lg rounded-3">
+          <!-- Card Header -->
+          <div class="card-header header-custom text-center">
+            <h3>Edit User</h3>
+          </div>
+          <div class="card-body">
+            <!-- Form -->
+            <form action="/admin/updateUser/<%= user._id %>" method="POST">
+              <!-- Username -->
+              <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  class="form-control"
+                  value="<%= user.username %>"
+                  required
+                />
+              </div>
+              <!-- Email -->
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  class="form-control"
+                  value="<%= user.email %>"
+                  required
+                />
+              </div>
+              <!-- Phone -->
+              <div class="mb-3">
+                <label for="phone" class="form-label">Phone</label>
+                <input
+                  type="text"
+                  id="phone"
+                  name="phone"
+                  class="form-control"
+                  value="<%= user.phone %>"
+                  required
+                />
+              </div>
+              <!-- Blocked Status -->
+              <div class="mb-3">
+                <label for="isBlocked" class="form-label">Blocked</label>
+                <select name="isBlocked" id="isBlocked" class="form-control">
+                  <option value="true" <%= user.isBlocked ? 'selected' : '' %>>Yes</option>
+                  <option value="false" <%= !user.isBlocked ? 'selected' : '' %>>No</option>
+                </select>
+              </div>
+              <!-- Submit Button -->
+              <div class="d-grid">
+                <button type="submit" class="btn btn-custom">Update User</button>
+              </div>
+            </form>
+          </div>
+          <!-- Card Footer -->
+          <div class="card-footer text-center">
+            <a href="/admin/users" class="btn btn-outline-secondary">Back to User Management</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle with Popper -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+  ></script>
+  <%- include('footer') %>
