@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Shop Dairy Products">
+    <meta name="author" content="Vegishop">
+    <link rel="icon" type="image/png" href="/public/img/logo.png">
+    <title>V-shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="vendor/icons/icofont.min.css" rel="stylesheet" type="text/css">
+    <link href="/public/style.css" rel="stylesheet">
+    <link href="vendor/sidebar/demo.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        .product {
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            transition: transform 0.3s ease;
+        }
+        .product:hover {
+            transform: translateY(-5px);
+        }
+        .product img {
+            height: 250px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .product img:hover {
+            transform: scale(1.1);
+        }
+        .product-price {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .product-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .navbar {
+            background: linear-gradient(90deg, #EB543B, #FBBF3B);
+        }
+        .search-bar {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .search-bar input {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img class="img-fluid" src="/public/img/logo.png" alt="Vegishop Logo" style="max-height: 40px;">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link text-white" href="/">Home</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link text-white" href="/shop">Products</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link text-white" href="#">Checkout</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-3">
+                    <% if (username) { %>
+                        <li class="nav-item">
+                            <a href="/account" class="nav-link text-success">
+                                <i class="icofont-user"></i> <%= username %>
+                            </a>
+                        </li>
+                    <% } else { %>
+                        <li class="nav-item">
+                            <a href="/login" class="nav-link text-success">
+                                <i class="icofont-login"></i> Login
+                            </a>
+                        </li>
+                    <% } %>
+                    <li class="nav-item">
+                        <a href="/cart" class="nav-link text-success">
+                            <i class="icofont-shopping-cart"></i> Cart
+                        </a>
+                    </li>
+                </ul>
+                
+            </div>
+        </div>
+    </nav>
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Search for products..." onkeyup="searchProducts()">
+    </div>
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">Our Products</h2>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4" id="product-list">
+                <% products.forEach(function(product) { %>
+                    <div class="col mb-4 product-item">
+                        <div class="product">
+                            <h5 class="product-name"><%= product.name %></h5>
+                            
+                            <% if (product.offer && product.offer > 0) { %>
+                                <p class="product-price">
+                                    <span style="text-decoration: line-through; color: red;">₹<%= product.price.toFixed(2) %></span>
+                                    <span style="font-weight: bold; color: green;"> ₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></span>
+                                    <small class="text-muted">(<%= product.offer %>% OFF)</small>
+                                </p>
+                            <% } else { %>
+                                <p class="product-price">₹<%= product.price.toFixed(2) %></p>
+                            <% } %>
+                            <% if (product.imagePaths && product.imagePaths.length > 0) { %>
+                                <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
+                                    <div class="carousel-inner">
+                                        <% product.imagePaths.forEach(function(image, index) { %>
+                                            <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                                                <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 img-thumbnail mx-auto" style="height: 200px; object-fit: cover;">
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
+                                </div>
+                            <% } else { %>
+                                <p>No images available</p>
+                            <% } %>
+                            <button class="btn btn-primary mt-3" onclick="window.location.href='/product/<%= product._id %>'">View Product</button>
+                        </div>
+                    </div>
+                <% }); %>
+                
+            </div>
+        </div>
+    </section>
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; 2025 Vegishop. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="privacy.html" class="text-white mx-2">Privacy Policy</a>
+                    <a href="terms.html" class="text-white mx-2">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function searchProducts() {
+            var input, filter, products, productItems, productName, i, txtValue;
+            input = document.getElementById('search-input');
+            filter = input.value.toUpperCase();
+            products = document.getElementById("product-list");
+            productItems = products.getElementsByClassName('product-item');
+
+            for (i = 0; i < productItems.length; i++) {
+                productName = productItems[i].getElementsByClassName("product-name")[0];
+                if (productName) {
+                    txtValue = productName.textContent || productName.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        productItems[i].style.display = "";
+                    } else {
+                        productItems[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

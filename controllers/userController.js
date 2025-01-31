@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto'); // For generating random OTPs
+const crypto = require('crypto');
 const User = require('../models/User');
-const otpService = require('../services/otpService'); // OTP sending logic (email/sms)
+const otpService = require('../services/otpService');
 const Category = require('../models/category');
 const Product = require('../models/product');
 
@@ -14,8 +14,7 @@ exports.renderSignup = (req, res) => {
   req.session.signerr = null;
   res.render("user/signup", { error });
 }
-
-/// Handle sign-up page
+ // Handle sign-up page
 exports.handleSignup = async (req, res) => {
   const { username, email, phone, password } = req.body;
 
@@ -26,45 +25,37 @@ exports.handleSignup = async (req, res) => {
       req.session.signerr = "Email already exists.";
       return res.redirect("/signup");
     }
+
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000); // Generates a 6-digit OTP
-    // Store OTP and the creation time
-const otpData = {
-  otp: otp,
-  createdAt: Date.now()  // Store the current time in milliseconds
-};
+    const otpExpires = new Date(Date.now() + 2 * 60 * 1000); // OTP expires in 2 minutes
 
-// Simulate a check after some time (e.g., after 1 minute)
-setTimeout(() => {
-  const isExpired = Date.now() - otpData.createdAt > 120000;  // 2 minutes
-
-  if (isExpired) {
-    console.log('OTP has expired.');
-  } else {
-    console.log('OTP is valid.');
-  }
-}, 60000);  // 1 minute wait before checking
-    // Temporarily store the user data and OTP in the session
-    req.session.tempUser = {
-      username,
+    // Store OTP in the Otp collection in the database
+    const otpData = new Otp({
       email,
-      phone,
-      password,
-      otp, // Store OTP temporarily in session
-    };
-    // Send OTP to the user's email or phone
-    await otpService.sendOtp(email, otp); // Replace with actual email/sms OTP logic
-    // Render the OTP page
-    res.render("user/verifyOtp", { email, signerr: null });
+      otp,
+      otpExpires,
+    });
+
+    await otpData.save(); // Save OTP in the database
+
+    // Send OTP to the user's email (or phone via SMS)
+    await otpService.sendOtp(email, otp);
+
+    // Render the OTP verification page
+    res.render("user/verifyOtp", { 
+      email, 
+      signerr: null, 
+      otpExpires: otpExpires,
+      otpExpired: false 
+    });
   } catch (err) {
     console.error("Error during sign-up:", err);
-    // Handle unexpected errors
     req.session.signerr = "An internal server error occurred. Please try again later.";
     return res.redirect("/signup");
   }
 };
 
-// Render sign-up page
 exports.renderlogin = (req, res) => {
   if (req.session.logstate) {
     return res.redirect("/home");
@@ -74,43 +65,30 @@ exports.renderlogin = (req, res) => {
   res.render("user/login", { error: loginError });
 }
 
-// handlelogin method in your controller
 exports.handlelogin = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    console.log('Searching for user with email:', email); // Debugging statement
-
     const user = await User.findOne({ email });
-
-    // Check if user is found
     if (!user) {
-      console.log('User not found in the database'); // Debugging statement
       req.session.loginerr = 'Invalid email or password';
-      return res.redirect('/login'); // Redirect with error
+      return res.redirect('/login');
     }
-
-    // Check if user is blocked
     if (user.isBlocked) {
       req.session.loginerr = 'Your account has been blocked by the admin.';
-      return res.redirect('/login'); // Redirect with error
+      return res.redirect('/login');
     }
-
-    // Check if password matches
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       req.session.loginerr = 'Invalid email or password';
-      return res.redirect('/login'); // Redirect with error
+      return res.redirect('/login');
     }
-
-    // Set session details if successful
     req.session.user = { 
       id: user._id,
-      email: user.email // Store email in session
+      email: user.email
     };
     req.session.logstate = true;
-    return res.redirect('/home'); // Redirect to home page
+    return res.redirect('/');
 
   } catch (err) {
     console.error('Error during login:', err);
@@ -120,52 +98,94 @@ exports.handlelogin = async (req, res) => {
 };
 
 
-// Render OTP page
 exports.renderOtpPage = (req, res) => {
-  const email = req.query.email; // Get the email from the query string
-  // Get the error message from session if it exists
+  const email = req.query.email; 
   const signerr = req.session.signerr || null;
-  // Clear the error message after rendering the page
   delete req.session.signerr;
-  // Pass the email and error to the view
-  res.render("user/verifyOtp", { email, signerr });
+  const otpExpires = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
+  res.render("user/verifyOtp", { 
+    email, 
+    signerr, 
+    otpExpires: otpExpires.getTime()
+  });
 };
+
+// Route to handle OTP resend
+exports.resendOtp = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'User not found' });
+    }
+
+    // Generate a new OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otpExpires = new Date(Date.now() + 2 * 60 * 1000); // OTP expires in 2 minutes
+
+    // Update the OTP and expiration time in the user's record
+    user.otp = otp;
+    user.otpExpires = otpExpires;
+
+    // Save the updated user record
+    await user.save();
+
+    // Send the OTP to the user via email or SMS
+    await otpService.sendOtp(user.email, otp); // Implement the actual OTP sending service
+
+    return res.status(200).json({ success: true, message: 'OTP has been resent' });
+
+  } catch (error) {
+    console.error('Error during OTP resend:', error);
+    return res.status(500).json({ success: false, message: 'An error occurred while resending OTP. Please try again.' });
+  }
+};
+
 // Handle OTP verification
 exports.verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
+
   try {
-    // Check if temporary user data exists in the session
-    const tempUser = req.session.tempUser;
-    if (!tempUser) {
-      req.session.signerr = "Session expired. Please sign up again.";
-      return res.redirect("/signup");
+    // Find the OTP data in the database based on the email
+    const otpData = await Otp.findOne({ email });
+
+    if (!otpData) {
+      req.session.signerr = "OTP data not found. Please request a new OTP.";
+      return res.redirect(`/verifyOtp?email=${email}`);
     }
-    // Convert both OTPs to strings and trim any extra spaces
-    const storedOtp = tempUser.otp.toString().trim();
-    const receivedOtp = otp.trim();
+
+    // Check if OTP is expired
+    if (otpData.otpExpires < Date.now()) {
+      req.session.signerr = "OTP has expired. Please request a new one.";
+      return res.redirect(`/verifyOtp?email=${email}`);
+    }
+
     // Validate OTP
-    if (storedOtp === receivedOtp) {
-      // Hash the password and create a new user
-      const hashedPassword = await bcrypt.hash(tempUser.password, 10);
+    if (otpData.otp === parseInt(otp)) {
+      // OTP is valid, hash the password and create a new user
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
       const newUser = new User({
-        username: tempUser.username,
-        email: tempUser.email,
-        phone: tempUser.phone,
+        username: req.body.username,
+        email,
+        phone: req.body.phone,
         password: hashedPassword,
       });
-      await newUser.save();
-      // After OTP verification, store the user details in the session
+
+      await newUser.save(); // Save the new user to the database
+
+      // Clear OTP data after successful verification
+      await Otp.deleteOne({ email }); // Remove OTP data from the database
+
       req.session.user = {
-      email: tempUser.email,
-      username: tempUser.username,
-      phone: tempUser.phone
+        email: newUser.email,
+        username: newUser.username,
+        phone: newUser.phone,
       };
 
-      // Clear the temporary user session data
-      delete req.session.tempUser;
-
-
-      return res.redirect("/home");
+      return res.redirect("/home"); // Redirect to home after successful signup
     } else {
       req.session.signerr = "Invalid OTP. Please try again.";
       return res.redirect(`/verifyOtp?email=${email}`);
@@ -176,37 +196,81 @@ exports.verifyOtp = async (req, res) => {
     return res.redirect(`/verifyOtp?email=${email}`);
   }
 };
-
 exports.renderhome = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.redirect("/login");
+    let user = null;
+    let username = "";
+    if (req.session.user) {
+      user = await User.findOne({ email: req.session.user.email });
+      if (user) {
+        username = user.username;
+      }
     }
-
-    const user = await User.findOne({ email: req.session.user.email });
-    
-
-    if (!user) {
-      return res.status(400).send('User not found in the database');
-    }
-
-    // Fetch categories (excluding soft-deleted ones)
     const categories = await Category.find({ isDeleted: { $ne: true } });
-
-    // Fetch products (excluding soft-deleted ones), sorted by offer percentage
     const products = await Product.find({ isDeleted: { $ne: true } }).populate('category');
-    res.render('user/home', {
-      username: user.username,
-      phone: user.phone,
-      categories,  // Pass categories to view
-      products,     // Pass products to view
-      imageUrl: '/uploads/categories/' // Base URL for category images
+    products.forEach(product => {
+      product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
+    });
+    res.render("user/home", {
+      username, 
+      phone: user ? user.phone : null,
+      categories,
+      products,
+      isLoggedIn: !!req.session.user,
     });
   } catch (err) {
-    console.error('Error fetching user data:', err);
-    return res.status(500).send('An internal server error occurred');
+    console.error("Error fetching user data:", err);
+    return res.status(500).send("An internal server error occurred");
   }
 };
+exports.getShopProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ isDeleted: { $ne: true } }).populate('category');
+    products.forEach(product => {
+      product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
+    });
+    let user = null;
+    let username = "";
+    if (req.session.user) {
+      user = await User.findOne({ email: req.session.user.email });
+      if (user) {
+        username = user.username;
+      }
+    }
+      res.render('user/shopproduct', { products ,username });
+  } catch (err) {
+      console.error('Error fetching products:', err);
+      res.status(500).send('Server Error');
+  }
+};
+exports.viewProduct = async (req, res) => {
+  try {
+    const productId = req.params.id; // Get the product ID from the URL
+    const product = await Product.findById(productId).populate('category'); // Fetch the product and populate category
+
+    // Ensure that image paths are properly formatted
+    if (product) {
+      product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
+    }
+
+    // Get the username from the session if the user is logged in
+    let username = "";
+    if (req.session.user) {
+      const user = await User.findOne({ email: req.session.user.email });
+      if (user) {
+        username = user.username;
+      }
+    }
+
+    // Render the product detail page
+    res.render('user/product-detail', { product, username });
+  } catch (err) {
+    console.error('Error fetching product details:', err);
+    res.status(500).send('Server Error');
+  }
+};
+
+
 
 
 

@@ -4,7 +4,6 @@ const Category = require('../models/category');
 const Product = require('../models/product')
 const path = require('path');
 const fs = require('fs');
-const { validationResult } = require('express-validator');
 
 // Admin credentials stored in environment variables
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
@@ -236,13 +235,13 @@ exports.addCategory = async (req, res) => {
 
   try {
     const { name, description } = req.body;
-    const imagePath = `/uploads/categories/${req.file.filename}`;  // Store the image path
+    const image = `/uploads/categories/${req.file.filename}`;  // Ensure consistent path format
 
     // Create a new category with the image path
     const newCategory = new Category({
       name,
       description,
-      image: imagePath,  // Save the image path in the database
+      image,  // Save the image path in the database
     });
 
     // Save the category to the database
@@ -281,10 +280,8 @@ exports.updateCategory = async (req, res) => {
   try {
     const categoryId = req.params.id;
     const { name, description, isListed } = req.body;
-
     // Convert isListed to boolean
     const isListedBool = isListed === 'true'; 
-
     // Find the existing category
     const category = await Category.findById(categoryId);
     if (!category) {
@@ -292,16 +289,16 @@ exports.updateCategory = async (req, res) => {
     }
 
     // Check if a new image was uploaded
-    let imageURL = category.image; // Keep old image if no new image is uploaded
+    let imagePath = category.image; // Keep old image if no new one is uploaded
     if (req.file) {
-        imageURL = `/uploads/categories/${req.file.filename}`; // Update with new image path
+      imagePath = `/uploads/categories/${req.file.filename}`;  // Store in the same format
     }
 
     // Update the category with new values
     category.name = name;
     category.description = description;
     category.isListed = isListedBool;
-    category.image = imageURL; // Save the image path in the category
+    category.image = imagePath; // Save the image path in the category
 
     // Save the updated category to the database
     await category.save();
@@ -398,41 +395,28 @@ exports.addProductPage = async (req, res) => {
 // Example for handling product images in your controller (addProduct method)
 exports.addProduct = async (req, res) => {
   try {
-      // Log req.body and req.files to inspect the data being sent
-      console.log(req.body);  // Should show the category and other fields
-      console.log(req.files);  // Should show the images array
-
-      const { name, description, price, category, stock } = req.body;
-
-      // Check if category is missing in the request
+      const { name, description, price, category, stock,offer } = req.body;
       if (!category) {
           return res.status(400).send('Category is required');
       }
-
       const images = req.files.map(file => file.filename);
-
-      // Create a new product
       const newProduct = new Product({
           name,
           description,
           price,
-          category,  // Ensure category is correctly passed
+          category,
           stock,
-          images,    // Array of image filenames
+          images, 
+          offer: offer || 0,
           isListed: true,
       });
-
-      // Save the new product
       await newProduct.save();
-
-      // Redirect to the product management page
       res.redirect('/admin/product');
   } catch (error) {
       console.error(error);
       res.status(500).send('Server Error');
   }
 };
-
 // Render Edit Product Page
 exports.editProductPage = async (req, res) => {
   try {
@@ -455,7 +439,7 @@ exports.editProductPage = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
       const productId = req.params.id;
-      const { name, description, price, category, stock, isListed } = req.body;
+      const { name, description, price, category, stock, isListed,offer } = req.body;
       // Convert isListed to boolean
       const isListedBool = isListed === 'true';
       // Fetch the existing product
@@ -476,13 +460,14 @@ exports.updateProduct = async (req, res) => {
           // Store new uploaded images
           images = req.files.map(file => file.filename);
       }
-
+      // Calculate Offer Price
+      const offerPrice = offer > 0 ? (price - (price * offer / 100)).toFixed(2) : price;
       // Log the updated data for debugging
-      console.log("Updating product:", { name, description, price, category, stock, isListed: isListedBool, images });
+      console.log("Updating product:", { name, description, price, category, stock, isListed: isListedBool, images,offer, offerPrice });
 
       const updatedProduct = await Product.findByIdAndUpdate(
           productId,
-          { name, description, price, category, stock, isListed: isListedBool, images },
+          { name, description, price, category, stock, isListed: isListedBool, images,offer, offerPrice },
           { new: true }
       );
 

@@ -49,7 +49,17 @@
                 <% products.forEach(product => { %>
                   <tr>
                     <td><%= product.name %></td>
-                    <td>₹<%= product.price.toFixed(2) %></td>
+                    <td>
+                      <% if (product.offer > 0) { %>
+                        <s>₹<%= product.price.toFixed(2) %></s> 
+                        <br>
+                        <strong>₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></strong> 
+                        <br>
+                        <span class="text-success">(<%= product.offer %>% Off)</span>
+                      <% } else { %>
+                        ₹<%= product.price.toFixed(2) %>
+                      <% } %>
+                    </td>
                     <td><%= product.stock %></td>
                     <td style="word-wrap: break-word; white-space: normal;">
                       <%= product.description.length > 50 ? product.description.substring(0, 50) + '...' : product.description %>
@@ -57,13 +67,13 @@
                     <td><%= product.category.name %></td>
                     <td><!-- Render images -->
                       <div class="d-flex justify-content-center">
-                          <% if (product.imageURLs && Array.isArray(product.imageURLs)) { %>
-                              <% product.imageURLs.forEach(imageURL => { %>
-                                  <img src="<%= imageURL %>" alt="<%= product.name %>" class="img-thumbnail mx-1" width="60" height="60">
-                              <% }); %>
-                          <% } else { %>
-                              <p>No images available</p>
-                          <% } %>
+                        <% if (product.imageURLs && Array.isArray(product.imageURLs)) { %>
+                          <% product.imageURLs.forEach(imageURL => { %>
+                            <img src="<%= imageURL %>" alt="<%= product.name %>" class="img-thumbnail mx-1" width="60" height="60">
+                          <% }); %>
+                        <% } else { %>
+                          <p>No images available</p>
+                        <% } %>
                       </div>
                     </td>
                     <td>
@@ -77,7 +87,6 @@
                         </form>
                       <% } %>
                     </td>
-                    
                     <td>
                       <a href="/admin/editproduct/<%= product._id %>" class="btn btn-warning btn-sm">
                         <i class="fas fa-edit"></i> Edit
@@ -94,7 +103,7 @@
                     </td>
                   </tr>
                 <% }) %>
-              </tbody>
+              </tbody>              
             </table>
           </div>
           </div>

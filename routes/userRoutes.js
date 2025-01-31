@@ -1,25 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const UserController = require('../controllers/userController');
-
-// Route to render the signup page
+//signup
 router.get("/signup", UserController.renderSignup);
-
-// Route for handling sign-up (user registration)
 router.post('/signup', UserController.handleSignup);
-
-// Route for handling login-up (user registration)
+//login
 router.get('/login', UserController.renderlogin);
-
-// Route for handling login-up (user registration)
 router.post('/login', UserController.handlelogin);
 
-// Route to render OTP page (for OTP input)
+// otp
 router.get('/verifyOtp', UserController.renderOtpPage);
-
-// Route for verifying OTP after signup
+router.post("/resendOtp", UserController.resendOtp);
 router.post('/verifyOtp', UserController.verifyOtp);
 
-router.get('/home', UserController.renderhome);
+//product
+router.get('/', UserController.renderhome);
+router.get('/shop', UserController.getShopProducts);
+// Route for a single product's detail page
+router.get('/product/:id', UserController.viewProduct);
 
 module.exports = router;

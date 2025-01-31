@@ -3,8 +3,8 @@ const express = require('express');
 const session = require('express-session');
 const mongoose = require('mongoose');
 const path = require('path');
-require('dotenv').config(); // Load environment variables from .env file
-const connectDB = require('./config/mongo');  // Import the connectDB function
+require('dotenv').config();
+const connectDB = require('./config/mongo');
 
 // Initialize Express App
 const app = express();
@@ -22,22 +22,21 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Session middleware setup
 app.use(session({
-  secret: 'your-secret-key',  // Change this to a secret key
+  secret: 'your-secret-key',
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false } // set 'secure: true' if you're using HTTPS
+  cookie: { secure: false }
 }));
 
 // Routes
 const Routes = require('./routes/userRoutes');
 app.use('/', Routes);
-// Connect to MongoDB
 
-// Call connectDB function to connect to MongoDB
+//  connect to MongoDB
 connectDB();
 
 // Serve static files from the "uploads" folder
-app.use("/uploads", express.static("uploads"));
+app.use('/uploads', express.static('uploads'));
 // Admin Routes (importing the adminRoutes from separate file)
 const adminRoutes = require('./routes/adminRoutes');
 app.use('/admin', adminRoutes);

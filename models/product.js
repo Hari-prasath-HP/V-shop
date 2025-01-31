@@ -8,7 +8,9 @@ const productSchema = new mongoose.Schema({
     images: [{ type: String, required: true }],
     stock: { type: Number, required: true, default: 0 },
     isListed: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false } // Soft delete flag
+    isDeleted: { type: Boolean, default: false } ,
+    offer: { type: Number, default: 0 },
+    offerPrice: Number, 
     }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);
