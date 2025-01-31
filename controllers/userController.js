@@ -4,6 +4,7 @@ const User = require('../models/User');
 const otpService = require('../services/otpService');
 const Category = require('../models/category');
 const Product = require('../models/product');
+const Cart = require('../models/Cart')
 
 // Render sign-up page
 exports.renderSignup = (req, res) => {
@@ -248,10 +249,23 @@ exports.viewProduct = async (req, res) => {
     const productId = req.params.id; // Get the product ID from the URL
     const product = await Product.findById(productId).populate('category'); // Fetch the product and populate category
 
-    // Ensure that image paths are properly formatted
-    if (product) {
-      product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
+    if (!product) {
+      return res.status(404).send('Product not found');
     }
+
+    // Ensure that image paths are properly formatted for the product
+    product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
+
+    // Fetch other products from the same category (excluding the current product)
+    const relatedProducts = await Product.find({ 
+      category: product.category, 
+      _id: { $ne: productId } 
+    }).limit(4);  // Get related products (limit can be adjusted)
+
+    // Ensure that image paths are properly formatted for each related product
+    relatedProducts.forEach(relatedProduct => {
+      relatedProduct.imagePaths = relatedProduct.images.map(image => `/uploads/products/${image}`);
+    });
 
     // Get the username from the session if the user is logged in
     let username = "";
@@ -263,12 +277,14 @@ exports.viewProduct = async (req, res) => {
     }
 
     // Render the product detail page
-    res.render('user/product-detail', { product, username });
+    res.render('user/product-detail', { product, username, relatedProducts });
   } catch (err) {
     console.error('Error fetching product details:', err);
-    res.status(500).send('Server Error');
+    res.status(500).send(`Server Error: ${err.message}`);  // Send more specific error message for debugging
   }
 };
+
+
 
 
 

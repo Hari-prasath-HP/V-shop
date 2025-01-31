@@ -109,7 +109,22 @@
   .category:hover .shop-btn {
     opacity: 1;
   }
-      </style>
+  .product-card {
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.product-image {
+    height: 200px;
+    object-fit: cover;
+}
+
+    </style>
       <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
 
 </head>
@@ -208,35 +223,41 @@
         const topOffers = products.filter(p => p.offer > 0).sort((a, b) => b.offer - a.offer).slice(0, 4);
         topOffers.forEach(function(product) { 
       %>
-        <div class="col mb-4">
-          <div class="product">
-            <h5><%= product.name %></h5>
-            <span style="text-decoration: line-through; color: red;">₹<%= product.price.toFixed(2) %></span>
-            <span style="font-weight: bold; color: green;"> ₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></span>
-            <small class="text-muted">(<%= product.offer %>% OFF)</small>
+      <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0 rounded product-card">
+          <div class="card-body text-center">
+            <h5 class="card-title text-truncate"><%= product.name %></h5>
+            
+            <div class="price-section">
+              <span class="text-danger text-decoration-line-through fs-6">₹<%= product.price.toFixed(2) %></span>
+              <span class="text-success fw-bold fs-5"> ₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></span>
+              <small class="text-muted d-block">(<%= product.offer %>% OFF)</small>
+            </div>
+      
             <% if (product.imagePaths && product.imagePaths.length > 0) { %>
               <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
+                <div class="carousel-inner rounded">
                   <% product.imagePaths.forEach(function(image, index) { %>
                     <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                      <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 img-thumbnail mx-auto" style="height: 200px; object-fit: cover;">
+                      <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 rounded-top product-image">
                     </div>
                   <% }); %>
                 </div>
                 <button class="carousel-control-prev" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                  <span class="visually-hidden">Previous</span>
+                  <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
                 </button>
                 <button class="carousel-control-next" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="next">
-                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                  <span class="visually-hidden">Next</span>
+                  <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
                 </button>
               </div>
             <% } else { %>
-              <p>No images available</p>
+              <p class="text-muted">No images available</p>
             <% } %>
+      
+            <button class="btn btn-primary mt-3 w-100" onclick="window.location.href='/product/<%= product._id %>'">View Product</button>
           </div>
         </div>
+      </div>      
       <% }); %>
     </div>
   </div>

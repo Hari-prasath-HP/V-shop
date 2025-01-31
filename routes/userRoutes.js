@@ -16,7 +16,6 @@ router.post('/verifyOtp', UserController.verifyOtp);
 //product
 router.get('/', UserController.renderhome);
 router.get('/shop', UserController.getShopProducts);
-// Route for a single product's detail page
 router.get('/product/:id', UserController.viewProduct);
 
 module.exports = router;

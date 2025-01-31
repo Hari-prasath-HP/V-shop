@@ -67,6 +67,34 @@
         .product-image:hover {
             transform: scale(1.2);
         }
+        .product-card img {
+        width: 100%; /* Make image take up the full width of the container */
+        height: 200px; /* Set a fixed height for the images */
+        object-fit: cover; /* Ensures the image covers the area without stretching */
+        object-position: center; /* Ensures the image is centered if it's cropped */
+        }
+        .quantity-input {
+    width: 60px;  /* Set a base width for the input */
+    font-size: 18px;
+    padding: 5px;
+    text-align: center; /* Center the number inside the input */
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.quantity-input:focus {
+    border-color: #2d6a4f; /* Change border color on focus */
+    outline: none;
+}
+
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+
+
 </style>
 </head>
 <body>
@@ -100,10 +128,10 @@
                         </li>
                     <% } else { %>
                         <li class="nav-item">
-                            <a href="/login" class="nav-link text-success">
-                                <i class="icofont-login"></i> Login
+                            <a href="/login" class="btn btn-success text-white">
+                              <i class="icofont-login"></i> Login
                             </a>
-                        </li>
+                          </li>
                     <% } %>
                     <li class="nav-item">
                         <a href="/cart" class="nav-link text-success">
@@ -117,7 +145,8 @@
     <section class="py-5">
         <div class="container">
             <div class="row">
-                <div class="col-md-6">
+                <!-- Current Product -->
+                <div class="col-md-6 mb-4">
                     <div id="product-carousel" class="carousel slide" data-bs-ride="carousel">
                         <div class="carousel-inner">
                             <% product.imagePaths.forEach(function(image, index) { %>
@@ -135,12 +164,13 @@
                             <span class="visually-hidden">Next</span>
                         </button>
                     </div>
-                </div>                
+                </div>
+                
                 <div class="col-md-6">
                     <div class="product-detail">
                         <h2 class="product-name"><%= product.name %></h2>
                         <p class="product-price">₹<%= product.price.toFixed(2) %></p>
-
+    
                         <% if (product.offer && product.offer > 0) { %>
                             <p>
                                 <span style="text-decoration: line-through; color: red;">₹<%= product.price.toFixed(2) %></span>
@@ -148,19 +178,66 @@
                                 <small class="text-muted">(<%= product.offer %>% OFF)</small>
                             </p>
                         <% } %>
+    
                         <p class="product-description"><strong>Description:</strong> <%= product.description %></p>
+                        <p class="product-description">
+                            <strong>Stock:</strong> 
+                            <% if (product.stock === 0) { %>
+                                No stock available
+                            <% } else { %>
+                                <%= product.stock %> available
+                            <% } %>
+                        </p>
                         <div class="quantity-control mt-3">
                             <button class="btn btn-secondary" id="reduce-quantity" onclick="updateQuantity('reduce')">-</button>
                             <input type="number" id="product-quantity" value="1" min="1" max="<%= product.stock %>" class="quantity-input" />
                             <button class="btn btn-secondary" id="add-quantity" onclick="updateQuantity('add')">+</button>
                         </div>
-                        <button class="btn btn-primary mt-3" onclick="addToCart()">Add to Cart</button>
+    
+                        <button class="btn btn-success mt-2 w-100" onclick="addToCart('<%= product._id %>')">Add to Cart</button>
                         <button class="btn btn-outline-secondary mt-3 ms-2" onclick="window.location.href='/shop'">Back to Products</button>
                     </div>
                 </div>
             </div>
+    
+            <!-- Related Products Section -->
+            <div class="row">
+                <% relatedProducts.forEach((relatedProduct, index) => { %>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="product-card">
+                            <!-- Carousel for each related product -->
+                            <div id="related-product-carousel-<%= relatedProduct._id %>" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-inner">
+                                    <% relatedProduct.imagePaths.forEach((image, imageIndex) => { %>
+                                        <div class="carousel-item <%= imageIndex === 0 ? 'active' : '' %>">
+                                            <img src="<%= image %>" alt="<%= relatedProduct.name %>" class="d-block w-100 img-fluid" />
+                                        </div>
+                                    <% }); %>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#related-product-carousel-<%= relatedProduct._id %>" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#related-product-carousel-<%= relatedProduct._id %>" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+
+                            <h4><%= relatedProduct.name %></h4>
+                            <p class="product-price">
+                                <span style="text-decoration: line-through; color: red;">₹<%= relatedProduct.price.toFixed(2) %></span>
+                                <span style="font-weight: bold; color: green;"> ₹<%= (relatedProduct.price - (relatedProduct.price * relatedProduct.offer / 100)).toFixed(2) %></span>
+                                <small class="text-muted">(<%= relatedProduct.offer %>% OFF)</small>
+                            </p>
+                            <button class="btn btn-primary" onclick="window.location.href='/product/<%= relatedProduct._id %>'">View Details</button>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
         </div>
     </section>
+    
     <footer class="bg-dark text-white py-4">
         <div class="container">
             <div class="row">
@@ -178,6 +255,32 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
 <script src="https://cdn.rawgit.com/elevateweb/elevatezoom/master/jquery.elevatezoom.js"></script>
 <script>
+    function addToCart(productId) {
+      fetch('/check-login')
+        .then(response => response.json())
+        .then(data => {
+          if (!data.isLoggedIn) {
+            window.location.href = '/login';
+          } else {
+            const quantity = document.getElementById('product-quantity') ? document.getElementById('product-quantity').value : 1;
+  
+            fetch('/cart/add', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ productId, quantity })
+            })
+            .then(response => response.json())
+            .then(result => {
+              if (result.success) {
+                alert('Product added to cart');
+                window.location.href = '/cart';
+              } else {
+                alert(result.message);
+              }
+            });
+          }
+        });
+    }
     function updateQuantity(action) {
         const quantityInput = document.getElementById("product-quantity");
         let currentQuantity = parseInt(quantityInput.value);
@@ -193,8 +296,7 @@
         const productId = "<%= product._id %>";
         window.location.href = `/cart/add/${productId}?quantity=${quantity}`;
     }
-</script>
-<script>
+
     $(document).ready(function() {
         $('.product-image').elevateZoom({
             zoomType: "lens",
