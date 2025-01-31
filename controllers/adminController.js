@@ -302,18 +302,27 @@ exports.manageProductPage = async (req, res) => {
 exports.addProductPage = async (req, res) => {
   try {
     const categories = await Category.find();
-    res.render('admin/addProduct', { categories , product: null });
+    res.render('admin/addProduct', {
+      categories,
+      product: null,
+      error: req.query.error || null,
+    });
   } catch (error) {
     console.error('Error fetching categories:', error);
     res.status(500).send('Internal Server Error');
   }
 };
+
 exports.addProduct = async (req, res) => {
   try {
       const { name, description, price, category, stock,offer } = req.body;
       if (!category) {
-          return res.status(400).send('Category is required');
+        return res.redirect('/admin/addProduct?error=Category is required');
       }
+      // Validate that exactly 3 images are uploaded
+      if (!req.files || req.files.length !== 3) {
+        return res.redirect('/admin/addProduct?error=You must upload exactly 3 images');
+    }
       const images = req.files.map(file => file.filename);
       const newProduct = new Product({
           name,

@@ -11,6 +11,7 @@ const productSchema = new mongoose.Schema({
     isDeleted: { type: Boolean, default: false } ,
     offer: { type: Number, default: 0 },
     offerPrice: Number, 
+    category: String,
     }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);

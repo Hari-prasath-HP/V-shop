@@ -92,10 +92,26 @@
     -webkit-appearance: none;
     margin: 0;
 }
-
-
-
+.breadcrumb {
+  background: none;
+  padding: 10px 0;
+}
+.breadcrumb-item a {
+  text-decoration: none;
+  color: #6f6f70;
+}
+.breadcrumb-item a:hover {
+  text-decoration: underline;
+}
+.rating i {
+  font-size: 18px;
+}
+.text-warning {
+  color: #ffc107;
+}
 </style>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light">
@@ -142,6 +158,13 @@
             </div>
         </div>
     </nav>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/">Home</a></li>
+          <li class="breadcrumb-item"><a href="/shop">Products</a></li>
+          <li class="breadcrumb-item active" aria-current="page"><%= product.name %></li>
+        </ol>
+      </nav>           
     <section class="py-5">
         <div class="container">
             <div class="row">
@@ -193,7 +216,19 @@
                             <input type="number" id="product-quantity" value="1" min="1" max="<%= product.stock %>" class="quantity-input" />
                             <button class="btn btn-secondary" id="add-quantity" onclick="updateQuantity('add')">+</button>
                         </div>
-    
+                        <div class="rating">
+                            <% let rating = product.rating || 4.5; %> <!-- Default to 4.5 if product.rating is not provided -->
+                            <% for(let i = 1; i <= 5; i++) { %>
+                              <% if(i <= Math.floor(rating)) { %>
+                                <i class="fas fa-star text-warning"></i> <!-- Filled Star -->
+                              <% } else if(i - 0.5 === rating) { %>
+                                <i class="fas fa-star-half-alt text-warning"></i> <!-- Half Star -->
+                              <% } else { %>
+                                <i class="far fa-star text-warning"></i> <!-- Empty Star -->
+                              <% } %>
+                            <% } %>
+                            <span>(<%= rating %> / 5)</span> <!-- Show the rating value -->
+                          </div>                                                                                                
                         <button class="btn btn-success mt-2 w-100" onclick="addToCart('<%= product._id %>')">Add to Cart</button>
                         <button class="btn btn-outline-secondary mt-3 ms-2" onclick="window.location.href='/shop'">Back to Products</button>
                     </div>
