@@ -60,14 +60,14 @@
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <img class="img-fluid" src="/public/img/logo.png" alt="Vegishop Logo" style="max-height: 40px;">
+                <h3>V-shop</h3>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto mb-2">
                     <li class="nav-item active">
                         <a class="nav-link text-white" href="/">Home</a>
                     </li>
@@ -77,28 +77,32 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link text-white" href="#">Checkout</a>
                     </li>
-                </ul>
-                <ul class="navbar-nav ms-3">
-                    <% if (username) { %>
-                        <li class="nav-item">
-                            <a href="/account" class="nav-link text-success">
-                                <i class="icofont-user"></i> <%= username %>
-                            </a>
-                        </li>
-                    <% } else { %>
-                        <li class="nav-item">
-                            <a href="/login" class="btn btn-success text-white">
-                              <i class="icofont-login"></i> Login
-                            </a>
-                          </li>
-                    <% } %>
                     <li class="nav-item">
-                        <a href="/cart" class="nav-link text-success">
-                            <i class="icofont-shopping-cart"></i> Cart
-                        </a>
-                    </li>
+                      <a href="/cart" class="nav-link text-white">
+                          <i class="icofont-shopping-cart"></i> Cart
+                      </a>
+                  </li>
                 </ul>
-                
+                <ul class="navbar-nav mb-2 me-3">
+                  <% if (username) { %>
+                      <li class="nav-item">
+                          <a href="/account" class="nav-link text-success">
+                              <i class="icofont-user"></i> <%= username %>
+                          </a>
+                      </li>
+                  <% } else { %>
+                      <li class="nav-item">
+                        <a href="/login" class="btn btn-success text-white">
+                          <i class="icofont-login"></i> Login
+                        </a>
+                      </li>
+                  <% } %>
+              </ul>
+              <form action="/logout" method="POST">
+                <button type="submit" class="btn btn-dark mb-2">
+                    <i class="fas fa-sign-out-alt fa-2x">logout</i> <!-- Larger icon -->
+                  </button>                                                   
+              </form>               
             </div>
         </div>
     </nav>

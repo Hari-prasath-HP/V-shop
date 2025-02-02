@@ -20,100 +20,103 @@
     </div>
   </div>
 </nav>
-  <div class="container-fluid p-0">
-    <div class="d-flex justify-content-center  vh-100">
-      <div class="card shadow-lg w-100">
-        <!-- Card Container -->
-        <div class="card-body overflow-hidden">
-          <div class="card-footer bg-white">
-          <!-- Card Footer -->
-          <div class="card-footer ">
+
+<div class="container-fluid p-0">
+  <div class="d-flex justify-content-center min-vh-100">
+    <div class="card shadow-lg w-100">
+      <div class="card-body">
+        <div class="card-footer bg-white">
+          <div class="card-footer">
             <a href="/admin/addProduct" class="btn btn-custom">Add New Product</a>
           </div>
-            <!-- Table --><!-- Table -->
-          <div class="table-responsive">
-            <table class="table table-striped table-bordered m-0" style="table-layout: fixed; width: 100%;">
-              <thead>
+
+          <!-- Table directly within the page layout -->
+          <table class="table table-striped table-bordered m-0" style="table-layout: fixed; width: 100%;">
+            <thead>
+              <tr>
+                <th style="width: 15%;">Name</th>
+                <th style="width: 10%;">Price (₹)</th>
+                <th style="width: 10%;">Stock</th>
+                <th style="width: 30%;">Description</th>
+                <th style="width: 10%;">Category</th>
+                <th style="width: 20%;">Images</th>
+                <th style="width: 10%;">Active</th>
+                <th style="width: 15%;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% products.forEach(product => { %>
                 <tr>
-                  <th style="width: 15%;">Name</th>
-                  <th style="width: 10%;">Price (₹)</th>
-                  <th style="width: 10%;">Stock</th>
-                  <th style="width: 30%;">Description</th>
-                  <th style="width: 10%;">Category</th>
-                  <th style="width: 20%;">Images</th>
-                  <th style="width: 10%;">Active</th>
-                  <th style="width: 15%;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% products.forEach(product => { %>
-                  <tr>
-                    <td><%= product.name %></td>
-                    <td>
-                      <% if (product.offer > 0) { %>
-                        <s>₹<%= product.price.toFixed(2) %></s> 
-                        <br>
-                        <strong>₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></strong> 
-                        <br>
-                        <span class="text-success">(<%= product.offer %>% Off)</span>
+                  <td><%= product.name %></td>
+                  <td>
+                    <% if (product.offer > 0) { %>
+                      <s>₹<%= product.price.toFixed(2) %></s> 
+                      <br>
+                      <strong>₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></strong> 
+                      <br>
+                      <span class="text-success">(<%= product.offer %>% Off)</span>
+                    <% } else { %>
+                      ₹<%= product.price.toFixed(2) %>
+                    <% } %>
+                  </td>
+                  <td><%= product.stock %></td>
+                  <td style="word-wrap: break-word; white-space: normal;">
+                    <%= product.description.length > 50 ? product.description.substring(0, 50) + '...' : product.description %>
+                  </td>
+                  <td>
+                    <% if (product.category && product.category.name) { %>
+                      <%= product.category.name %> <!-- Display category name -->
+                    <% } else { %>
+                      <p>No category available</p>
+                    <% } %>
+                  </td>
+                                   
+                  <td>
+                    <div class="d-flex justify-content-center">
+                      <% if (product.imageURLs && Array.isArray(product.imageURLs)) { %>
+                        <% product.imageURLs.forEach(imageURL => { %>
+                          <img src="<%= imageURL %>" alt="<%= product.name %>" class="img-thumbnail mx-1" width="60" height="60">
+                        <% }); %>
                       <% } else { %>
-                        ₹<%= product.price.toFixed(2) %>
+                        <p>No images available</p>
                       <% } %>
-                    </td>
-                    <td><%= product.stock %></td>
-                    <td style="word-wrap: break-word; white-space: normal;">
-                      <%= product.description.length > 50 ? product.description.substring(0, 50) + '...' : product.description %>
-                    </td>
-                    <td><%= product.category.name %></td>
-                    <td><!-- Render images -->
-                      <div class="d-flex justify-content-center">
-                        <% if (product.imageURLs && Array.isArray(product.imageURLs)) { %>
-                          <% product.imageURLs.forEach(imageURL => { %>
-                            <img src="<%= imageURL %>" alt="<%= product.name %>" class="img-thumbnail mx-1" width="60" height="60">
-                          <% }); %>
-                        <% } else { %>
-                          <p>No images available</p>
-                        <% } %>
-                      </div>
-                    </td>
-                    <td>
-                      <% if (product.isListed) { %>
-                        <form action="/admin/unlistProduct/<%= product._id %>" >
-                          <button type="submit" class="btn btn-success btn-sm">Active</button>
-                        </form>
-                      <% } else { %>
-                        <form action="/admin/listProduct/<%= product._id %>" >
-                          <button type="submit" class="btn btn-danger btn-sm">Inactive</button>
-                        </form>
-                      <% } %>
-                    </td>
-                    <td>
-                      <a href="/admin/editproduct/<%= product._id %>" class="btn btn-warning btn-sm">
-                        <i class="fas fa-edit"></i> Edit
+                    </div>
+                  </td>
+                  <td>
+                    <% if (product.isListed) { %>
+                      <form action="/admin/unlistProduct/<%= product._id %>" >
+                        <button type="submit" class="btn btn-success btn-sm">Active</button>
+                      </form>
+                    <% } else { %>
+                      <form action="/admin/listProduct/<%= product._id %>" >
+                        <button type="submit" class="btn btn-danger btn-sm">Inactive</button>
+                      </form>
+                    <% } %>
+                  </td>
+                  <td>
+                    <a href="/admin/editproduct/<%= product._id %>" class="btn btn-warning btn-sm">
+                      <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <% if (product.isDeleted) { %>
+                      <a href="/admin/restoreProduct/<%= product._id %>" class="btn btn-success btn-sm">
+                        <i class="fas fa-undo"></i> Restore
                       </a>
-                      <% if (product.isDeleted) { %>
-                        <a href="/admin/restoreProduct/<%= product._id %>" class="btn btn-success btn-sm">
-                          <i class="fas fa-undo"></i> Restore
-                        </a>
-                      <% } else { %>
-                        <a href="/admin/deleteProduct/<%= product._id %>" class="btn btn-danger btn-sm">
-                          <i class="fas fa-trash-alt"></i> Delete
-                        </a>
-                      <% } %>
-                    </td>
-                  </tr>
-                <% }) %>
-              </tbody>              
-            </table>
-          </div>
-          </div>
+                    <% } else { %>
+                      <a href="/admin/deleteProduct/<%= product._id %>" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash-alt"></i> Delete
+                      </a>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>              
+          </table>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Bootstrap JS Bundle with Popper -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
-  ></script>
-  <%- include('footer') %>
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<%- include('footer') %>

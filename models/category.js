@@ -1,12 +1,11 @@
-// models/Category.js
 const mongoose = require('mongoose');
 
 const categorySchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
-  image: { type: String, required: true }, // Store a single image filename
-  isListed: { type: Boolean, default: true }, // true means listed, false means unlisted
-  isDeleted: { type: Boolean, default: false }, // Default value is false (not deleted)
+  image: { type: String, required: true },
+  isListed: { type: Boolean, default: true },
+  isDeleted: { type: Boolean, default: false },
 });
 
 const Category = mongoose.model('Category', categorySchema);

@@ -28,6 +28,11 @@
         <div class="card-header text-white text-center" style="background-color: #eb543b;">
           <h3>Add Category</h3>
         </div>
+        <% if (errorMessage) { %>
+          <div class="alert alert-danger" role="alert">
+            <%= errorMessage %>
+          </div>
+        <% } %>
         <div class="card-body">
           <form id="categoryForm" action="/admin/add" method="POST" onsubmit="validateCategory(event)" enctype="multipart/form-data">
             <div class="mb-3">
@@ -38,7 +43,6 @@
                 name="name"
                 class="form-control"
                 placeholder="Enter category name"
-                required
               />
               <span id="nameError" class="error"></span>
             </div>
@@ -50,13 +54,12 @@
                 class="form-control"
                 placeholder="Enter category description"
                 rows="4"
-                required
               ></textarea>
               <span id="descriptionError" class="error"></span>
             </div>
             <div class="mb-3">
               <label for="images" class="form-label">Product Images</label>
-              <input type="file" name="image" class="form-control mb-2" accept="image/*" required />
+              <input type="file" name="image" class="form-control mb-2" accept="image/*"  />
             </div>
             <div class="d-grid">
               <button type="submit" class="btn btn-custom">Add Category</button>

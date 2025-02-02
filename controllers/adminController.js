@@ -162,7 +162,7 @@ exports.manageCategoryPage = async (req, res) => {
     const categories = await Category.find({
       name: { $regex: searchQuery, $options: 'i' },
       isDeleted: { $ne: true },
-    });
+    }).sort({ createdAt: -1 }); 
 
     const updatedCategories = categories.map(category => ({
       ...category._doc,
@@ -179,21 +179,26 @@ exports.addCategoryPage = (req, res) => {
   if (!req.session.isAdmin) {
     return res.redirect('/admin/login');
   }
-  res.render("admin/addCategory");
+  const errorMessage = req.session.errorMessage || '';
+  req.session.errorMessage = null;
+  res.render('admin/addCategory', { errorMessage });
 };
 exports.addCategory = async (req, res) => {
-  console.log(req.body);
-  console.log(req.file);
   if (!req.file) {
     return res.status(400).send('Category image is required!');
   }
   try {
     const { name, description } = req.body;
+    const existingCategory = await Category.findOne({ name, isDeleted: { $ne: true } });
+    if (existingCategory) {
+      req.session.errorMessage = 'Category with this name already exists and is not deleted!';
+      return res.redirect('/admin/addCategory'); // Redirect back to the form
+    }
     const image = `/uploads/categories/${req.file.filename}`;
     const newCategory = new Category({
       name,
       description,
-      image, 
+      image,
     });
     await newCategory.save();
     res.redirect('/admin/categories');
@@ -204,10 +209,8 @@ exports.addCategory = async (req, res) => {
 };
 exports.editCategoryPage = async (req, res) => {
   const categoryId = req.params.id;
-
   try {
     const category = await Category.findById(categoryId);
-    
     if (!category) {
       return res.status(404).json({ message: 'Category not found.' });
     }
@@ -243,14 +246,12 @@ exports.updateCategory = async (req, res) => {
 };
 exports.softDeleteCategory = async (req, res) => {
   const categoryId = req.params.id;
-
   try {
     const updatedCategory = await Category.findByIdAndUpdate(
       categoryId,
       { isDeleted: true },
       { new: true }
     );
-
     if (!updatedCategory) {
       return res.status(404).json({ message: 'Category not found.' });
     }
@@ -286,13 +287,16 @@ exports.unlistCategory = async (req, res) => {
 };
 exports.manageProductPage = async (req, res) => {
   try {
-      const products = await Product.find({ isDeleted: { $ne: true } }).populate("category");
-      const updatedProducts = products.map(product => ({
-          ...product._doc,
-          category: product.category || { name: "Uncategorized" },
-          imageURLs: product.images.map(image => `/uploads/products/${image}`) 
-      }));
-
+    const products = await Product.find({ isDeleted: { $ne: true } })
+  .populate("category", "name description image isListed") 
+  .sort({ createdAt: -1 });
+  const updatedProducts = products.map(product => ({
+    ...product._doc,
+    category: product.category ? {
+      name: product.category.name
+    } : { name: "Uncategorized" },
+    imageURLs: product.images.map(image => `/uploads/products/${image}`)
+  }));
       res.render('admin/product', { products: updatedProducts });
   } catch (error) {
       console.error("Error fetching products:", error);
@@ -302,43 +306,50 @@ exports.manageProductPage = async (req, res) => {
 exports.addProductPage = async (req, res) => {
   try {
     const categories = await Category.find();
+    const errorMessage = req.session.error || null;
+    req.session.error = null;
     res.render('admin/addProduct', {
       categories,
       product: null,
-      error: req.query.error || null,
+      error: errorMessage,
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
     res.status(500).send('Internal Server Error');
   }
 };
-
 exports.addProduct = async (req, res) => {
   try {
-      const { name, description, price, category, stock,offer } = req.body;
-      if (!category) {
-        return res.redirect('/admin/addProduct?error=Category is required');
-      }
-      // Validate that exactly 3 images are uploaded
-      if (!req.files || req.files.length !== 3) {
-        return res.redirect('/admin/addProduct?error=You must upload exactly 3 images');
+    const { name, description, price, category, stock, offer } = req.body;
+    const existingProduct = await Product.findOne({ name });
+    if (existingProduct) {
+      req.session.error = 'Product already exists';
+      return res.redirect('/admin/addProduct');
     }
-      const images = req.files.map(file => file.filename);
-      const newProduct = new Product({
-          name,
-          description,
-          price,
-          category,
-          stock,
-          images, 
-          offer: offer || 0,
-          isListed: true,
-      });
-      await newProduct.save();
-      res.redirect('/admin/product');
+    if (!category) {
+      req.session.error = 'Category is required';
+      return res.redirect('/admin/addProduct');
+    }
+    if (!req.files || req.files.length !== 3) {
+      req.session.error = 'You must upload exactly 3 images';
+      return res.redirect('/admin/addProduct');
+    }
+    const images = req.files.map(file => file.filename);
+    const newProduct = new Product({
+      name,
+      description,
+      price,
+      category,
+      stock,
+      images,
+      offer: offer || 0,
+      isListed: true,
+    });
+    await newProduct.save();
+    res.redirect('/admin/product');
   } catch (error) {
-      console.error(error);
-      res.status(500).send('Server Error');
+    console.error(error);
+    res.status(500).send('Server Error');
   }
 };
 exports.editProductPage = async (req, res) => {
@@ -346,11 +357,9 @@ exports.editProductPage = async (req, res) => {
     const productId = req.params.id;
     const product = await Product.findById(productId);
     const categories = await Category.find();
-
     if (!product) {
       return res.status(404).send('Product not found');
     }
-
     res.render('admin/editProduct', { product, categories });
   } catch (error) {
     console.error('Error fetching product or categories:', error);
@@ -377,18 +386,14 @@ exports.updateProduct = async (req, res) => {
           images = req.files.map(file => file.filename);
       }
       const offerPrice = offer > 0 ? (price - (price * offer / 100)).toFixed(2) : price;
-      console.log("Updating product:", { name, description, price, category, stock, isListed: isListedBool, images,offer, offerPrice });
-
       const updatedProduct = await Product.findByIdAndUpdate(
           productId,
           { name, description, price, category, stock, isListed: isListedBool, images,offer, offerPrice },
           { new: true }
       );
-
       if (!updatedProduct) {
           return res.status(404).send('Product not found');
       }
-
       res.redirect('/admin/product');
   } catch (error) {
       console.error("Error updating product:", error);
@@ -403,11 +408,9 @@ exports.softDeleteProduct = async (req, res) => {
       { isDeleted: true }, 
       { new: true }
     );
-
     if (!updatedProduct) {
       return res.status(404).json({ message: 'Product not found.' });
     }
-
     res.redirect('/admin/product');
   } catch (error) {
     console.error('Error soft deleting product:', error);
@@ -448,3 +451,13 @@ exports.unlistProduct = async (req, res) => {
     res.status(500).send('Server Error');
   }
 } ;
+exports.logout = (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error during logout:", err);
+      return res.status(500).send("Error logging out");
+    }
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.redirect('/admin/login');
+  });
+};

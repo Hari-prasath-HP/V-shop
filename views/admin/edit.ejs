@@ -2,16 +2,12 @@
   <div class="container py-5">
     <div class="row justify-content-center">
       <div class="col-md-6">
-        <!-- Card Container -->
         <div class="card shadow-lg rounded-3">
-          <!-- Card Header -->
           <div class="card-header header-custom text-center">
             <h3>Edit User</h3>
           </div>
           <div class="card-body">
-            <!-- Form -->
             <form action="/admin/updateUser/<%= user._id %>" method="POST">
-              <!-- Username -->
               <div class="mb-3">
                 <label for="username" class="form-label">Username</label>
                 <input
@@ -23,7 +19,6 @@
                   required
                 />
               </div>
-              <!-- Email -->
               <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
                 <input
@@ -35,7 +30,6 @@
                   required
                 />
               </div>
-              <!-- Phone -->
               <div class="mb-3">
                 <label for="phone" class="form-label">Phone</label>
                 <input
@@ -47,7 +41,6 @@
                   required
                 />
               </div>
-              <!-- Blocked Status -->
               <div class="mb-3">
                 <label for="isBlocked" class="form-label">Blocked</label>
                 <select name="isBlocked" id="isBlocked" class="form-control">
@@ -55,13 +48,11 @@
                   <option value="false" <%= !user.isBlocked ? 'selected' : '' %>>No</option>
                 </select>
               </div>
-              <!-- Submit Button -->
               <div class="d-grid">
                 <button type="submit" class="btn btn-custom">Update User</button>
               </div>
             </form>
           </div>
-          <!-- Card Footer -->
           <div class="card-footer text-center">
             <a href="/admin/users" class="btn btn-outline-secondary">Back to User Management</a>
           </div>

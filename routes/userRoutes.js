@@ -9,7 +9,6 @@ router.get('/login', UserController.renderlogin);
 router.post('/login', UserController.handlelogin);
 
 // otp
-router.get('/verifyOtp', UserController.renderOtpPage);
 router.post("/resendOtp", UserController.resendOtp);
 router.post('/verifyOtp', UserController.verifyOtp);
 
@@ -17,5 +16,9 @@ router.post('/verifyOtp', UserController.verifyOtp);
 router.get('/', UserController.renderhome);
 router.get('/shop', UserController.getShopProducts);
 router.get('/product/:id', UserController.viewProduct);
+
+// logout
+router.post('/logout', UserController.logout);
+
 
 module.exports = router;

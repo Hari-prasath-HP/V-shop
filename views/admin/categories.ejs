@@ -46,11 +46,8 @@
           <td><%= category.name %></td>
           <td><%= category.isDeleted ? 'Deleted' : 'Active' %></td>
           <td style="word-wrap: break-word; white-space: normal;"><%= category.description %></td>
-          <!-- Display Image -->
           <td>
-            <!-- Render images -->
             <div class="d-flex justify-content-center">
-              <!-- Render category image -->
               <% if (category.image) { %>
                 <img src="<%= category.image %>" alt="<%= category.name %>" class="img-thumbnail mx-1" width="60" height="60">
               <% } else { %>

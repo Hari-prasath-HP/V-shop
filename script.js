@@ -27,7 +27,11 @@ app.use(session({
   saveUninitialized: true,
   cookie: { secure: false }
 }));
-
+// **Cache-Control Middleware (Prevents storing previous pages)**
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  next();
+});
 // Routes
 const Routes = require('./routes/userRoutes');
 app.use('/', Routes);
@@ -47,6 +51,6 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something went wrong! Please try again later.');
 });
 
-app.listen(3000, () => {
+app.listen(3001, () => {
   console.log(`Server is running on port 3000`);
 });
