@@ -3,40 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Validation Form</title>
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  >
+  <title>Signup - V-shop</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    html, body {
-      height: 100%;
-    }
-    .error {
-      color: red;
-      font-size: 0.85em;
-    }
-    .success {
-      color: green;
-      font-size: 1em;
-      margin-top: 10px;
-    }
+    html, body { height: 100%; }
+    .error { color: red; font-size: 0.85em; }
+    .success { color: green; font-size: 1em; margin-top: 10px; }
     body {
       background: linear-gradient(135deg, #fbbf3b, #eb543b);
       justify-content: center;
       align-items: center;
       background-repeat: no-repeat;
     }
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-    .input-group .btn {
-      border-radius: 0 0.375rem 0.375rem 0;
-    }
+    .input-group .btn { border-radius: 0 0.375rem 0.375rem 0; }
   </style>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="bg-light">
 <header class="bg-complementary py-3">
@@ -48,17 +29,20 @@
     </div>
   </div>
 </header>
+
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-md-6">
       <div class="card shadow-sm">
         <div class="card-body">
           <h2 class="card-title text-center mb-0">Let's get Started</h2>
-          <p class="mb-2">Create account to see our top picks for you </p>
+          <p class="mb-2">Create an account to see our top picks for you</p>
+          
           <% if (error) { %>
             <div class="alert alert-danger"><%= error %></div>
           <% } %>
-          <form id="validationForm" action="/signup" method="post" onsubmit="validateForm(event)">
+
+          <form id="signupForm" action="/signup" method="post" onsubmit="return validateForm(event)">
             <div class="mb-3">
               <label for="username" class="form-label">Username:</label>
               <input type="text" id="username" name="username" class="form-control" placeholder="Enter your username">
@@ -80,139 +64,102 @@
                 <input type="password" id="password" name="password" class="form-control" placeholder="Enter password">
                 <button type="button" class="btn btn-outline-secondary" id="togglePassword">
                   <i class="fas fa-eye-slash"></i>
-                </button>                
-              </div>              
+                </button>
+              </div>
               <span id="passwordError" class="error"></span>
             </div>
             <div class="mb-3">
               <label for="confirmPassword" class="form-label">Confirm Password:</label>
               <div class="input-group">
                 <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" placeholder="Confirm password">
-                <button type="button" class="btn btn-outline-secondary" id="toggleConfirmPassword"><i class="fas fa-eye-slash"></i> </button>
+                <button type="button" class="btn btn-outline-secondary" id="toggleConfirmPassword">
+                  <i class="fas fa-eye-slash"></i>
+                </button>
               </div>
               <span id="confirmPasswordError" class="error"></span>
             </div>
-            <button type="submit" class="btn" style="background: linear-gradient(45deg, #eb543b, #fbbf3b); color: white; width: 100%;">Submit</button>
-            <p class="pt-3">Already have an account! <a href="/login">Signin</a></p>
+
+            <button type="submit" class="btn" style="background: linear-gradient(45deg, #eb543b, #fbbf3b); color: white; width: 100%;">Sign Up</button>
+            <p class="pt-3">Already have an account? <a href="/login">Sign in</a></p>
             <p id="formMessage" class="success"></p>
           </form>
-          <hr>
-            <h5 class="text-center">Or Sign Up/Login with</h5>
-            <!-- Google Login Button -->
-            <div class="g-signin2" data-onsuccess="onSignIn" data-clientid="YOUR_GOOGLE_CLIENT_ID" style="margin: 10px auto;">Sign in with Google</div>
+
+          <!-- Google Sign-In -->
+          <div class="text-center mt-3">
+            <div id="g_id_onload"
+                 data-client_id="634181701252-i34bqt5fk83egnjnf4qhltovrei29v4b.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse">
+            </div>
+            <div class="g_id_signin" data-type="standard"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Scripts -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/static/validation.js"></script>
 <script>
-  // Initialize the Google Sign-In client
-  function onSignIn(googleUser) {
-    // Get the Google user's profile information
-    var profile = googleUser.getBasicProfile();
-    console.log("Full Name: " + profile.getName());
-    console.log("Email: " + profile.getEmail());
-    console.log("Image URL: " + profile.getImageUrl());
+  function handleCredentialResponse(response) {
+    console.log("Encoded JWT ID token: " + response.credential);
+    
+    fetch('http://localhost:3000/auth/google', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ id_token: tokenFromGoogle }),
+})
+.then(response => response.json())
+.then(data => console.log('Google login response:', data))
+.catch(error => console.error('Error:', error));
 
-    // Get the ID token from the Google Sign-In response
-    var id_token = googleUser.getAuthResponse().id_token;
-    console.log("ID Token: " + id_token);
 
-    // Send the ID token to the server
-    fetch('/auth/google', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id_token: id_token }),
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log(data);
-      // Handle successful response (e.g., redirect, save session)
-    })
-    .catch(error => {
-      console.error('Error during Google login:', error);
-    });
-  }
-
-  // Toggle password visibility
+  // Password visibility toggle
   document.getElementById("togglePassword").addEventListener("click", function () {
     const passwordField = document.getElementById("password");
-    const toggleButton = document.getElementById("togglePassword");
-
-    if (passwordField.type === "password") {
-      passwordField.type = "text";
-      toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
-    } else {
-      passwordField.type = "password";
-      toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
-    }
+    passwordField.type = passwordField.type === "password" ? "text" : "password";
+    this.innerHTML = passwordField.type === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
   });
 
-  // Toggle confirm password visibility
   document.getElementById("toggleConfirmPassword").addEventListener("click", function () {
     const confirmPasswordField = document.getElementById("confirmPassword");
-    const toggleButton = document.getElementById("toggleConfirmPassword");
-
-    if (confirmPasswordField.type === "password") {
-      confirmPasswordField.type = "text";
-      toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
-    } else {
-      confirmPasswordField.type = "password";
-      toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
-    }
+    confirmPasswordField.type = confirmPasswordField.type === "password" ? "text" : "password";
+    this.innerHTML = confirmPasswordField.type === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
   });
 
-  // Form validation function
   function validateForm(event) {
     event.preventDefault();
-
-    const email = document.getElementById("email").value.trim();  
-    const password = document.getElementById("password").value.trim();
-    const confirmPassword = document.getElementById("confirmPassword").value.trim();
-    const username = document.getElementById("username").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const usernameError = document.getElementById("usernameError");
-    const phoneError = document.getElementById("phoneError");
-    const emailError = document.getElementById("emailError");
-    const passwordError = document.getElementById("passwordError");
-    const formMessage = document.getElementById("formMessage");
-    const confirmPasswordError = document.getElementById("confirmPasswordError");
-    usernameError.textContent = "";
-    emailError.textContent = "";
-    phoneError.textContent = "";
-    passwordError.textContent = "";
-    confirmPasswordError.textContent = "";
-    formMessage.textContent = "";
     let isValid = true;
-    if (username === "") {
-      usernameError.textContent = "Username is required.";
+    
+    const fields = ["username", "email", "phone", "password", "confirmPassword"];
+    fields.forEach(field => {
+      document.getElementById(field + "Error").textContent = "";
+    });
+
+    if (!document.getElementById("username").value.trim()) {
+      document.getElementById("usernameError").textContent = "Username is required.";
       isValid = false;
     }
-    if (email === "") {
-      emailError.textContent = "Email is required.";
+    if (!document.getElementById("email").value.trim()) {
+      document.getElementById("emailError").textContent = "Email is required.";
       isValid = false;
     }
-    if (phone === "") {
-      phoneError.textContent = "Phone number is required.";
+    if (!document.getElementById("phone").value.trim()) {
+      document.getElementById("phoneError").textContent = "Phone number is required.";
       isValid = false;
     }
-    if (password === "") {
-      passwordError.textContent = "Password is required.";
+    if (!document.getElementById("password").value.trim()) {
+      document.getElementById("passwordError").textContent = "Password is required.";
       isValid = false;
     }
-    if (confirmPassword === "") {
-      confirmPasswordError.textContent = "Confirm Password is required.";
-      isValid = false;
-    }
+
     if (isValid) {
-      document.getElementById("validationForm").submit();
+      document.getElementById("signupForm").submit();
     }
   }
 </script>
-<script src="https://apis.google.com/js/platform.js" async defer></script>
 </body>
 </html>

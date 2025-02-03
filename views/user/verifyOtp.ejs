@@ -64,14 +64,14 @@
     </div>
   </div>
   <script>
-    let otpExpires = <%= otpExpires %>; // Ensure it's a valid timestamp
+    let ExpiringOtp = <%= otpExpires %> ;
     let timerElement = document.getElementById("timer");
     let verifyBtn = document.getElementById("verifyBtn");
     let resendOtpForm = document.getElementById("resendOtpForm");
   
     function startCountdown() {
       let interval = setInterval(() => {
-        let remainingTime = Math.floor((otpExpires - Date.now()) / 1000);
+        let remainingTime = Math.floor((ExpiringOtp - Date.now()) / 1000);
         
         if (remainingTime <= 0) {
           clearInterval(interval);

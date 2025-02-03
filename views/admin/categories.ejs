@@ -44,7 +44,7 @@
         <% categories.forEach(category => { %>
         <tr>
           <td><%= category.name %></td>
-          <td><%= category.isDeleted ? 'Deleted' : 'Active' %></td>
+          <td><%= category.isListed ? 'Listed' : 'Unlisted' %></td>
           <td style="word-wrap: break-word; white-space: normal;"><%= category.description %></td>
           <td>
             <div class="d-flex justify-content-center">
