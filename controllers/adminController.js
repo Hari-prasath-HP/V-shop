@@ -90,44 +90,6 @@ exports.addUser = async (req,res)=>{
       res.status(500).json({ error: 'Internal Server Error. Please try again later.' });
   }
 };
-exports.routeedit = async (req, res) => {
-  const userId = req.params.id;
-  try {
-    const user = await User.findById(userId);
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
-    }
-    res.render('admin/edit', { user });
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({ message: 'Error fetching user details.' });
-  }
-};
-exports.handleEdit = async (req, res) => {
-  const { id } = req.params;
-  const { username, email, phone } = req.body;
-  if (!username || !email) {
-    return res.status(400).json({ message: 'Username and email are required.' });
-  }
-
-  try {
-    const updatedUser = await User.findByIdAndUpdate(id, {
-      username,
-      email,
-      phone,
-    }, { new: true });
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found.' });
-    }
-
-    res.redirect('/admin/users'); 
-  } catch (error) {
-    console.error('Error updating user:', error);
-    res.status(500).json({ message: 'Error updating user.' });
-  }
-};
 exports.handleDelete = async (req, res) => {
   const { id } = req.params;
   try {

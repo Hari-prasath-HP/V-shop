@@ -14,8 +14,6 @@ adminrouter.get('/dashboard', adminController.dashboardPage);
 // User management
 adminrouter.get('/users', adminController.manageUsersPage);
 adminrouter.post("/admin/adduser",adminController.addUser)
-adminrouter.get('/editUser/:id',adminController.routeedit);
-adminrouter.post('/updateUser/:id',adminController.handleEdit);
 adminrouter.get('/deleteUser/:id', adminController.handleDelete);
 adminrouter.get('/blockUser/:id', adminController.handleBlock);
 adminrouter.get('/unblockUser/:id', adminController.handleUnblock);
