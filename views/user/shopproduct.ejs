@@ -133,58 +133,61 @@
     </div>
 </nav>
 
-    <section class="py-5" style="background-color: #cfcdcd;">
-        <div class="search-bar">
-            <input type="text" id="search-input" placeholder="Search for products..." onkeyup="searchProducts()">
-        </div>
-        <div class="container">
-            <h2 class="text-center mb-4">Our Products</h2>
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4" id="product-list">
-                <% products.forEach(function(product) { %>
-                    <div class="col mb-4 product-item">
-                        <div class="product">
-                            <h5 class="product-name"><%= product.name %></h5>
-                            <% if (product.offer && product.offer > 0) { %>
-                                <p class="product-price">
-                                    <span style="text-decoration: line-through; color: red;">₹<%= product.price.toFixed(2) %></span>
-                                    <span style="font-weight: bold; color: green;"> ₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></span>
-                                    <small class="text-muted">(<%= product.offer %>% OFF)</small>
-                                    <!-- Offer savings amount -->
-                                    <small class="text-muted" style="font-weight: bold;">(Save ₹<%= (product.price * product.offer / 100).toFixed(2) %>)</small>
-                                </p>
-                            <% } else { %>
-                                <p class="product-price">₹<%= product.price.toFixed(2) %></p>
-                            <% } %>
-                            
-                            <% if (product.imagePaths && product.imagePaths.length > 0) { %>
-                                <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
-                                    <div class="carousel-inner">
-                                        <% product.imagePaths.forEach(function(image, index) { %>
-                                            <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                                                <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 img-thumbnail mx-auto" style="height: 200px; object-fit: cover;">
-                                            </div>
-                                        <% }); %>
-                                    </div>
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="prev">
-                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                        <span class="visually-hidden">Previous</span>
-                                    </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="next">
-                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                        <span class="visually-hidden">Next</span>
-                                    </button>
+<section class="py-5" style="background-color: #cfcdcd;">
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Search for products..." onkeyup="searchProducts()">
+    </div>
+    <div class="container">
+        <h2 class="text-center mb-4">Our Products</h2>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4" id="product-list">
+            <% products.forEach(function(product) { %>
+                <div class="col mb-4 product-item">
+                    <div class="product">
+                        <h5 class="product-name"><%= product.name %></h5>
+                        <% if (product.offerPercentage && product.offerPercentage > 0) { %>
+                            <!-- Show original price with strike-through and offer price -->
+                            <p class="product-price">
+                                <span style="text-decoration: line-through; color: red;">₹<%= product.price.toFixed(2) %></span>
+                                <span style="font-weight: bold; color: green;"> ₹<%= product.offerPrice || (product.price - (product.price * product.offerPercentage / 100)).toFixed(2) %></span>
+                                <small class="text-muted">(<%= product.offerPercentage %>% OFF)</small>
+                                <!-- Offer savings amount -->
+                                <small class="text-muted" style="font-weight: bold;">(Save ₹<%= (product.price * product.offerPercentage / 100).toFixed(2) %>)</small>
+                            </p>
+                        <% } else { %>
+                            <!-- If no offer, just show the original price -->
+                            <p class="product-price">₹<%= product.price.toFixed(2) %></p>
+                        <% } %>
+                        
+                        <% if (product.imagePaths && product.imagePaths.length > 0) { %>
+                            <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-inner">
+                                    <% product.imagePaths.forEach(function(image, index) { %>
+                                        <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                                            <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 img-thumbnail mx-auto" style="height: 200px; object-fit: cover;">
+                                        </div>
+                                    <% }); %>
                                 </div>
-                            <% } else { %>
-                                <p>No images available</p>
-                            <% } %>
-                            <button class="btn btn-primary mt-3" onclick="window.location.href='/product/<%= product._id %>'">View Product</button>
-                        </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        <% } else { %>
+                            <p>No images available</p>
+                        <% } %>
+                        <button class="btn btn-primary mt-3" onclick="window.location.href='/product/<%= product._id %>'">View Product</button>
                     </div>
-                <% }); %>
-                
-            </div>
+                </div>
+            <% }); %>
+            
         </div>
-    </section>
+    </div>
+</section>
+
     <footer class="bg-dark text-white py-4">
         <div class="container">
             <div class="row">

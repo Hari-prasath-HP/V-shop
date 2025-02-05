@@ -269,6 +269,26 @@
     position: relative;
     z-index: 1000; /* Ensures navbar stays on top */
 }
+.price-section {
+  font-size: 1.2em;
+  margin-bottom: 15px;
+}
+
+.price-section span {
+  font-weight: bold;
+}
+
+.price-section .text-danger {
+  text-decoration: line-through;
+}
+
+.price-section .text-success {
+  color: green;
+}
+
+.price-section small {
+  font-size: 0.9em;
+}
 
 </style>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
@@ -335,91 +355,92 @@
       </nav>           
       <section class="py-5">
         <div class="container">
-            <div class="row">
-                <!-- Current Product -->
-                <div class="col-md-6 mb-4">
-                    <div id="product-carousel" class="carousel slide" data-bs-ride="carousel">
-                        <div class="carousel-inner">
-                            <% product.imagePaths.forEach(function(image, index) { %>
-                                <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                                    <div class="zoom-container">
-                                        <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 img-fluid product-image" data-zoom-image="<%= image %>">
-                                    </div>
-                                </div>
-                            <% }); %>
-                        </div>                        
-                        <!-- Main Image Carousel Controls -->
-                        <button class="carousel-control-prev" type="button" data-bs-target="#product-carousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#product-carousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                
-                        <!-- Thumbnails Below the Main Image -->
-                        <div class="carousel-thumbnails mt-3 d-flex justify-content-center">
-                            <% product.imagePaths.forEach(function(image, index) { %>
-                                <div class="thumbnail-container mx-2">
-                                    <img src="<%= image %>" alt="Thumbnail <%= index + 1 %>" class="img-thumbnail"
-                                         style="width: 60px; height: 60px; cursor: pointer;"
-                                         onclick="changeImage(<%= index %>)">
-                                </div>
-                            <% }); %>
-                        </div>
-                        
+          <div class="row">
+            <!-- Product Carousel -->
+            <div class="col-md-6 mb-4">
+              <div id="product-carousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                  <% product.imagePaths.forEach(function(image, index) { %>
+                    <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                      <div class="zoom-container">
+                        <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 img-fluid product-image" data-zoom-image="<%= image %>">
+                      </div>
                     </div>
-                </div>                             
-                <div class="col-md-6">
-                    <div class="product-detail">
-                        <h2 class="product-name display-4"><%= product.name %></h2>
-                        <p class="product-price fs-3">₹<%= product.price.toFixed(2) %></p>
-    
-                        <% if (product.offer && product.offer > 0) { %>
-                            <p>
-                                <span style="text-decoration: line-through; color: red; font-size: 1.2em;">₹<%= product.price.toFixed(2) %></span>
-                                <span style="font-weight: bold; color: green; font-size: 1.5em;"> ₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></span>
-                                <small class="text-muted fs-6">(<%= product.offer %>% OFF)</small>
-                            </p>
-                        <% } %>
-    
-                        <p class="product-description"><strong>Description:</strong> <%= product.description %></p>
-                        <p class="product-description">
-                            <% if (product.stock === 0) { %>
-                                <strong>Stock:</strong>
-                                <p class="text-danger mt-2 fs-5">No stock available</p>
-                            <% } else if (product.stock < 5) { %>
-                                <p class="text-danger mt-2 fs-5"><strong class="text-dark">Stock:</strong> Only <%= product.stock %> left in stock!</p>
-                            <% } %>
-                        </p>                        
-                        <div class="quantity-control mt-3">
-                            <button class="btn btn-secondary circle-btn" id="reduce-quantity" onclick="updateQuantity('reduce')">-</button>
-                            <input type="number" id="product-quantity" value="1" min="1" max="<%= product.stock %>" class="quantity-input form-control-sm" />
-                            <button class="btn btn-secondary circle-btn" id="add-quantity" onclick="updateQuantity('add')">+</button>
-                        </div>
-                        <div class="rating mt-3">
-                            <% let rating = product.rating || 4.5; %> <!-- Default to 4.5 if product.rating is not provided -->
-                            <% for(let i = 1; i <= 5; i++) { %>
-                                <% if(i <= Math.floor(rating)) { %>
-                                    <i class="fas fa-star text-warning"></i> <!-- Filled Star -->
-                                <% } else if(i - 0.5 === rating) { %>
-                                    <i class="fas fa-star-half-alt text-warning"></i> <!-- Half Star -->
-                                <% } else { %>
-                                    <i class="far fa-star text-warning"></i> <!-- Empty Star -->
-                                <% } %>
-                            <% } %>
-                            <span>(<%= rating %> / 5)</span> <!-- Show the rating value -->
-                        </div>                                                                                                 
-                        <button class="btn btn-primary rounded-pill px-5 py-3 mb-4" onclick="addToCart('<%= product._id %>')"><i class="fa fa-shopping-bag me-2"></i> Add to Cart</button>
-                        <button class="btn btn-outline-secondary mt-3 ms-2" onclick="window.location.href='/shop'">Back to Products</button>
-                    </div>
+                  <% }); %>
                 </div>
+                <!-- Carousel Controls -->
+                <button class="carousel-control-prev" type="button" data-bs-target="#product-carousel" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#product-carousel" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              </div>
             </div>
+      
+            <!-- Product Details -->
+            <div class="col-md-6">
+              <div class="product-detail">
+                <h2 class="product-name display-4"><%= product.name %></h2>
+      
+                <!-- Display Price, Offer Price, and Offer Percentage -->
+                <div class="price-section">
+                  <% if (product.offerPrice && product.offerPercentageDisplay) { %>
+                    <p>
+                      <span style="text-decoration: line-through; color: red; font-size: 1.2em;">
+                        ₹<%= product.price %>
+                      </span>
+                      <span style="font-weight: bold; color: green; font-size: 1.5em;">
+                        ₹<%= product.offerPrice %>
+                      </span>
+                      <small class="text-muted fs-6">
+                        (<%= product.offerPercentageDisplay %>)
+                      </small>
+                    </p>
+                  <% } else { %>
+                    <p>
+                      <span style="font-weight: bold; font-size: 1.5em;">
+                        ₹<%= product.price %>
+                      </span>
+                    </p>
+                  <% } %>
+                </div>
+      
+                <!-- Product Description -->
+                <p class="product-description"><strong>Description:</strong> <%= product.description %></p>
+      
+                <!-- Stock Availability -->
+                <p class="product-description">
+                  <% if (product.stock === 0) { %>
+                    <strong>Stock:</strong>
+                    <p class="text-danger mt-2 fs-5">No stock available</p>
+                  <% } else if (product.stock < 5) { %>
+                    <p class="text-danger mt-2 fs-5"><strong class="text-dark">Stock:</strong> Only <%= product.stock %> left in stock!</p>
+                  <% } %>
+                </p>
+      
+                <!-- Quantity Control -->
+                <div class="quantity-control mt-3">
+                  <button class="btn btn-secondary circle-btn" id="reduce-quantity" onclick="updateQuantity('reduce')">-</button>
+                  <input type="number" id="product-quantity" value="1" min="1" max="<%= product.stock %>" class="quantity-input form-control-sm" />
+                  <button class="btn btn-secondary circle-btn" id="add-quantity" onclick="updateQuantity('add')">+</button>
+                </div>
+      
+                <!-- Add to Cart and Back to Products -->
+                <button class="btn btn-primary rounded-pill px-5 py-3 mb-4" onclick="addToCart('<%= product._id %>')">
+                  <i class="fa fa-shopping-bag me-2"></i> Add to Cart
+                </button>
+                <button class="btn btn-outline-secondary mt-3 ms-2" onclick="window.location.href='/shop'">Back to Products</button>
+              </div>
+            </div>
+          </div>
         </div>
-    </section>
-    <section class=" bg-grey mb-5" >
-        <div class="container" >
+      </section>
+        
+      <section class="bg-grey mb-5">
+        <div class="container">
             <h2 class="text-center mb-4">Related Products</h2>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 <% relatedProducts.forEach((relatedProduct, index) => { %>
@@ -446,11 +467,22 @@
     
                             <div class="card-body text-center">
                                 <h5 class="card-title text-primary"><%= relatedProduct.name %></h5>
+    
+                                <!-- Price and Offer Price with offer percentage -->
                                 <p class="card-text product-price">
-                                    <span style="text-decoration: line-through; color: red;">₹<%= relatedProduct.price.toFixed(2) %></span>
-                                    <span style="font-weight: bold; color: green;"> ₹<%= (relatedProduct.price - (relatedProduct.price * relatedProduct.offer / 100)).toFixed(2) %></span>
-                                    <small class="text-muted">(<%= relatedProduct.offer %>% OFF)</small>
+                                    <% if (relatedProduct.offerPrice !== relatedProduct.price.toFixed(2)) { %>
+                                        <span style="text-decoration: line-through; color: red;">
+                                            ₹<%= relatedProduct.price.toFixed(2) %>
+                                        </span>
+                                        <span style="font-weight: bold; color: green;">
+                                            ₹<%= relatedProduct.offerPrice %>
+                                        </span>
+                                        <small class="text-muted">(<%= relatedProduct.offerPercentage %>% OFF)</small>
+                                    <% } else { %>
+                                        <span style="font-weight: bold;">₹<%= relatedProduct.price.toFixed(2) %></span>
+                                    <% } %>
                                 </p>
+    
                                 <button class="btn btn-outline-primary" onclick="window.location.href='/product/<%= relatedProduct._id %>'">View Details</button>
                             </div>
                         </div>
@@ -459,6 +491,7 @@
             </div>
         </div>
     </section>
+    
     
         
     

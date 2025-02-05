@@ -331,48 +331,49 @@ h1, h2, h3, p {
     <section class="py-5" style="background-color: #b5b5b5;">
       <div class="container">
         <h2 class="text-center mb-4">Offer's Today</h2>
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4" >
-          <% 
-            const topOffers = products.filter(p => p.offer > 0).sort((a, b) => b.offer - a.offer).slice(0, 4);
-            topOffers.forEach(function(product) { 
-          %>
-          <div class="col-md-4 mb-4" >
-            <div class="card shadow-sm border-0 rounded product-card" style="background-color: #d6e6ed;">
-              <div class="card-body text-center" >
-                <h5 class="card-title text-truncate"><%= product.name %></h5>
-                
-                <div class="price-section">
-                  <span class="text-danger text-decoration-line-through fs-6">₹<%= product.price.toFixed(2) %></span>
-                  <span class="text-success fw-bold fs-5"> ₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></span>
-                  <small class="text-muted d-block">(<%= product.offer %>% OFF)</small>
-                </div>
-          
-                <% if (product.imagePaths && product.imagePaths.length > 0) { %>
-                  <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-inner rounded">
-                      <% product.imagePaths.forEach(function(image, index) { %>
-                        <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                          <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 rounded-top product-image">
-                        </div>
-                      <% }); %>
-                    </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="prev">
-                      <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="next">
-                      <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
-                    </button>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4">
+            <% 
+              // Loop through topOfferProducts which are passed from the controller
+              topOfferProducts.forEach(function(product) { 
+            %>
+            <div class="col-md-4 mb-4">
+              <div class="card shadow-sm border-0 rounded product-card" style="background-color: #d6e6ed;">
+                <div class="card-body text-center">
+                  <h5 class="card-title text-truncate"><%= product.name %></h5>
+                  
+                  <div class="price-section">
+                    <!-- Display original price and offer price -->
+                    <span class="text-danger text-decoration-line-through fs-6">₹<%= product.price.toFixed(2) %></span>
+                    <span class="text-success fw-bold fs-5"> ₹<%= (product.price - (product.price * product.offerPercentage / 100)).toFixed(2) %></span>
+                    <small class="text-muted d-block">(<%= product.offerPercentage.toFixed(2) %>% OFF)</small>
                   </div>
-                <% } else { %>
-                  <p class="text-muted">No images available</p>
-                <% } %>
-          
-                <button class="btn btn-primary mt-3 w-100" onclick="window.location.href='/product/<%= product._id %>'">View Product</button>
+              
+                  <% if (product.imagePaths && product.imagePaths.length > 0) { %>
+                    <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
+                      <div class="carousel-inner rounded">
+                        <% product.imagePaths.forEach(function(image, index) { %>
+                          <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                            <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 rounded-top product-image">
+                          </div>
+                        <% }); %>
+                      </div>
+                      <button class="carousel-control-prev" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                      </button>
+                      <button class="carousel-control-next" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="next">
+                        <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                      </button>
+                    </div>
+                  <% } else { %>
+                    <p class="text-muted">No images available</p>
+                  <% } %>
+              
+                  <button class="btn btn-primary mt-3 w-100" onclick="window.location.href='/product/<%= product._id %>'">View Product</button>
+                </div>
               </div>
-            </div>
-          </div>      
-          <% }); %>
-        </div>
+            </div>      
+            <% }); %>
+          </div>          
       </div>
     </section>
     <!-- Footer -->
