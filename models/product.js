@@ -9,8 +9,7 @@ const productSchema = new mongoose.Schema({
     stock: { type: Number, required: true, default: 0 },
     isListed: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
-    offer: { type: Number, default: 0 },
-    offerPrice: Number
+    offerPrice: { type: Number, default: 0 },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);

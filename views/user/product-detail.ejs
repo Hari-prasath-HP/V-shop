@@ -15,6 +15,48 @@
     <link href="vendor/sidebar/demo.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        /* Container for zoom effect */
+.zoom-container {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Style for the zoomed image */
+.product-image {
+    transition: transform 0.5s ease;
+    width: 100%;
+    height: 400px; /* Fixed height */
+    object-fit: cover;
+}
+/* Zoom lens */
+.zoom-lens {
+    position: absolute;
+    border: 1px solid #000;
+    background-color: rgba(255, 255, 255, 0.4);
+    display: none;
+    cursor: pointer;
+}
+
+/* Zoom preview container */
+.zoom-preview {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    width: 400px;
+    height: 400px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    display: none;
+}
+
+/* Preview image inside the preview container */
+.zoom-preview img {
+    position: absolute;
+    width: auto;
+    height: 100%;
+}
         .container {
             width: 100%;
             padding: 0 15px;
@@ -52,7 +94,7 @@
             object-fit: cover; /* Maintain aspect ratio */
         }
         .navbar {
-            background: linear-gradient(90deg, #EB543B, #FBBF3B);
+            background-color: #333333;
         }
         .btn-primary {
             background-color: #2d6a4f;
@@ -184,16 +226,60 @@
             text-align: center;
             padding: 5px;
         }
+        .carousel-inner {
+        height: 400px; /* Fixed height for carousel */
+        overflow: hidden; /* Hide overflowing content */
+    }
+
+    .carousel-item {
+        height: 100%; /* Ensure each carousel item fills the container */
+    }
+
+    .product-image {
+        height: 100%; /* Image fills the carousel item height */
+        width: 100%; /* Ensures the image stretches to fit the container */
+        object-fit: cover; /* Ensures the image maintains its aspect ratio and fills the space */
+    }
+    .fixed-img {
+    width: 100%;
+    height: 250px;  /* Set a fixed height for the image */
+    object-fit: cover;  /* Ensure the aspect ratio is maintained without stretching */
+}
+.circle-btn {
+    width: 40px;  /* Ensure width and height are equal */
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0; /* Remove extra padding */
+    border: none; /* Optional: Remove border if not needed */
+}
+@media (max-width: 991px) { /* Applies only on smaller screens */
+    .navbar-collapse {
+        background-color: #706f6f;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    .navbar-nav{
+        margin-bottom: 5px;
+    }
+}
+.navbar {
+    position: relative;
+    z-index: 1000; /* Ensures navbar stays on top */
+}
 
 </style>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light">
+<body style="background-color: #cfcdcd;">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="height:10vh">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <h3>V-shop</h3>
+                <h1>V-shop</h1>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -202,40 +288,41 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item active">
-                        <a class="nav-link text-white" href="/">Home</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link text-white" href="/shop">Products</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link text-white" href="#">Checkout</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a href="/cart" class="nav-link text-white">
-                            <i class="icofont-shopping-cart"></i> Cart
+                        <a class="nav-link" href="/" style="font-weight: bold; font-size: 22px;">
+                          Home
                         </a>
                     </li>
-                </ul>
-                <ul class="navbar-nav ms-3">
-                    <% if (username) { %>
-                        <li class="nav-item">
-                            <a href="/account" class="nav-link text-success">
-                                <i class="icofont-user"></i> <%= username %>
-                            </a>
-                        </li>
-                    <% } else { %>
-                        <li class="nav-item">
-                            <a href="/login" class="btn btn-success text-white">
-                              <i class="icofont-login"></i> Login
-                            </a>
-                          </li>
-                    <% } %>
-                </ul>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop" style="font-weight: bold; font-size: 22px;">
+                          Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/cart" class="nav-link" style="font-weight: bold; font-size: 22px;">
+                          <i class="fas fa-shopping-cart"></i> 
+                        </a>
+                    </li>
+                  </ul>                                 
+                    <ul class="navbar-nav ms-3">
+                        <% if (username) { %>
+                            <li class="nav-item">
+                                <a href="/account" class="nav-link text-success" style="font-size: 22px;">
+                                    <i class="icofont-user"></i> <%= username %>
+                                </a>
+                            </li>
+                        <% } else { %>
+                            <li class="nav-item me-2">
+                                <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
+                                    Signin
+                                </a>
+                            </li>
+                        <% } %>
+                    </ul>
                 <form action="/logout" method="POST">
-                    <button type="submit" class="btn btn-dark">
-                      <i class="fas fa-sign-out-alt"></i>
-                    </button>
-                  </form>
+                  <a href="/logout" class="btn btn-danger text-white" style="font-size: 22px">
+                    Signout
+                </a>
+                </form>
             </div>
         </div>
     </nav>
@@ -246,7 +333,7 @@
           <li class="breadcrumb-item active" aria-current="page"><%= product.name %></li>
         </ol>
       </nav>           
-    <section class="py-5">
+      <section class="py-5">
         <div class="container">
             <div class="row">
                 <!-- Current Product -->
@@ -255,10 +342,13 @@
                         <div class="carousel-inner">
                             <% product.imagePaths.forEach(function(image, index) { %>
                                 <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                                    <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 img-fluid product-image">
+                                    <div class="zoom-container">
+                                        <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 img-fluid product-image" data-zoom-image="<%= image %>">
+                                    </div>
                                 </div>
                             <% }); %>
-                        </div>
+                        </div>                        
+                        <!-- Main Image Carousel Controls -->
                         <button class="carousel-control-prev" type="button" data-bs-target="#product-carousel" data-bs-slide="prev">
                             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                             <span class="visually-hidden">Previous</span>
@@ -267,66 +357,80 @@
                             <span class="carousel-control-next-icon" aria-hidden="true"></span>
                             <span class="visually-hidden">Next</span>
                         </button>
-                    </div>
-                </div>
                 
+                        <!-- Thumbnails Below the Main Image -->
+                        <div class="carousel-thumbnails mt-3 d-flex justify-content-center">
+                            <% product.imagePaths.forEach(function(image, index) { %>
+                                <div class="thumbnail-container mx-2">
+                                    <img src="<%= image %>" alt="Thumbnail <%= index + 1 %>" class="img-thumbnail"
+                                         style="width: 60px; height: 60px; cursor: pointer;"
+                                         onclick="changeImage(<%= index %>)">
+                                </div>
+                            <% }); %>
+                        </div>
+                        
+                    </div>
+                </div>                             
                 <div class="col-md-6">
                     <div class="product-detail">
-                        <h2 class="product-name"><%= product.name %></h2>
-                        <p class="product-price">₹<%= product.price.toFixed(2) %></p>
+                        <h2 class="product-name display-4"><%= product.name %></h2>
+                        <p class="product-price fs-3">₹<%= product.price.toFixed(2) %></p>
     
                         <% if (product.offer && product.offer > 0) { %>
                             <p>
-                                <span style="text-decoration: line-through; color: red;">₹<%= product.price.toFixed(2) %></span>
-                                <span style="font-weight: bold; color: green;"> ₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></span>
-                                <small class="text-muted">(<%= product.offer %>% OFF)</small>
+                                <span style="text-decoration: line-through; color: red; font-size: 1.2em;">₹<%= product.price.toFixed(2) %></span>
+                                <span style="font-weight: bold; color: green; font-size: 1.5em;"> ₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></span>
+                                <small class="text-muted fs-6">(<%= product.offer %>% OFF)</small>
                             </p>
                         <% } %>
     
                         <p class="product-description"><strong>Description:</strong> <%= product.description %></p>
                         <p class="product-description">
-                            <strong>Stock:</strong> 
                             <% if (product.stock === 0) { %>
-                                No stock available
-                            <% } else { %>
-                                <%= product.stock %> available
+                                <strong>Stock:</strong>
+                                <p class="text-danger mt-2 fs-5">No stock available</p>
+                            <% } else if (product.stock < 5) { %>
+                                <p class="text-danger mt-2 fs-5"><strong class="text-dark">Stock:</strong> Only <%= product.stock %> left in stock!</p>
                             <% } %>
-                        </p>
+                        </p>                        
                         <div class="quantity-control mt-3">
-                            <button class="btn btn-secondary" id="reduce-quantity" onclick="updateQuantity('reduce')">-</button>
-                            <input type="number" id="product-quantity" value="1" min="1" max="<%= product.stock %>" class="quantity-input" />
-                            <button class="btn btn-secondary" id="add-quantity" onclick="updateQuantity('add')">+</button>
+                            <button class="btn btn-secondary circle-btn" id="reduce-quantity" onclick="updateQuantity('reduce')">-</button>
+                            <input type="number" id="product-quantity" value="1" min="1" max="<%= product.stock %>" class="quantity-input form-control-sm" />
+                            <button class="btn btn-secondary circle-btn" id="add-quantity" onclick="updateQuantity('add')">+</button>
                         </div>
-                        <div class="rating">
+                        <div class="rating mt-3">
                             <% let rating = product.rating || 4.5; %> <!-- Default to 4.5 if product.rating is not provided -->
                             <% for(let i = 1; i <= 5; i++) { %>
-                              <% if(i <= Math.floor(rating)) { %>
-                                <i class="fas fa-star text-warning"></i> <!-- Filled Star -->
-                              <% } else if(i - 0.5 === rating) { %>
-                                <i class="fas fa-star-half-alt text-warning"></i> <!-- Half Star -->
-                              <% } else { %>
-                                <i class="far fa-star text-warning"></i> <!-- Empty Star -->
-                              <% } %>
+                                <% if(i <= Math.floor(rating)) { %>
+                                    <i class="fas fa-star text-warning"></i> <!-- Filled Star -->
+                                <% } else if(i - 0.5 === rating) { %>
+                                    <i class="fas fa-star-half-alt text-warning"></i> <!-- Half Star -->
+                                <% } else { %>
+                                    <i class="far fa-star text-warning"></i> <!-- Empty Star -->
+                                <% } %>
                             <% } %>
                             <span>(<%= rating %> / 5)</span> <!-- Show the rating value -->
-                          </div>                                                                                                
-                        <button class="btn btn-success mt-2 w-100" onclick="addToCart('<%= product._id %>')">Add to Cart</button>
+                        </div>                                                                                                 
+                        <button class="btn btn-primary rounded-pill px-5 py-3 mb-4" onclick="addToCart('<%= product._id %>')"><i class="fa fa-shopping-bag me-2"></i> Add to Cart</button>
                         <button class="btn btn-outline-secondary mt-3 ms-2" onclick="window.location.href='/shop'">Back to Products</button>
                     </div>
                 </div>
             </div>
-    
-            <!-- Related Products Section -->
-            <div class="row">
+        </div>
+    </section>
+    <section class=" bg-grey mb-5" >
+        <div class="container" >
+            <h2 class="text-center mb-4">Related Products</h2>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 <% relatedProducts.forEach((relatedProduct, index) => { %>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="product-card">
+                    <div class="col">
+                        <div class="card shadow-sm border-0 rounded-lg overflow-hidden">
                             <!-- Carousel for each related product -->
                             <div id="related-product-carousel-<%= relatedProduct._id %>" class="carousel slide" data-bs-ride="carousel">
                                 <div class="carousel-inner">
                                     <% relatedProduct.imagePaths.forEach((image, imageIndex) => { %>
                                         <div class="carousel-item <%= imageIndex === 0 ? 'active' : '' %>">
-                                            <img src="<%= image %>" alt="<%= relatedProduct.name %>" class="d-block w-100 img-fluid" />
+                                            <img src="<%= image %>" alt="<%= relatedProduct.name %>" class="d-block w-100 img-fluid fixed-img" />
                                         </div>
                                     <% }); %>
                                 </div>
@@ -339,20 +443,24 @@
                                     <span class="visually-hidden">Next</span>
                                 </button>
                             </div>
-
-                            <h4><%= relatedProduct.name %></h4>
-                            <p class="product-price">
-                                <span style="text-decoration: line-through; color: red;">₹<%= relatedProduct.price.toFixed(2) %></span>
-                                <span style="font-weight: bold; color: green;"> ₹<%= (relatedProduct.price - (relatedProduct.price * relatedProduct.offer / 100)).toFixed(2) %></span>
-                                <small class="text-muted">(<%= relatedProduct.offer %>% OFF)</small>
-                            </p>
-                            <button class="btn btn-primary" onclick="window.location.href='/product/<%= relatedProduct._id %>'">View Details</button>
+    
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-primary"><%= relatedProduct.name %></h5>
+                                <p class="card-text product-price">
+                                    <span style="text-decoration: line-through; color: red;">₹<%= relatedProduct.price.toFixed(2) %></span>
+                                    <span style="font-weight: bold; color: green;"> ₹<%= (relatedProduct.price - (relatedProduct.price * relatedProduct.offer / 100)).toFixed(2) %></span>
+                                    <small class="text-muted">(<%= relatedProduct.offer %>% OFF)</small>
+                                </p>
+                                <button class="btn btn-outline-primary" onclick="window.location.href='/product/<%= relatedProduct._id %>'">View Details</button>
+                            </div>
                         </div>
                     </div>
                 <% }); %>
             </div>
         </div>
     </section>
+    
+        
     
     <footer class="bg-dark text-white py-4">
         <div class="container">
@@ -369,7 +477,23 @@
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
-<script src="https://cdn.rawgit.com/elevateweb/elevatezoom/master/jquery.elevatezoom.js"></script>
+<script src="https://cdn.rawgit.com/elevateweb/elevatezoom/master/jquery.elevatezoom.js"></script>     
+<script>
+    function changeImage(index) {
+        const carousel = document.getElementById('product-carousel');
+        const carouselItems = carousel.querySelectorAll('.carousel-item');
+        const totalItems = carouselItems.length;
+        // Make sure the index is valid
+        if (index >= 0 && index < totalItems) {
+            // Activate the clicked thumbnail's corresponding carousel item
+            const activeItem = carousel.querySelector('.carousel-item.active');
+            if (activeItem) {
+                activeItem.classList.remove('active');
+            }
+            carouselItems[index].classList.add('active');
+        }
+    }
+</script>  
 <script>
     function addToCart(productId) {
       fetch('/check-login')
@@ -379,7 +503,6 @@
             window.location.href = '/login';
           } else {
             const quantity = document.getElementById('product-quantity') ? document.getElementById('product-quantity').value : 1;
-  
             fetch('/cart/add', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -412,17 +535,6 @@
         const productId = "<%= product._id %>";
         window.location.href = `/cart/add/${productId}?quantity=${quantity}`;
     }
-
-    $(document).ready(function() {
-        $('.product-image').elevateZoom({
-            zoomType: "lens",
-            lensShape: "round",
-            lensSize: 200,
-            scrollZoom: true
-        });
-    });
 </script>
-
 </body>
-
 </html>

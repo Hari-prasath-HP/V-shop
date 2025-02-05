@@ -50,10 +50,12 @@
                                 <label for="price" class="form-label">Price (₹)</label>
                                 <input type="number" id="price" name="price" class="form-control" value="<%= product.price %>" step="0.01" required>
                             </div>
+                            <!-- Product Offer Price -->
                             <div class="mb-3">
-                                <label for="offer" class="form-label">Offer Percentage (%)</label>
-                                <input type="number" class="form-control" name="offer" id="offer" min="0" max="100" value="<%= product.offer %>" required>
-                              </div>
+                                <label for="offerPrice" class="form-label">Offer Price (₹)</label>
+                                <input type="number" id="offerPrice" name="offerPrice" class="form-control" 
+                                    value="<%= product.offerPrice %>" step="0.01" min="0">
+                            </div>
                               
                             <!-- Product Stock -->
                             <div class="mb-3">

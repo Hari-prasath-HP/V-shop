@@ -41,14 +41,26 @@ exports.dashboardPage = (req, res) => {
 exports.manageUsersPage = async (req, res) => {
   try {
     const searchQuery = req.query.search || "";
-    const users = await User.find({
+    const page = parseInt(req.query.page) || 1; // Get page number from query, default to 1
+    const limit = 10; // Number of users per page
+    const skip = (page - 1) * limit; // Skip previous pages
+    const totalUsers = await User.countDocuments({
       $or: [
         { username: { $regex: searchQuery, $options: "i" } },
         { email: { $regex: searchQuery, $options: "i" } },
         { phone: { $regex: searchQuery, $options: "i" } },
       ],
     });
-    res.render("admin/users", { users, searchQuery });
+    const users = await User.find({
+      $or: [
+        { username: { $regex: searchQuery, $options: "i" } },
+        { email: { $regex: searchQuery, $options: "i" } },
+        { phone: { $regex: searchQuery, $options: "i" } },
+      ],
+    }).skip(skip)
+    .limit(limit);
+    const totalPages = Math.ceil(totalUsers / limit);
+    res.render("admin/users", { users, searchQuery,currentPage: page, totalPages  });
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).render("admin/error", { message: "Unable to fetch users." });
@@ -159,22 +171,44 @@ exports.handleUnblock = async (req, res) => {
 exports.manageCategoryPage = async (req, res) => {
   try {
     const searchQuery = req.query.search || '';
+    const page = parseInt(req.query.page) || 1; // Get current page, default to 1
+    const limit = 5; // Number of categories per page
+    const skip = (page - 1) * limit; // Calculate skip value
+
+    // Get total count for pagination
+    const totalCategories = await Category.countDocuments({
+      name: { $regex: searchQuery, $options: 'i' },
+      isDeleted: { $ne: true },
+    });
+
+    // Fetch paginated categories
     const categories = await Category.find({
       name: { $regex: searchQuery, $options: 'i' },
       isDeleted: { $ne: true },
-    }).sort({ createdAt: -1 }); 
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     const updatedCategories = categories.map(category => ({
       ...category._doc,
       imageURL: category.image ? `/uploads/categories/${category.image}` : null,
     }));
 
-    res.render('admin/categories', { categories: updatedCategories, searchQuery });
+    const totalPages = Math.ceil(totalCategories / limit);
+
+    res.render('admin/categories', {
+      categories: updatedCategories,
+      searchQuery,
+      currentPage: page,
+      totalPages,
+    });
   } catch (error) {
     console.error('Error fetching categories:', error);
     res.status(500).render('admin/error', { message: 'Unable to fetch categories.' });
   }
 };
+
 exports.addCategoryPage = (req, res) => {
   if (!req.session.isAdmin) {
     return res.redirect('/admin/login');
@@ -287,20 +321,46 @@ exports.unlistCategory = async (req, res) => {
 };
 exports.manageProductPage = async (req, res) => {
   try {
+    const searchQuery = req.query.search || '';
+    const page = parseInt(req.query.page) || 1; // Get current page, default to 1
+    const limit = 3; // Number of products per page
+    const skip = (page - 1) * limit; // Calculate how many products to skip
+
+    // Get total count for pagination
+    const totalProducts = await Product.countDocuments({ isDeleted: { $ne: true } });
+
+    // Fetch paginated products
     const products = await Product.find({ isDeleted: { $ne: true } })
-  .populate("category", "name description image isListed") 
-  .sort({ createdAt: -1 });
-  const updatedProducts = products.map(product => ({
-    ...product._doc,
-    category: product.category ? {
-      name: product.category.name
-    } : { name: "Uncategorized" },
-    imageURLs: product.images.map(image => `/uploads/products/${image}`)
-  }));
-      res.render('admin/product', { products: updatedProducts });
+      .populate("category", "name description image isListed")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Map products and include offer price calculation
+    const updatedProducts = products.map(product => {
+      // Calculate the offer price if offerPrice is set
+      const finalPrice = product.offerPrice || product.price; // If no offer price, use the original price
+
+      return {
+        ...product._doc,
+        category: product.category ? { name: product.category.name } : { name: "Uncategorized" },
+        imageURLs: product.images.map(image => `/uploads/products/${image}`),
+        offerPrice: finalPrice,  // Add offerPrice to the product data
+        discountPrice: product.price - finalPrice  // Optionally, show the discount amount
+      };
+    });
+
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    res.render('admin/product', {
+      products: updatedProducts,
+      currentPage: page,
+      totalPages,
+      searchQuery, 
+    });
   } catch (error) {
-      console.error("Error fetching products:", error);
-      res.status(500).send("Server Error");
+    console.error("Error fetching products:", error);
+    res.status(500).send("Server Error");
   }
 };
 exports.addProductPage = async (req, res) => {
@@ -318,9 +378,10 @@ exports.addProductPage = async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 };
+
 exports.addProduct = async (req, res) => {
   try {
-    const { name, description, price, category, stock, offer } = req.body;
+    const { name, description, price, category, stock, offerPrice } = req.body;
     const existingProduct = await Product.findOne({ name });
     if (existingProduct) {
       req.session.error = 'Product already exists';
@@ -335,6 +396,10 @@ exports.addProduct = async (req, res) => {
       return res.redirect('/admin/addProduct');
     }
     const images = req.files.map(file => file.filename);
+
+    // Ensure offerPrice is present, if not, we don't need to store any offer
+    const offerPriceValue = offerPrice ? offerPrice : price;
+
     const newProduct = new Product({
       name,
       description,
@@ -342,9 +407,10 @@ exports.addProduct = async (req, res) => {
       category,
       stock,
       images,
-      offer: offer || 0,
+      offerPrice: offerPriceValue,  // Store the offer price directly
       isListed: true,
     });
+
     await newProduct.save();
     res.redirect('/admin/product');
   } catch (error) {
@@ -352,6 +418,7 @@ exports.addProduct = async (req, res) => {
     res.status(500).send('Server Error');
   }
 };
+
 exports.editProductPage = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -368,36 +435,64 @@ exports.editProductPage = async (req, res) => {
 };
 exports.updateProduct = async (req, res) => {
   try {
-      const productId = req.params.id;
-      const { name, description, price, category, stock, isListed,offer } = req.body;
-      const isListedBool = isListed === 'true';
-      const product = await Product.findById(productId);
-      if (!product) {
-          return res.status(404).send('Product not found');
-      }
-      let images = product.images;
-      if (req.files && req.files.length > 0) {
-          product.images.forEach(image => {
-              const imagePath = path.join(__dirname, '../uploads/products', image);
-              if (fs.existsSync(imagePath)) {
-                  fs.unlinkSync(imagePath);
-              }
-          });
-          images = req.files.map(file => file.filename);
-      }
-      const offerPrice = offer > 0 ? (price - (price * offer / 100)).toFixed(2) : price;
-      const updatedProduct = await Product.findByIdAndUpdate(
-          productId,
-          { name, description, price, category, stock, isListed: isListedBool, images,offer, offerPrice },
-          { new: true }
-      );
-      if (!updatedProduct) {
-          return res.status(404).send('Product not found');
-      }
-      res.redirect('/admin/product');
+    const productId = req.params.id;
+    const { name, description, price, category, stock, isListed, offerPrice } = req.body;
+    console.log(offerPrice)
+    const isListedBool = isListed === 'true';
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).send('Product not found');
+    }
+
+    // Handle image updates: Remove old images if new ones are uploaded
+    let images = product.images;
+    if (req.files && req.files.length > 0) {
+      product.images.forEach(image => {
+        const imagePath = path.join(__dirname, '../uploads/products', image);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      });
+      images = req.files.map(file => file.filename);
+    }
+
+    // Ensure `offerPrice` is correctly updated
+    let updatedOfferPrice = parseFloat(offerPrice) || product.offerPrice || price; // Maintain previous offer if none is provided
+    let discount = 0;
+
+    // Calculate discount if offer price is lower than actual price
+    if (updatedOfferPrice < price) {
+      discount = Math.round(((price - updatedOfferPrice) / price) * 100); 
+    } else {
+      updatedOfferPrice = price; // No discount, reset offer price to original price
+    }
+
+    // Update product in the database
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      { 
+        name, 
+        description, 
+        price, 
+        category, 
+        stock, 
+        isListed: isListedBool, 
+        images, 
+        offerPrice: updatedOfferPrice,
+        discount // Store discount percentage for reference
+      },
+      { new: true }
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).send('Product not found');
+    }
+
+    res.redirect('/admin/product');
   } catch (error) {
-      console.error("Error updating product:", error);
-      res.status(500).send('Internal Server Error');
+    console.error("Error updating product:", error);
+    res.status(500).send('Internal Server Error');
   }
 };
 exports.softDeleteProduct = async (req, res) => {

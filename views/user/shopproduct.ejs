@@ -14,6 +14,15 @@
     <link href="vendor/sidebar/demo.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        .product-item {
+    transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.product-item:hover {
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-5px);
+}
+
         .product {
             padding: 15px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -40,7 +49,7 @@
             font-weight: 600;
         }
         .navbar {
-            background: linear-gradient(90deg, #EB543B, #FBBF3B);
+            background-color: #333333;
         }
         .search-bar {
             margin: 20px 0;
@@ -54,62 +63,80 @@
             border-radius: 5px;
             border: 1px solid #ccc;
         }
-    </style>
+        @media (max-width: 991px) { /* Applies only on smaller screens */
+            .navbar-collapse {
+                background-color: #706f6f;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            .navbar-nav{
+                margin-bottom: 5px;
+            }
+        }
+        .navbar {
+            position: relative;
+            z-index: 1000; /* Ensures navbar stays on top */
+        }
+            </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <h3>V-shop</h3>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto mb-2">
-                    <li class="nav-item active">
-                        <a class="nav-link text-white" href="/">Home</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link text-white" href="/shop">Products</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link text-white" href="#">Checkout</a>
-                    </li>
-                    <li class="nav-item">
-                      <a href="/cart" class="nav-link text-white">
-                          <i class="icofont-shopping-cart"></i> Cart
-                      </a>
-                  </li>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="height:10vh" style="background-color: #cfcdcd;">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <h1>V-shop</h1>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="/" style="font-weight: bold; font-size: 22px;">
+                        Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/shop" style="font-weight: bold; font-size: 22px;">
+                       Products
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/cart" class="nav-link" style="font-weight: bold; font-size: 22px;">
+                      <i class="fas fa-shopping-cart"></i> 
+                    </a>
+                </li>
+              </ul>                                 
+                <ul class="navbar-nav ">
+                    <% if (username) { %>
+                        <li class="nav-item">
+                            <a href="/account" class="nav-link text-success" style="font-size: 22px;">
+                                <i class="icofont-user"></i> <%= username %>
+                            </a>
+                        </li>
+                    <% } else { %>
+                        <li class="nav-item me-2">
+                            <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
+                                Signin
+                            </a>
+                        </li>
+                    <% } %>
                 </ul>
-                <ul class="navbar-nav mb-2 me-3">
-                  <% if (username) { %>
-                      <li class="nav-item">
-                          <a href="/account" class="nav-link text-success">
-                              <i class="icofont-user"></i> <%= username %>
-                          </a>
-                      </li>
-                  <% } else { %>
-                      <li class="nav-item">
-                        <a href="/login" class="btn btn-success text-white">
-                          <i class="icofont-login"></i> Login
-                        </a>
-                      </li>
-                  <% } %>
-              </ul>
-              <form action="/logout" method="POST">
-                <button type="submit" class="btn btn-dark mb-2">
-                    <i class="fas fa-sign-out-alt fa-2x">logout</i> <!-- Larger icon -->
-                  </button>                                                   
-              </form>               
-            </div>
+            <form action="/logout" method="POST">
+              <a href="/logout" class="btn btn-danger text-white" style="font-size: 22px">
+                Signout
+            </a>
+            </form>
         </div>
-    </nav>
-    <div class="search-bar">
-        <input type="text" id="search-input" placeholder="Search for products..." onkeyup="searchProducts()">
     </div>
-    <section class="py-5">
+</nav>
+
+    <section class="py-5" style="background-color: #cfcdcd;">
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search for products..." onkeyup="searchProducts()">
+        </div>
         <div class="container">
             <h2 class="text-center mb-4">Our Products</h2>
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4" id="product-list">
@@ -117,16 +144,18 @@
                     <div class="col mb-4 product-item">
                         <div class="product">
                             <h5 class="product-name"><%= product.name %></h5>
-                            
                             <% if (product.offer && product.offer > 0) { %>
                                 <p class="product-price">
                                     <span style="text-decoration: line-through; color: red;">₹<%= product.price.toFixed(2) %></span>
                                     <span style="font-weight: bold; color: green;"> ₹<%= (product.price - (product.price * product.offer / 100)).toFixed(2) %></span>
                                     <small class="text-muted">(<%= product.offer %>% OFF)</small>
+                                    <!-- Offer savings amount -->
+                                    <small class="text-muted" style="font-weight: bold;">(Save ₹<%= (product.price * product.offer / 100).toFixed(2) %>)</small>
                                 </p>
                             <% } else { %>
                                 <p class="product-price">₹<%= product.price.toFixed(2) %></p>
                             <% } %>
+                            
                             <% if (product.imagePaths && product.imagePaths.length > 0) { %>
                                 <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
                                     <div class="carousel-inner">

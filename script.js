@@ -40,7 +40,7 @@ app.use('/', Routes);
 connectDB();
 
 // Serve static files from the "uploads" folder
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Admin Routes (importing the adminRoutes from separate file)
 const adminRoutes = require('./routes/adminRoutes');
 app.use('/admin', adminRoutes);
