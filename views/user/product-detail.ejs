@@ -109,9 +109,9 @@
             object-fit: cover;
             transition: transform 0.3s ease;
         }
-        .product-image:hover {
+        /* .product-image:hover {
             transform: scale(1.2);
-        }
+        } */
         .product-card img {
             width: 100%; /* Make image take up the full width */
             height: auto;
@@ -219,43 +219,53 @@
         }
 
         #add-quantity {
-            width: 30px; /* Adjust width of the increase button to be smaller */
+            width: 30px;
         }
         .quantity-control .quantity-input {
-            width: 60px; /* Adjust width of the input as needed */
+            width: 60px;
             text-align: center;
             padding: 5px;
         }
         .carousel-inner {
-        height: 400px; /* Fixed height for carousel */
-        overflow: hidden; /* Hide overflowing content */
+        height: 400px;
+        overflow: hidden; 
     }
+.btn-custom {
+  padding: 15px 80px;
+  font-size: 14px;
+  border-radius: 25px; 
+  width: auto;
+}
+
+.btn-custom i {
+  font-size: 18px;
+}
 
     .carousel-item {
-        height: 100%; /* Ensure each carousel item fills the container */
+        height: 100%;
     }
 
     .product-image {
-        height: 100%; /* Image fills the carousel item height */
-        width: 100%; /* Ensures the image stretches to fit the container */
-        object-fit: cover; /* Ensures the image maintains its aspect ratio and fills the space */
+        height: 100%; 
+        width: 100%;
+        object-fit: cover; 
     }
     .fixed-img {
     width: 100%;
-    height: 250px;  /* Set a fixed height for the image */
-    object-fit: cover;  /* Ensure the aspect ratio is maintained without stretching */
+    height: 250px; 
+    object-fit: cover;
 }
 .circle-btn {
-    width: 40px;  /* Ensure width and height are equal */
+    width: 40px; 
     height: 30px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0; /* Remove extra padding */
-    border: none; /* Optional: Remove border if not needed */
+    padding: 0; 
+    border: none; 
 }
-@media (max-width: 991px) { /* Applies only on smaller screens */
+@media (max-width: 991px) {
     .navbar-collapse {
         background-color: #706f6f;
         padding: 10px;
@@ -267,7 +277,7 @@
 }
 .navbar {
     position: relative;
-    z-index: 1000; /* Ensures navbar stays on top */
+    z-index: 1000;
 }
 .price-section {
   font-size: 1.2em;
@@ -288,6 +298,22 @@
 
 .price-section small {
   font-size: 0.9em;
+}
+.zoom-container {
+  position: relative;
+}
+
+.zoom-result {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background-size: 500%;
+  background-repeat: no-repeat;
+  display: none;
+  pointer-events: none; 
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  transform: translate(-50%, -50%);
 }
 
 </style>
@@ -356,36 +382,43 @@
       <section class="py-5">
         <div class="container">
           <div class="row">
-            <!-- Product Carousel -->
-            <div class="col-md-6 mb-4">
-              <div id="product-carousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                  <% product.imagePaths.forEach(function(image, index) { %>
-                    <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                      <div class="zoom-container">
-                        <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 img-fluid product-image" data-zoom-image="<%= image %>">
-                      </div>
-                    </div>
-                  <% }); %>
+<div class="container py-5">
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div id="product-carousel" class="carousel slide" data-bs-ride="carousel">
+          <div class="carousel-inner">
+            <% product.imagePaths.forEach(function(image, index) { %>
+              <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                <div class="zoom-container">
+                  <img src="<%= image %>" alt="<%= product.name %>" 
+                       class="d-block w-100 img-fluid product-image zoomable" 
+                       data-zoom-image="<%= image %>">
+                  <div class="zoom-result"></div> 
                 </div>
-                <!-- Carousel Controls -->
-                <button class="carousel-control-prev" type="button" data-bs-target="#product-carousel" data-bs-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                  <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#product-carousel" data-bs-slide="next">
-                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                  <span class="visually-hidden">Next</span>
-                </button>
               </div>
+            <% }); %>
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#product-carousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#product-carousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
+        <div class="row mt-3">
+          <% product.imagePaths.forEach(function(image, index) { %>
+            <div class="col-3">
+              <img src="<%= image %>" class="img-thumbnail thumbnail-image" 
+                   data-bs-target="#product-carousel" data-bs-slide-to="<%= index %>" alt="Thumbnail">
             </div>
-      
-            <!-- Product Details -->
+          <% }); %>
+        </div>
+      </div>
             <div class="col-md-6">
               <div class="product-detail">
                 <h2 class="product-name display-4"><%= product.name %></h2>
-      
-                <!-- Display Price, Offer Price, and Offer Percentage -->
                 <div class="price-section">
                   <% if (product.offerPrice && product.offerPercentageDisplay) { %>
                     <p>
@@ -407,11 +440,7 @@
                     </p>
                   <% } %>
                 </div>
-      
-                <!-- Product Description -->
                 <p class="product-description"><strong>Description:</strong> <%= product.description %></p>
-      
-                <!-- Stock Availability -->
                 <p class="product-description">
                   <% if (product.stock === 0) { %>
                     <strong>Stock:</strong>
@@ -420,19 +449,14 @@
                     <p class="text-danger mt-2 fs-5"><strong class="text-dark">Stock:</strong> Only <%= product.stock %> left in stock!</p>
                   <% } %>
                 </p>
-      
-                <!-- Quantity Control -->
-                <div class="quantity-control mt-3">
+                <div class="quantity-control mt-3 mb-3">
                   <button class="btn btn-secondary circle-btn" id="reduce-quantity" onclick="updateQuantity('reduce')">-</button>
                   <input type="number" id="product-quantity" value="1" min="1" max="<%= product.stock %>" class="quantity-input form-control-sm" />
                   <button class="btn btn-secondary circle-btn" id="add-quantity" onclick="updateQuantity('add')">+</button>
                 </div>
-      
-                <!-- Add to Cart and Back to Products -->
-                <button class="btn btn-primary rounded-pill px-5 py-3 mb-4" onclick="addToCart('<%= product._id %>')">
-                  <i class="fa fa-shopping-bag me-2"></i> Add to Cart
-                </button>
-                <button class="btn btn-outline-secondary mt-3 ms-2" onclick="window.location.href='/shop'">Back to Products</button>
+                <button class="btn btn-primary rounded-pill btn-custom mb-4" onclick="addToCart('<%= product._id %>')">
+                    <i class="fa fa-shopping-bag me-2"></i> Add to Cart
+                  </button> 
               </div>
             </div>
           </div>
@@ -446,7 +470,6 @@
                 <% relatedProducts.forEach((relatedProduct, index) => { %>
                     <div class="col">
                         <div class="card shadow-sm border-0 rounded-lg overflow-hidden">
-                            <!-- Carousel for each related product -->
                             <div id="related-product-carousel-<%= relatedProduct._id %>" class="carousel slide" data-bs-ride="carousel">
                                 <div class="carousel-inner">
                                     <% relatedProduct.imagePaths.forEach((image, imageIndex) => { %>
@@ -467,8 +490,6 @@
     
                             <div class="card-body text-center">
                                 <h5 class="card-title text-primary"><%= relatedProduct.name %></h5>
-    
-                                <!-- Price and Offer Price with offer percentage -->
                                 <p class="card-text product-price">
                                     <% if (relatedProduct.offerPrice !== relatedProduct.price.toFixed(2)) { %>
                                         <span style="text-decoration: line-through; color: red;">
@@ -491,10 +512,6 @@
             </div>
         </div>
     </section>
-    
-    
-        
-    
     <footer class="bg-dark text-white py-4">
         <div class="container">
             <div class="row">
@@ -510,15 +527,39 @@
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
-<script src="https://cdn.rawgit.com/elevateweb/elevatezoom/master/jquery.elevatezoom.js"></script>     
+<script src="https://cdn.rawgit.com/elevateweb/elevatezoom/master/jquery.elevatezoom.js"></script>
+<script>
+document.querySelectorAll('.zoomable').forEach(img => {
+  img.addEventListener('mousemove', function (event) {
+    const zoomResult = this.nextElementSibling;
+    zoomResult.style.display = 'block';
+
+    const { left, top, width, height } = this.getBoundingClientRect();
+    const x = ((event.pageX - left) / width) * 100;
+    const y = ((event.pageY - top) / height) * 100;
+    zoomResult.style.backgroundImage = `url(${this.dataset.zoomImage})`;
+    zoomResult.style.backgroundPosition = `${x}% ${y}%`;
+    const zoomBoxSize = 200;
+
+    const offsetX = event.pageX - zoomBoxSize / 2;
+    const offsetY = event.pageY - zoomBoxSize / 2;
+
+    zoomResult.style.left = `${offsetX}px`;
+    zoomResult.style.top = `${offsetY}px`;
+  });
+
+  img.addEventListener('mouseleave', function () {
+    this.nextElementSibling.style.display = 'none';
+  });
+});
+
+  </script>     
 <script>
     function changeImage(index) {
         const carousel = document.getElementById('product-carousel');
         const carouselItems = carousel.querySelectorAll('.carousel-item');
         const totalItems = carouselItems.length;
-        // Make sure the index is valid
         if (index >= 0 && index < totalItems) {
-            // Activate the clicked thumbnail's corresponding carousel item
             const activeItem = carousel.querySelector('.carousel-item.active');
             if (activeItem) {
                 activeItem.classList.remove('active');
@@ -568,6 +609,8 @@
         const productId = "<%= product._id %>";
         window.location.href = `/cart/add/${productId}?quantity=${quantity}`;
     }
+
 </script>
+
 </body>
 </html>

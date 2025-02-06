@@ -353,8 +353,8 @@ exports.addProduct = async (req, res) => {
       req.session.error = 'Category is required';
       return res.redirect('/admin/addProduct');
     }
-    if (!req.files || req.files.length !== 3) {
-      req.session.error = 'You must upload exactly 3 images';
+    if (!req.files || req.files.length <= 3) {
+      req.session.error = 'You must upload minimum 3 images';
       return res.redirect('/admin/addProduct');
     }
     const images = req.files.map(file => file.filename);
