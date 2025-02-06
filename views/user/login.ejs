@@ -31,6 +31,8 @@
             font-size: 0.9rem;
         }
     </style>
+      <!-- Toastify CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 <body>
     <header class="bg-complementary py-3">
@@ -48,10 +50,6 @@
                 <div class="login-container">
                     <h2 >Welcome Back</h2>
                     <p class=" mb-2">Signin to continue</p>
-                    <% if (error) { %>
-                        <div class="alert alert-danger text-center"><%= error %></div>
-                    <% } %>
-
                     <form id="loginForm" action="/login" method="post" onsubmit="validateLogin(event)">
                         <div class="mb-3">
                             <label for="email" class="form-label">Email:</label>
@@ -79,7 +77,24 @@
             </div>
         </div>
     </div>
+            <!-- Load Toastify before using it -->
+            <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
+            <% if (error) { %>
+              <script>
+                window.onload = function() {
+                  Toastify({
+                    text: "<%= error %>",
+                    duration: 3000,  
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "red",  
+                  }).showToast();
+                };
+              </script>
+            <% } %>
+           
     <script>
         document.getElementById("togglePassword").addEventListener("click", function () {
             const passwordField = document.getElementById("password");

@@ -20,8 +20,12 @@ exports.handleSignup = async (req, res) => {
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      req.session.signerr = "Email already exists.";
-      return res.redirect("/signup");
+        return res.render("user/signup", { 
+            error: "Email already exists", 
+            username, 
+            email, 
+            phone 
+        });
     }
     const otp = Math.floor(100000 + Math.random() * 900000);
     const otpExpires = new Date(Date.now() + 1 * 60 * 1000); 
