@@ -2,16 +2,12 @@
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-md-6">
-      <!-- Card Container -->
       <div class="card shadow-lg border-0">
-        <!-- Card Header -->
         <div class="card-header text-center bg-primary text-white">
           <h3>Edit Category</h3>
         </div>
         <div class="card-body">
-          <!-- Form -->
           <form action="/admin/editCategory/<%= category._id %>" method="POST"  enctype="multipart/form-data">
-            <!-- Category Name -->
             <div class="mb-3">
               <label for="name" class="form-label">Category Name</label>
               <input
@@ -23,7 +19,6 @@
                 required
               />
             </div>
-            <!-- Category Description -->
             <div class="mb-3">
               <label for="description" class="form-label">Description</label>
               <textarea
@@ -34,27 +29,21 @@
                 required
               ><%= category.description %></textarea>
             </div>
-            <!-- Display existing images -->
               <div class="mb-3">
                 <label class="form-label">Current Images</label>
                 <div>
-                    <% if (category.images && category.images.length > 0) { %>
-                        <% category.images.forEach(image => { %>
-                            <img src="<%= image %>" alt="Category Image" class="img-thumbnail me-2" width="100">
-                        <% }) %>
-                    <% } else { %>
-                        <p>No images available.</p>
-                    <% } %>
+                <% if (category && category.image) { %>
+                  <img src="<%= category.image %>" alt="Category Image" class="img-thumbnail me-2" width="100">
+                <% } else { %>
+                  <p>No image available.</p>
+                <% } %>
+
                 </div>
             </div>
-
-      <!-- Upload new images -->
       <div class="mb-3">
           <label for="images" class="form-label">Upload New Images</label>
           <input type="file" id="image" name="image" accept="image/*" />
       </div>
-
-            <!-- Status (Listed/Unlisted) -->
             <div class="mb-3">
               <label for="isListed" class="form-label">Listed</label>
               <select name="isListed" id="isListed" class="form-control">
@@ -62,13 +51,11 @@
                 <option value="false" <%= !category.isListed ? 'selected' : '' %>>No</option>
               </select>
             </div>
-            <!-- Submit Button -->
             <div class="d-grid">
               <button type="submit" class="btn btn-success">Update Category</button>
             </div>
           </form>
         </div>
-        <!-- Card Footer -->
         <div class="card-footer text-center">
           <a href="/admin/categories" class="btn btn-outline-secondary">Back to Categories</a>
         </div>

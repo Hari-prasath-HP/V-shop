@@ -130,7 +130,7 @@ exports.resendOtp = async (req, res) => {
       { upsert: true, new: true }
     );
     await otpService.sendOtp(email, newOtp);
-    console.log(`✅ New OTP: ${newOtp} sent to ${email}, expires at: ${otpExpires}`);
+    console.log(`New OTP: ${newOtp} sent to ${email}, expires at: ${otpExpires}`);
     res.render("user/verifyOtp", { 
       email, 
       signerr: null, 
@@ -138,7 +138,7 @@ exports.resendOtp = async (req, res) => {
       otpExpired: false 
     });
   } catch (err) {
-    console.error("❌ Error in resendOtp:", err);
+    console.error(" Error in resendOtp:", err);
     res.status(500).send("Server error. Try again later.");
   }
 };
@@ -194,38 +194,26 @@ exports.renderhome = async (req, res) => {
         username = user.username;
       }
     }
-
-    // Fetch categories that are not deleted
     const categories = await Category.find({ isDeleted: { $ne: true } });
-
-    // Fetch all products that are not deleted and populate the category
     const products = await Product.find({ isDeleted: { $ne: true } }).populate('category');
-
-    // Function to calculate offer percentage
     const calculateOfferPercentage = (price, offerPrice) => {
       if (price > 0 && offerPrice > 0) {
         return ((price - offerPrice) / price) * 100;
       }
       return 0;
     };
-
-    // Add offer percentage and discounted price to each product
     products.forEach(product => {
       product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
       product.discountedPrice = product.offerPrice > 0 ? product.offerPrice : product.price;
       product.offerPercentage = calculateOfferPercentage(product.price, product.offerPrice);
     });
-
-    // Sort products by offer percentage in descending order and limit to top 4
     const topOfferProducts = products.sort((a, b) => b.offerPercentage - a.offerPercentage).slice(0, 4);
-
-    // Render the homepage with the top offer products
     res.render("user/home", {
       user,
       username,
       phone: user ? user.phone : null,
       categories,
-      topOfferProducts, // Send the top 4 offer percentage products
+      topOfferProducts, 
       isLoggedIn: !!req.session.user,
     });
   } catch (err) {
@@ -235,26 +223,19 @@ exports.renderhome = async (req, res) => {
 };
 exports.getShopProducts = async (req, res) => {
   try {
-    // Fetch all products that are not deleted, and populate category data
     const products = await Product.find({ isDeleted: { $ne: true } })
-                                  .populate('category');
-
-    // Process product data, map image paths, calculate offer price and offer percentage
+    .populate('category');
     products.forEach(product => {
       product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
-      
-      // Calculate offer price if there's an offer percentage
       if (product.offerPrice > 0) {
         const discountPercentage = ((product.price - product.offerPrice) / product.price) * 100;
-        product.offerPercentage = discountPercentage.toFixed(2);  // Store the offer percentage
-        product.offerPrice = product.offerPrice.toFixed(2);  // Format offer price
+        product.offerPercentage = discountPercentage.toFixed(2); 
+        product.offerPrice = product.offerPrice.toFixed(2);
       } else {
-        product.offerPercentage = 0;  // If no offer, set percentage to 0
-        product.offerPrice = product.price.toFixed(2);  // No offer, so set offer price to regular price
+        product.offerPercentage = 0;
+        product.offerPrice = product.price.toFixed(2);
       }
     });
-
-    // Get username from session if the user is logged in
     let username = "";
     if (req.session.user) {
       const user = await User.findOne({ email: req.session.user.email });
@@ -262,8 +243,6 @@ exports.getShopProducts = async (req, res) => {
         username = user.username;
       }
     }
-
-    // Render the products page with the products and username
     res.render('user/shopproduct', { products, username });
   } catch (err) {
     console.error('Error fetching products:', err);
@@ -273,54 +252,37 @@ exports.getShopProducts = async (req, res) => {
 exports.viewProduct = async (req, res) => {
   try {
     const productId = req.params.id;
-
-    // Fetch product details by ID and populate the category data
     const product = await Product.findById(productId).populate('category');
     if (!product) {
       return res.status(404).send('Product not found');
     }
-
-    // Process image paths to display on the product page
     product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
-
-    // Calculate offer price and offer percentage
     if (product.offerPrice > 0) {
-      // Calculate the discount percentage if offerPrice is available
       const discountPercentage = ((product.price - product.offerPrice) / product.price) * 100;
-      product.offerPercentage = discountPercentage.toFixed(2);  // Store the offer percentage
-      product.offerPrice = product.offerPrice.toFixed(2);  // Format offer price
+      product.offerPercentage = discountPercentage.toFixed(2); 
+      product.offerPrice = product.offerPrice.toFixed(2); 
     } else {
-      // If no offer price is provided, set offer percentage to 0 and offer price to regular price
-      product.offerPercentage = 0;  // No offer
-      product.offerPrice = product.price.toFixed(2);  // Set offer price as regular price
+      product.offerPercentage = 0; 
+      product.offerPrice = product.price.toFixed(2);  
     }
-
-    // If offerPrice is different from regular price, display the offer percentage
     if (product.offerPrice !== product.price.toFixed(2)) {
       product.offerPercentageDisplay = product.offerPercentage + "% OFF";
     }
-
-    // Fetch related products within the same category (excluding the current product)
     const relatedProducts = await Product.find({
       category: product.category,
-      _id: { $ne: productId } // Exclude the current product
-    }).limit(4); // Limit to 4 related products
-
-    // Process related products: format image paths and calculate offer prices if applicable
+      _id: { $ne: productId } 
+    }).limit(4);
     relatedProducts.forEach(relatedProduct => {
       relatedProduct.imagePaths = relatedProduct.images.map(image => `/uploads/products/${image}`);
-      // Calculate offer price for related products
       if (relatedProduct.offerPrice > 0) {
         const relatedDiscountPercentage = ((relatedProduct.price - relatedProduct.offerPrice) / relatedProduct.price) * 100;
-        relatedProduct.offerPercentage = relatedDiscountPercentage.toFixed(2);  // Store the offer percentage
-        relatedProduct.offerPrice = relatedProduct.offerPrice.toFixed(2);  // Format offer price
+        relatedProduct.offerPercentage = relatedDiscountPercentage.toFixed(2); 
+        relatedProduct.offerPrice = relatedProduct.offerPrice.toFixed(2); 
       } else {
-        relatedProduct.offerPercentage = 0;  // If no offer, set percentage to 0
-        relatedProduct.offerPrice = relatedProduct.price.toFixed(2);  // No offer, set offer price to regular price
+        relatedProduct.offerPercentage = 0; 
+        relatedProduct.offerPrice = relatedProduct.price.toFixed(2); 
       }
     });
-
-    // Initialize username from the session if the user is logged in
     let username = "";
     if (req.session.user) {
       const user = await User.findOne({ email: req.session.user.email });
@@ -328,16 +290,12 @@ exports.viewProduct = async (req, res) => {
         username = user.username;
       }
     }
-
-    // Render the product detail page with product, related products, and username
     res.render('user/product-detail', { product, username, relatedProducts });
   } catch (err) {
     console.error('Error fetching product details:', err);
     res.status(500).send(`Server Error: ${err.message}`);
   }
 };
-
-// logout user
 exports.logout = (req, res) => {
   try {
     req.session.destroy((err) => {

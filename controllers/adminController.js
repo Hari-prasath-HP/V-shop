@@ -41,9 +41,9 @@ exports.dashboardPage = (req, res) => {
 exports.manageUsersPage = async (req, res) => {
   try {
     const searchQuery = req.query.search || "";
-    const page = parseInt(req.query.page) || 1; // Get page number from query, default to 1
-    const limit = 10; // Number of users per page
-    const skip = (page - 1) * limit; // Skip previous pages
+    const page = parseInt(req.query.page) || 1; 
+    const limit = 10; 
+    const skip = (page - 1) * limit;
     const totalUsers = await User.countDocuments({
       $or: [
         { username: { $regex: searchQuery, $options: "i" } },
@@ -133,17 +133,13 @@ exports.handleUnblock = async (req, res) => {
 exports.manageCategoryPage = async (req, res) => {
   try {
     const searchQuery = req.query.search || '';
-    const page = parseInt(req.query.page) || 1; // Get current page, default to 1
-    const limit = 5; // Number of categories per page
-    const skip = (page - 1) * limit; // Calculate skip value
-
-    // Get total count for pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5; 
+    const skip = (page - 1) * limit;
     const totalCategories = await Category.countDocuments({
       name: { $regex: searchQuery, $options: 'i' },
       isDeleted: { $ne: true },
     });
-
-    // Fetch paginated categories
     const categories = await Category.find({
       name: { $regex: searchQuery, $options: 'i' },
       isDeleted: { $ne: true },
@@ -188,7 +184,7 @@ exports.addCategory = async (req, res) => {
     const existingCategory = await Category.findOne({ name, isDeleted: { $ne: true } });
     if (existingCategory) {
       req.session.errorMessage = 'Category with this name already exists and is not deleted!';
-      return res.redirect('/admin/addCategory'); // Redirect back to the form
+      return res.redirect('/admin/addCategory'); 
     }
     const image = `/uploads/categories/${req.file.filename}`;
     const newCategory = new Category({
@@ -220,26 +216,46 @@ exports.updateCategory = async (req, res) => {
   try {
     const categoryId = req.params.id;
     const { name, description, isListed } = req.body;
-    const isListedBool = isListed === 'true'; 
+    const isListedBool = isListed === 'true';
+
     const category = await Category.findById(categoryId);
     if (!category) {
-        return res.status(404).send('Category not found');
+      return res.status(404).send('Category not found');
     }
+
     let imagePath = category.image;
     if (req.file) {
+      if (category.image) {
+        const existingImagePath = path.join(__dirname, '../uploads/categories', path.basename(category.image));
+        if (fs.existsSync(existingImagePath)) {
+          fs.unlinkSync(existingImagePath);
+        }
+      }
       imagePath = `/uploads/categories/${req.file.filename}`;
     }
-    category.name = name;
-    category.description = description;
-    category.isListed = isListedBool;
-    category.image = imagePath;
-    await category.save();
+
+    const updatedCategory = await Category.findByIdAndUpdate(
+      categoryId,
+      { 
+        name, 
+        description, 
+        isListed: isListedBool, 
+        image: imagePath 
+      },
+      { new: true }
+    );
+
+    if (!updatedCategory) {
+      return res.status(404).send('Category not found');
+    }
+
     res.redirect('/admin/categories');
-} catch (error) {
-    console.error(error);
+  } catch (error) {
+    console.error("Error updating category:", error);
     res.status(500).send('An error occurred while updating the category');
-}
+  }
 };
+
 exports.softDeleteCategory = async (req, res) => {
   const categoryId = req.params.id;
   try {
@@ -284,31 +300,24 @@ exports.unlistCategory = async (req, res) => {
 exports.manageProductPage = async (req, res) => {
   try {
     const searchQuery = req.query.search || '';
-    const page = parseInt(req.query.page) || 1; // Get current page, default to 1
-    const limit = 3; // Number of products per page
-    const skip = (page - 1) * limit; // Calculate how many products to skip
-
-    // Get total count for pagination
+    const page = parseInt(req.query.page) || 1; 
+    const limit = 3;
+    const skip = (page - 1) * limit;
     const totalProducts = await Product.countDocuments({ isDeleted: { $ne: true } });
-
-    // Fetch paginated products
     const products = await Product.find({ isDeleted: { $ne: true } })
       .populate("category", "name description image isListed")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
-
-    // Map products and include offer price calculation
     const updatedProducts = products.map(product => {
-      // Calculate the offer price if offerPrice is set
-      const finalPrice = product.offerPrice || product.price; // If no offer price, use the original price
+      const finalPrice = product.offerPrice || product.price;
 
       return {
         ...product._doc,
         category: product.category ? { name: product.category.name } : { name: "Uncategorized" },
         imageURLs: product.images.map(image => `/uploads/products/${image}`),
-        offerPrice: finalPrice,  // Add offerPrice to the product data
-        discountPrice: product.price - finalPrice  // Optionally, show the discount amount
+        offerPrice: finalPrice,
+        discountPrice: product.price - finalPrice
       };
     });
 
@@ -358,8 +367,6 @@ exports.addProduct = async (req, res) => {
       return res.redirect('/admin/addProduct');
     }
     const images = req.files.map(file => file.filename);
-
-    // Ensure offerPrice is present, if not, we don't need to store any offer
     const offerPriceValue = offerPrice ? offerPrice : price;
 
     const newProduct = new Product({
@@ -369,7 +376,7 @@ exports.addProduct = async (req, res) => {
       category,
       stock,
       images,
-      offerPrice: offerPriceValue,  // Store the offer price directly
+      offerPrice: offerPriceValue,
       isListed: true,
     });
 
@@ -406,8 +413,6 @@ exports.updateProduct = async (req, res) => {
     if (!product) {
       return res.status(404).send('Product not found');
     }
-
-    // Handle image updates: Remove old images if new ones are uploaded
     let images = product.images;
     if (req.files && req.files.length > 0) {
       product.images.forEach(image => {
@@ -418,19 +423,13 @@ exports.updateProduct = async (req, res) => {
       });
       images = req.files.map(file => file.filename);
     }
-
-    // Ensure `offerPrice` is correctly updated
-    let updatedOfferPrice = parseFloat(offerPrice) || product.offerPrice || price; // Maintain previous offer if none is provided
+    let updatedOfferPrice = parseFloat(offerPrice) || product.offerPrice || price;
     let discount = 0;
-
-    // Calculate discount if offer price is lower than actual price
     if (updatedOfferPrice < price) {
       discount = Math.round(((price - updatedOfferPrice) / price) * 100); 
     } else {
-      updatedOfferPrice = price; // No discount, reset offer price to original price
+      updatedOfferPrice = price;
     }
-
-    // Update product in the database
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
       { 
@@ -442,7 +441,7 @@ exports.updateProduct = async (req, res) => {
         isListed: isListedBool, 
         images, 
         offerPrice: updatedOfferPrice,
-        discount // Store discount percentage for reference
+        discount 
       },
       { new: true }
     );
