@@ -77,6 +77,17 @@
             position: relative;
             z-index: 1000; /* Ensures navbar stays on top */
         }
+        .breadcrumb {
+        background: none;
+        padding: 10px 0;
+        }
+        .breadcrumb-item a {
+        text-decoration: none;
+        color: #6f6f70;
+        }
+        .breadcrumb-item a:hover {
+        text-decoration: underline;
+        }
             </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
@@ -132,8 +143,14 @@
         </div>
     </div>
 </nav>
-
-<section class="py-5" style="background-color: #cfcdcd;">
+  
+<section class="py-2" style="background-color: #cfcdcd;">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb ms-5">
+          <li class="breadcrumb-item"><a href="/">Home</a></li>
+          <li class="breadcrumb-item"><a href="/shop">Products</a></li>
+        </ol>
+      </nav>
     <div class="search-bar">
         <input type="text" id="search-input" placeholder="Search for products..." onkeyup="searchProducts()">
     </div>

@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config();
 const connectDB = require('./config/mongo');
+const passport = require("passport");
+require("./config/passport");
 
 // Initialize Express App
 const app = express();
@@ -27,6 +29,8 @@ app.use(session({
   saveUninitialized: true,
   cookie: { secure: false }
 }));
+app.use(passport.initialize());
+app.use(passport.session());
 // **Cache-Control Middleware (Prevents storing previous pages)**
 app.use((req, res, next) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");

@@ -269,27 +269,26 @@ h1, h2, h3, p {
                     </a>
                 </li>
               </ul>                                 
-                <ul class="navbar-nav ">
-                    <% if (username) { %>
-                        <li class="nav-item">
-                            <a href="/account" class="nav-link text-success" style="font-size: 22px;">
-                                <i class="icofont-user"></i> <%= username %>
-                            </a>
-                        </li>
-                    <% } else { %>
-                        <li class="nav-item me-2">
-                            <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
-                                <!-- <i class="fas fa-sign-in-alt"></i> -->
-                                 Signin
-                            </a>
-                        </li>
-                    <% } %>
-                </ul>
-              <form action="/logout" method="POST">
-                <a href="/logout" class="btn btn-danger text-white" style="font-size: 22px">
-                     Signout
-                </a>
-              </form>
+              <ul class="navbar-nav ">
+                <% if (user) { %>  <!-- Check if user is logged in -->
+                    <li class="nav-item">
+                        <a href="/account" class="nav-link text-success" style="font-size: 22px;">
+                            <i class="icofont-user"></i> <%= user.name || user.username %>
+                        </a>
+                    </li>
+                <% } else { %>
+                    <li class="nav-item me-2">
+                        <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
+                            Sign in
+                        </a>
+                    </li>
+                <% } %>
+            </ul>            
+                <form action="/logout" method="POST">
+                    <button type="submit" class="btn btn-danger text-white" style="font-size: 22px">
+                        Signout
+                    </button>
+                </form>                
             </div>
         </div>
     </nav>

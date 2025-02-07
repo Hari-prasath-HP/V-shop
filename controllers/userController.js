@@ -5,7 +5,7 @@ const otpService = require('../services/otpService');
 const Category = require('../models/category');
 const Product = require('../models/product');
 const Otp = require('../models/renderotp');
-
+const passport = require("passport");
 //handle signup
 exports.renderSignup = (req, res) => {
   if (req.session.logstate) {
@@ -16,7 +16,7 @@ exports.renderSignup = (req, res) => {
   res.render("user/signup", { error });
 }
 exports.handleSignup = async (req, res) => {
-  const { username, email, phone, password } = req.body;
+  const { username, email, phone, password, confirmPassword } = req.body;
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -24,7 +24,9 @@ exports.handleSignup = async (req, res) => {
             error: "Email already exists", 
             username, 
             email, 
-            phone 
+            phone,
+            password,
+            confirmPassword
         });
     }
     const otp = Math.floor(100000 + Math.random() * 900000);
@@ -47,6 +49,15 @@ exports.handleSignup = async (req, res) => {
     console.error("Error during sign-up:", err);
     req.session.signerr = "An internal server error occurred. Please try again later.";
     return res.redirect("/signup");
+  }
+};
+// Google Authentication Callback
+exports.googleAuthCallback = (req, res) => {
+  if (req.user) {
+    req.session.user = req.user; // Store user in session
+    res.redirect("/"); // Redirect to homepage after login
+  } else {
+    res.redirect("/login");
   }
 };
 
@@ -175,7 +186,7 @@ exports.verifyOtp = async (req, res) => {
 // Render home
 exports.renderhome = async (req, res) => {
   try {
-    let user = null;
+    let user = req.session.user ||null;
     let username = "";
     if (req.session.user) {
       user = await User.findOne({ email: req.session.user.email });
@@ -210,6 +221,7 @@ exports.renderhome = async (req, res) => {
 
     // Render the homepage with the top offer products
     res.render("user/home", {
+      user,
       username,
       phone: user ? user.phone : null,
       categories,
@@ -340,3 +352,4 @@ exports.logout = (req, res) => {
     res.status(500).send('An error occurred during logout');
   }
 };
+
