@@ -160,6 +160,7 @@ exports.manageCategoryPage = async (req, res) => {
       searchQuery,
       currentPage: page,
       totalPages,
+      page: "categories",
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -181,7 +182,12 @@ exports.addCategory = async (req, res) => {
   }
   try {
     const { name, description } = req.body;
-    const existingCategory = await Category.findOne({ name, isDeleted: { $ne: true } });
+    const categoryNameLower = name.toLowerCase(); // Convert input name to lowercase
+    const existingCategory = await Category.findOne({ 
+      name: { $regex: new RegExp(`^${name}$`, 'i') }, 
+      isDeleted: { $ne: true }
+    });
+
     if (existingCategory) {
       req.session.errorMessage = 'Category with this name already exists and is not deleted!';
       return res.redirect('/admin/addCategory'); 
@@ -353,7 +359,7 @@ exports.addProductPage = async (req, res) => {
 exports.addProduct = async (req, res) => {
   try {
     const { name, description, price, category, stock, offerPrice } = req.body;
-    const existingProduct = await Product.findOne({ name });
+    const existingProduct = await Product.findOne({ name: new RegExp(`^${name}$`, 'i') });
     if (existingProduct) {
       req.session.error = 'Product already exists';
       return res.redirect('/admin/addProduct');
@@ -362,7 +368,7 @@ exports.addProduct = async (req, res) => {
       req.session.error = 'Category is required';
       return res.redirect('/admin/addProduct');
     }
-    if (!req.files || req.files.length <= 3) {
+    if (!req.files || req.files.length < 3) {
       req.session.error = 'You must upload minimum 3 images';
       return res.redirect('/admin/addProduct');
     }

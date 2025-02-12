@@ -15,14 +15,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         .product-item {
-    transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
-}
-
-.product-item:hover {
-    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-    transform: translateY(-5px);
-}
-
+            transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
         .product {
             padding: 15px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -88,7 +82,7 @@
         .breadcrumb-item a:hover {
         text-decoration: underline;
         }
-            </style>
+        </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -119,28 +113,32 @@
                       <i class="fas fa-shopping-cart"></i> 
                     </a>
                 </li>
-              </ul>                                 
-                <ul class="navbar-nav ">
-                    <% if (username) { %>
-                        <li class="nav-item">
-                            <a href="/account" class="nav-link text-success" style="font-size: 22px;">
-                                <i class="icofont-user"></i> <%= username %>
-                            </a>
-                        </li>
-                    <% } else { %>
-                        <li class="nav-item me-2">
-                            <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
-                                Signin
-                            </a>
-                        </li>
-                    <% } %>
-                </ul>
-            <form action="/logout" method="POST">
-              <a href="/logout" class="btn btn-danger text-white" style="font-size: 22px">
-                Signout
-            </a>
-            </form>
-        </div>
+            </ul>                                 
+            <ul class="navbar-nav">
+                <% if (user) { %> 
+                    <li class="nav-item">
+                        <a href="/account" class="nav-link text-success" style="font-size: 22px;">
+                          <i class="icofont-user"></i> <%= user.name || user.username %>
+                        </a>
+                    </li>
+                    <!-- Show Signout button only when the user is logged in -->
+                    <li class="nav-item me-2">
+                        <form action="/logout" method="POST">
+                            <button type="submit" class="btn btn-danger text-white" style="font-size: 22px">
+                                Signout
+                            </button>
+                        </form>
+                    </li>
+                <% } else { %>
+                    <!-- Show Sign in button only when the user is not logged in -->
+                    <li class="nav-item me-2">
+                        <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
+                            Sign in
+                        </a>
+                    </li>
+                <% } %>
+            </ul>
+        </div>        
     </div>
 </nav>
   
@@ -156,52 +154,73 @@
     </div>
     <div class="container">
         <h2 class="text-center mb-4">Our Products</h2>
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4" id="product-list">
-            <% products.forEach(function(product) { %>
-                <div class="col mb-4 product-item">
-                    <div class="product">
-                        <h5 class="product-name"><%= product.name %></h5>
-                        <% if (product.offerPercentage && product.offerPercentage > 0) { %>
-                            <!-- Show original price with strike-through and offer price -->
-                            <p class="product-price">
-                                <span style="text-decoration: line-through; color: red;">₹<%= product.price.toFixed(2) %></span>
-                                <span style="font-weight: bold; color: green;"> ₹<%= product.offerPrice || (product.price - (product.price * product.offerPercentage / 100)).toFixed(2) %></span>
-                                <small class="text-muted">(<%= product.offerPercentage %>% OFF)</small>
-                                <!-- Offer savings amount -->
-                                <small class="text-muted" style="font-weight: bold;">(Save ₹<%= (product.price * product.offerPercentage / 100).toFixed(2) %>)</small>
-                            </p>
-                        <% } else { %>
-                            <!-- If no offer, just show the original price -->
-                            <p class="product-price">₹<%= product.price.toFixed(2) %></p>
-                        <% } %>
-                        
-                        <% if (product.imagePaths && product.imagePaths.length > 0) { %>
-                            <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
-                                <div class="carousel-inner">
-                                    <% product.imagePaths.forEach(function(image, index) { %>
-                                        <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                                            <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 img-thumbnail mx-auto" style="height: 200px; object-fit: cover;">
-                                        </div>
-                                    <% }); %>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4" id="product-list">
+                <% products.forEach(function(product) { %>
+                    <div class="col mb-4 product-item">
+                        <div class="product">
+                            <h5 class="product-name"><%= product.name %></h5>
+                            <% if (product.offerPercentage && product.offerPercentage > 0) { %>
+                                <p class="product-price">
+                                    <span style="text-decoration: line-through; color: red;">₹<%= product.price.toFixed(2) %></span>
+                                    <span style="font-weight: bold; color: green;"> ₹<%= product.offerPrice || (product.price - (product.price * product.offerPercentage / 100)).toFixed(2) %></span>
+                                    <small class="text-muted">(<%= product.offerPercentage %>% OFF)</small>
+                                    <small class="text-muted" style="font-weight: bold;">(Save ₹<%= (product.price * product.offerPercentage / 100).toFixed(2) %>)</small>
+                                </p>
+                            <% } else { %>
+                                <p class="product-price">₹<%= product.price.toFixed(2) %></p>
+                            <% } %>
+                            
+                            <% if (product.imagePaths && product.imagePaths.length > 0) { %>
+                                <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
+                                    <div class="carousel-inner">
+                                        <% product.imagePaths.forEach(function(image, index) { %>
+                                            <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                                                <img src="<%= image %>" alt="<%= product.name %>" class="d-block w-100 img-thumbnail mx-auto" style="height: 200px; object-fit: cover;">
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
                                 </div>
-                                <button class="carousel-control-prev" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="prev">
-                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Previous</span>
-                                </button>
-                                <button class="carousel-control-next" type="button" data-bs-target="#carousel-<%= product._id %>" data-bs-slide="next">
-                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Next</span>
-                                </button>
-                            </div>
-                        <% } else { %>
-                            <p>No images available</p>
-                        <% } %>
-                        <button class="btn btn-primary mt-3" onclick="window.location.href='/product/<%= product._id %>'">View Product</button>
+                            <% } else { %>
+                                <p>No images available</p>
+                            <% } %>
+                            <button class="btn btn-primary mt-3" onclick="window.location.href='/product/<%= product._id %>'">View Product</button>
+                        </div>
                     </div>
-                </div>
-            <% }); %>
-            
-        </div>
+                <% }); %>
+            </div>
+        
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-4">
+                <% if (currentPage > 1) { %>
+                    <a href="?page=<%= currentPage - 1 %>&search=<%= searchQuery %>" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                <% } else { %>
+                    <span class="btn btn-outline-secondary btn-sm disabled">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </span>
+                <% } %>
+                
+                <span class="mx-3">Page <%= currentPage %> of <%= totalPages %></span>
+                
+                <% if (currentPage < totalPages) { %>
+                    <a href="?page=<%= currentPage + 1 %>&search=<%= searchQuery %>" class="btn btn-outline-primary btn-sm">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                <% } else { %>
+                    <span class="btn btn-outline-secondary btn-sm disabled">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </span>
+                <% } %>
+            </div>  
     </div>
 </section>
 

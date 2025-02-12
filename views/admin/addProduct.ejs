@@ -27,12 +27,7 @@
       <div class="card shadow-lg rounded-3">
         <div class="card-header header-custom text-center mb-2">
           <h3>Add Product</h3>
-        </div>
-        <% if (error) { %>
-          <div class="alert alert-danger">
-            <%= error %>
-          </div>
-        <% } %>        
+        </div>      
         <div class="card-body">
           <form action="/admin/addproduct" method="POST" enctype="multipart/form-data" id="productForm" onsubmit="handleProductSubmit(event)">
             <div class="mb-3">
@@ -76,15 +71,12 @@
               <span id="stockError" class="error"></span>
             </div>
             
-            <div class="mb-3">
-              <label for="images" class="form-label">Product Images</label>
-              <input type="file" id="images" name="images" class="form-control mb-2" accept="image/*" multiple onchange="handleImageChange(event)" />
-              <div class="img-container" style="display: none; width: 300px; height: 300px; overflow: hidden;">
-                <img id="imagePreview" src="" alt="Image Preview" style="max-width: 100%; height: auto;"/>
-              </div>
-              <button type="button" class="btn btn-primary mt-2" id="cropBtn">Crop Image</button>
+            <div class="container mt-4">
+              <label for="images" class="form-label">Upload Images</label>
+              <input type="file" id="images" class="form-control" multiple accept="image/*">
+              <div id="previewContainer" class="d-flex gap-2 flex-wrap mt-2"></div>
             </div>
-            <div id="croppedResult"></div>
+            </div>
             <div class="d-grid">
               <button type="submit" class="btn btn-custom">Add Product</button>
             </div>
@@ -98,63 +90,154 @@
     </div>
   </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+  <!-- Load Toastify before using it -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+  <% if (error) { %>
+    <script>
+      window.onload = function() {
+        Toastify({
+          text: "<%= error %>",
+          duration: 3000,  
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "red",  
+        }).showToast();
+      };
+    </script>
+  <% } %>
+  <!-- Toastify JS -->
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.12/cropper.min.js"></script>
 <script>
-  let cropper;
+  document.getElementById('images').addEventListener('change', function(event) {
+    const files = event.target.files;
+    const imageContainer = document.getElementById('previewContainer');
+    imageContainer.innerHTML = '';  // Clear previous preview if any.
 
-  document.addEventListener("DOMContentLoaded", function() {
-      document.getElementById("images").addEventListener("change", function(event) {
-          const file = event.target.files[0];
-          if (!file) return;
+    Array.from(files).forEach(file => {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imageBox = document.createElement('div');
+                imageBox.classList.add('image-box');
+                imageBox.style.position = 'relative';
 
-          const reader = new FileReader();
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.classList.add('cropper-container');
+                img.style.maxWidth = '200px';
 
-          reader.onload = function(e) {
-              const image = document.getElementById("imagePreview");
-              image.src = e.target.result;
+                const saveBtn = document.createElement('button');
+                saveBtn.innerText = 'Save Cropped Image';
+                saveBtn.classList.add('save-btn');
+                saveBtn.style.marginTop = '10px';
 
-              // Ensure image is fully loaded before initializing Cropper
-              image.onload = function() {
-                  // Destroy any previous cropper instance if it exists
-                  if (cropper) {
-                      cropper.destroy();
-                  }
+                imageBox.appendChild(img);
+                imageBox.appendChild(saveBtn);
+                imageContainer.appendChild(imageBox);
 
-                  // Initialize the cropper instance with desired options
-                  cropper = new Cropper(image, {
-                      aspectRatio: 1,
-                      viewMode: 2,
-                      autoCropArea: 0.8,
-                      background: false
-                  });
+                // Initialize Cropper after image is loaded.
+                const cropper = new Cropper(img, {
+                    aspectRatio: 1,  // Optional: Customize as needed
+                    viewMode: 2,     // Optional: Allows zooming and panning.
+                    responsive: true,
+                    autoCropArea: 0.65
+                });
 
-                  // Show the image container after the cropper is initialized
-                  document.querySelector(".img-container").style.display = "block";
-              };
-          };
+                // Save the cropped image when the button is clicked.
+                saveBtn.addEventListener('click', function() {
+                    const croppedCanvas = cropper.getCroppedCanvas();
+                    if (croppedCanvas) {
+                        const croppedImage = croppedCanvas.toDataURL('image/png');
+                        console.log('Cropped Image:', croppedImage); // You can upload this image to your server if needed
+                        // You can also use the `croppedImage` to replace the preview or upload to your server.
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+  });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      const imageInput = document.getElementById("images");
+      const previewContainer = document.getElementById("previewContainer");
+      let imageFiles = [];
 
-          reader.readAsDataURL(file);
-      });
+      imageInput.addEventListener("change", function (event) {
+          const files = Array.from(event.target.files);
 
-      // Handle crop button click and display cropped image
-      document.getElementById("cropBtn").addEventListener("click", function() {
-          if (!cropper) {
-              alert("Please upload an image first.");
+          if (imageFiles.length + files.length < 3) {
+              alert("You need to upload a minimum of 3 images.");
               return;
           }
 
-          // Get the cropped image as a canvas
-          const croppedCanvas = cropper.getCroppedCanvas();
+          files.forEach((file) => {
+              if (!file.type.startsWith("image/")) return;
 
-          if (croppedCanvas) {
-              const croppedImage = croppedCanvas.toDataURL();
+              const reader = new FileReader();
+              reader.onload = function (e) {
+                  const imgIndex = imageFiles.length;
+                  imageFiles.push(file);
 
-              // Display cropped image in the 'croppedResult' div
-              const croppedResult = document.getElementById("croppedResult");
-              croppedResult.innerHTML = `<img src="${croppedImage}" style="max-width: 100%;">`;
-          } else {
-              console.log("Cropping failed");
-          }
+                  const imgWrapper = document.createElement("div");
+                  imgWrapper.className = "position-relative d-inline-block m-2";
+                  
+                  const img = document.createElement("img");
+                  img.src = e.target.result;
+                  img.className = "img-thumbnail";
+                  img.style.width = "100px";
+                  img.style.cursor = "pointer";
+
+                  const replaceInput = document.createElement("input");
+                  replaceInput.type = "file";
+                  replaceInput.className = "d-none";
+                  replaceInput.accept = "image/*";
+
+                  replaceInput.addEventListener("change", function (e) {
+                      const newFile = e.target.files[0];
+                      if (!newFile.type.startsWith("image/")) return;
+
+                      const newReader = new FileReader();
+                      newReader.onload = function (event) {
+                          img.src = event.target.result;
+                          imageFiles[imgIndex] = newFile;
+                      };
+                      newReader.readAsDataURL(newFile);
+                  });
+
+                  img.addEventListener("click", function () {
+                      replaceInput.click();
+                  });
+
+                  const deleteButton = document.createElement("button");
+                  deleteButton.innerHTML = "X";
+                  deleteButton.className = "btn btn-danger btn-sm position-absolute";
+                  deleteButton.style.top = "0";
+                  deleteButton.style.right = "0";
+                  deleteButton.style.borderRadius = "50%";
+
+                  deleteButton.addEventListener("click", function () {
+                      if (imageFiles.length > 3) {
+                          imageFiles.splice(imgIndex, 1);
+                          previewContainer.removeChild(imgWrapper);
+                      } else {
+                          alert("You must have at least 3 images.");
+                      }
+                  });
+
+                  imgWrapper.appendChild(img);
+                  imgWrapper.appendChild(replaceInput);
+                  imgWrapper.appendChild(deleteButton);
+                  previewContainer.appendChild(imgWrapper);
+              };
+              reader.readAsDataURL(file);
+          });
+
+          imageInput.value = ""; // Reset input field after selection
       });
   });
 </script>

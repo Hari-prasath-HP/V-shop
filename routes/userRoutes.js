@@ -22,7 +22,8 @@ router.post('/verifyOtp', UserController.verifyOtp);
 router.get('/', UserController.renderhome);
 router.get('/shop', UserController.getShopProducts);
 router.get('/product/:id', UserController.viewProduct);
-
+router.post('/add-to-cart', UserController.addToCart);
+router.get('/cart', UserController.viewCart);
 // logout
 router.post('/logout', UserController.logout);
 

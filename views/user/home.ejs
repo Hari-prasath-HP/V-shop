@@ -269,26 +269,31 @@ h1, h2, h3, p {
                     </a>
                 </li>
               </ul>                                 
-              <ul class="navbar-nav ">
+              <ul class="navbar-nav">
                 <% if (user) { %>  <!-- Check if user is logged in -->
-                    <li class="nav-item">
-                        <a href="/account" class="nav-link text-success" style="font-size: 22px;">
-                            <i class="icofont-user"></i> <%= user.name || user.username %>
-                        </a>
-                    </li>
-                <% } else { %>
-                    <li class="nav-item me-2">
-                        <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
-                            Sign in
-                        </a>
-                    </li>
-                <% } %>
-            </ul>            
-                <form action="/logout" method="POST">
-                    <button type="submit" class="btn btn-danger text-white" style="font-size: 22px">
+                  <li class="nav-item">
+                    <a href="/account" class="nav-link text-success" style="font-size: 22px;">
+                      <i class="icofont-user"></i> <%= user.name || user.username %>
+                    </a>
+                  </li>
+                  <!-- Show Signout button when the user is logged in -->
+                  <li class="nav-item me-2">
+                    <form action="/logout" method="POST">
+                      <button type="submit" class="btn btn-danger text-white" style="font-size: 22px">
                         Signout
-                    </button>
-                </form>                
+                      </button>
+                    </form>
+                  </li>
+                <% } else { %>
+                  <!-- Show Sign in button when the user is not logged in -->
+                  <li class="nav-item me-2">
+                    <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
+                      Sign in
+                    </a>
+                  </li>
+                <% } %>
+              </ul>
+                             
             </div>
         </div>
     </nav>

@@ -168,12 +168,6 @@
         .navbar .navbar-toggler {
             border-color: transparent;
         }
-        .navbar-nav {
-            margin-left: auto;
-        }
-        .navbar-nav .nav-item {
-            text-align: center;
-        }
         .btn {
             width: 100%;
             padding: 10px;
@@ -336,6 +330,58 @@
       height: 40px;
     }
   }
+  /* Popup Container */
+.cart-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.checkmark-container {
+  font-size: 50px;
+  color: green;
+}
+
+.popup-message {
+  font-size: 18px;
+  margin-top: 10px;
+  color: #333;
+}
+
+/* Animation for checkmark */
+.animated-checkmark {
+  animation: checkmark-animation 1s ease-in-out;
+}
+
+@keyframes checkmark-animation {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
 </style>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
@@ -352,44 +398,48 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="/" style="font-weight: bold; font-size: 22px;">
+              <ul class="navbar-nav ms-auto">
+                  <li class="nav-item active">
+                      <a class="nav-link" href="/" style="font-weight: bold; font-size: 22px;">
                           Home
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/shop" style="font-weight: bold; font-size: 22px;">
-                          Products
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/cart" class="nav-link" style="font-weight: bold; font-size: 22px;">
-                          <i class="fas fa-shopping-cart"></i> 
-                        </a>
-                    </li>
-                  </ul>                                 
-                    <ul class="navbar-nav ms-3">
-                        <% if (username) { %>
-                            <li class="nav-item">
-                                <a href="/account" class="nav-link text-success" style="font-size: 22px;">
-                                    <i class="icofont-user"></i> <%= username %>
-                                </a>
-                            </li>
-                        <% } else { %>
-                            <li class="nav-item me-2">
-                                <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
-                                    Signin
-                                </a>
-                            </li>
-                        <% } %>
-                    </ul>
-                <form action="/logout" method="POST">
-                  <a href="/logout" class="btn btn-danger text-white" style="font-size: 22px">
-                    Signout
-                </a>
-                </form>
-            </div>
+                      </a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" href="/shop" style="font-weight: bold; font-size: 22px;">
+                         Products
+                      </a>
+                  </li>
+                  <li class="nav-item">
+                      <a href="/cart" class="nav-link" style="font-weight: bold; font-size: 22px;">
+                        <i class="fas fa-shopping-cart"></i> 
+                      </a>
+                  </li>
+              </ul>                                 
+              <ul class="navbar-nav">
+                  <% if (user) { %> 
+                      <li class="nav-item">
+                          <a href="/account" class="nav-link text-success" style="font-size: 22px;">
+                            <i class="icofont-user"></i> <%= user.name || user.username %>
+                          </a>
+                      </li>
+                      <!-- Show Signout button only when the user is logged in -->
+                      <li class="nav-item me-2">
+                          <form action="/logout" method="POST">
+                              <button type="submit" class="btn btn-danger text-white" style="font-size: 22px">
+                                  Signout
+                              </button>
+                          </form>
+                      </li>
+                  <% } else { %>
+                      <!-- Show Sign in button only when the user is not logged in -->
+                      <li class="nav-item me-2">
+                          <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
+                              Sign in
+                          </a>
+                      </li>
+                  <% } %>
+              </ul>
+          </div>          
         </div>
     </nav>
     <nav aria-label="breadcrumb">
@@ -474,13 +524,18 @@
                   <% } %>
                 </p>
                 <div class="quantity-control mt-3 mb-3">
-                  <button class="btn btn-secondary circle-btn" id="reduce-quantity" onclick="updateQuantity('reduce')">-</button>
-                  <input type="number" id="product-quantity" value="1" min="1" max="<%= product.stock %>" class="quantity-input form-control-sm" />
-                  <button class="btn btn-secondary circle-btn" id="add-quantity" onclick="updateQuantity('add')">+</button>
+                  <button type="button" class="btn btn-secondary circle-btn" onclick="updateQuantity('reduce')">-</button>
+                  <input type="number" id="product-quantity" name="quantity" value="1" min="1" max="<%= product.stock %>" class="quantity-input form-control-sm" />
+                  <button type="button" class="btn btn-secondary circle-btn" onclick="updateQuantity('add')">+</button>
                 </div>
-                <button class="btn btn-primary rounded-pill btn-custom mb-4" onclick="addToCart('<%= product._id %>')">
+                
+                <form action="/add-to-cart" method="POST">
+                  <input type="hidden" name="productId" value="<%= product._id %>">
+                  <input type="hidden" name="quantity" id="hidden-quantity" value="1"> <!-- Hidden input to send quantity -->
+                  <button type="submit" class="btn btn-primary rounded-pill btn-custom mb-4">
                     <i class="fa fa-shopping-bag me-2"></i> Add to Cart
-                  </button> 
+                  </button>
+                </form>           
               </div>
             </div>
           </div>
@@ -536,6 +591,15 @@
             </div>
         </div>
     </section>
+<!-- Cart Popup -->
+<div id="cart-popup" class="cart-popup">
+  <div class="popup-content">
+    <div class="checkmark-container">
+      <i class="fa fa-check-circle animated-checkmark"></i>
+    </div>
+    <p class="popup-message">Product added to cart!</p>
+  </div>
+</div>
     <footer class="bg-dark text-white py-4">
         <div class="container">
             <div class="row">
@@ -593,48 +657,35 @@ document.querySelectorAll('.zoomable').forEach(img => {
     }
 </script>  
 <script>
-    function addToCart(productId) {
-      fetch('/check-login')
-        .then(response => response.json())
-        .then(data => {
-          if (!data.isLoggedIn) {
-            window.location.href = '/login';
-          } else {
-            const quantity = document.getElementById('product-quantity') ? document.getElementById('product-quantity').value : 1;
-            fetch('/cart/add', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ productId, quantity })
-            })
-            .then(response => response.json())
-            .then(result => {
-              if (result.success) {
-                alert('Product added to cart');
-                window.location.href = '/cart';
-              } else {
-                alert(result.message);
-              }
-            });
-          }
-        });
-    }
-    function updateQuantity(action) {
-        const quantityInput = document.getElementById("product-quantity");
-        let currentQuantity = parseInt(quantityInput.value);
-        const maxStock = parseInt(quantityInput.getAttribute("max"));
-        if (action === 'add' && currentQuantity < maxStock) {
-            quantityInput.value = currentQuantity + 1;
-        } else if (action === 'reduce' && currentQuantity > 1) {
-            quantityInput.value = currentQuantity - 1;
-        }
-    }
-    function addToCart() {
-        const quantity = document.getElementById("product-quantity").value;
-        const productId = "<%= product._id %>";
-        window.location.href = `/cart/add/${productId}?quantity=${quantity}`;
+  // Function to show error messages
+  function showError(message) {
+      const errorMessage = document.getElementById('error-message');
+      if (errorMessage) {
+          errorMessage.textContent = message;
+          errorMessage.style.display = 'block';  // Show the error message
+      }
+  }
+
+  function updateQuantity(action) {
+    let quantityInput = document.getElementById('product-quantity');
+    let hiddenQuantity = document.getElementById('hidden-quantity');
+    let currentQuantity = parseInt(quantityInput.value);
+
+    if (action === 'add' && currentQuantity < <%= product.stock %>) {
+      quantityInput.value = currentQuantity + 1;
+    } else if (action === 'reduce' && currentQuantity > 1) {
+      quantityInput.value = currentQuantity - 1;
     }
 
-</script>
+    // Update hidden input to send correct quantity
+    hiddenQuantity.value = quantityInput.value;
+  }
 
+  // Sync the quantity input change to the hidden field
+  document.getElementById('product-quantity').addEventListener('input', function() {
+    document.getElementById('hidden-quantity').value = this.value;
+  });
+  </script>
+    
 </body>
 </html>

@@ -22,6 +22,8 @@
       color: #721c24;
     }
   </style>
+  <!-- Toastify CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 
 <body class="bg-light">
@@ -33,12 +35,6 @@
             <h3>Verify OTP</h3>
           </div>
           <div class="card-body">
-            <% if (signerr) { %>
-              <div class="alert alert-custom mt-3 text-center">
-                <%= signerr %>
-              </div>
-            <% } %> 
-
             <!-- Verify OTP Form -->
             <form action="/verifyOtp" method="POST" id="verifyOtpForm">
               <input type="hidden" name="email" value="<%= email %>" />
@@ -63,30 +59,53 @@
       </div>
     </div>
   </div>
+  <!-- Load Toastify before using it -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+  <% if (signerr) { %>
+    <script>
+      window.onload = function() {
+        Toastify({
+          text: "<%= signerr %>",
+          duration: 3000,  
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "red",  
+        }).showToast();
+      };
+    </script>
+  <% } %>
+  <!-- Toastify JS -->
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script>
-    let otpExpires = <%= otpExpires %>; 
+    let otpExpires = <%= otpExpires ? new Date(otpExpires).getTime() : 0 %>;
+  
     let timerElement = document.getElementById("timer");
     let verifyBtn = document.getElementById("verifyBtn");
     let resendOtpForm = document.getElementById("resendOtpForm");
   
-    function startCountdown() {
-      let interval = setInterval(() => {
-        let remainingTime = Math.floor((otpExpires - Date.now()) / 1000);
-        
-        if (remainingTime <= 0) {
-          clearInterval(interval);
-          timerElement.innerText = "OTP Expired!";
-          verifyBtn.style.display = "none"; // Hide Verify button
-          resendOtpForm.style.display = "block"; // Show Resend OTP button
+    if (otpExpires > 0) {
+      let countdown = Math.floor((otpExpires - Date.now()) / 1000);
+      
+      function updateTimer() {
+        if (countdown > 0) {
+          timerElement.innerText = `OTP expires in ${countdown} seconds`;
+          countdown--;
+          setTimeout(updateTimer, 1000);
         } else {
-          timerElement.innerText = `Time left: ${remainingTime} sec`;
+          timerElement.innerText = "OTP expired. Request a new OTP.";
+          verifyBtn.disabled = true;
+          resendOtpForm.style.display = "block";
         }
-      }, 1000);
+      }
+  
+      updateTimer();
+    } else {
+      timerElement.innerText = "OTP expired. Request a new OTP.";
+      verifyBtn.disabled = true;
+      resendOtpForm.style.display = "block";
     }
-  
-    startCountdown();
   </script>
-  
-  
   </body>
 </html>

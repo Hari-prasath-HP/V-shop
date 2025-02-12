@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiple Image Upload and Crop</title>
+  <link href="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.css" rel="stylesheet" />
+  <style>
+    .image-preview-container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .image-preview-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 200px;
+      height: 200px;
+    }
+    .image-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .remove-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: red;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      padding: 5px;
+      cursor: pointer;
+    }
+    #upload-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #saveImagesButton {
+      display: none;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Upload and Crop Multiple Images</h1>
+
+  <div id="upload-container">
+    <input type="file" id="imageUpload" multiple accept="image/*">
+    <button id="saveImagesButton">Save Images</button>
+  </div>
+
+  <div class="image-preview-container" id="imagePreviewContainer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.js"></script>
+  <script>
+    const imageUpload = document.getElementById('imageUpload');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const saveImagesButton = document.getElementById('saveImagesButton');
+    let cropperInstances = [];
+
+    // Upload and preview multiple images
+    imageUpload.addEventListener('change', function(event) {
+      const files = event.target.files;
+      const fileArray = Array.from(files);
+      
+      // Clear previous previews and cropper instances
+      imagePreviewContainer.innerHTML = "";
+      cropperInstances.forEach(cropper => cropper.destroy());
+      cropperInstances = [];
+
+      // Handle each selected image
+      fileArray.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imagePreviewWrapper = document.createElement('div');
+          imagePreviewWrapper.classList.add('image-preview-wrapper');
+
+          const imagePreview = document.createElement('img');
+          imagePreview.src = e.target.result;
+          imagePreview.classList.add('image-preview');
+          imagePreviewWrapper.appendChild(imagePreview);
+
+          const removeBtn = document.createElement('button');
+          removeBtn.innerHTML = 'X';
+          removeBtn.classList.add('remove-btn');
+          removeBtn.onclick = function() {
+            removeImage(index);
+          };
+          imagePreviewWrapper.appendChild(removeBtn);
+
+          imagePreviewContainer.appendChild(imagePreviewWrapper);
+
+          // Initialize cropper for the new image
+          const cropper = new Cropper(imagePreview, {
+            aspectRatio: 1,
+            viewMode: 1,
+            responsive: true,
+            zoomable: true,
+            scalable: true,
+            rotatable: true,
+            cropBoxResizable: true,
+          });
+          cropperInstances.push(cropper);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Show the save button
+      saveImagesButton.style.display = 'inline-block';
+    });
+
+    // Remove image functionality
+    function removeImage(index) {
+      // Remove the preview and destroy the cropper instance
+      const previewWrappers = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
+      previewWrappers[index].remove();
+      cropperInstances[index].destroy();
+      cropperInstances.splice(index, 1);
+
+      // Hide save button if there are no images
+      if (cropperInstances.length === 0) {
+        saveImagesButton.style.display = 'none';
+      }
+    }
+
+    // Save cropped images
+    saveImagesButton.addEventListener('click', () => {
+      const croppedImages = cropperInstances.map((cropper, index) => {
+        const croppedCanvas = cropper.getCroppedCanvas({
+          width: 300, // Set fixed width (can be changed)
+          height: 300, // Set fixed height (can be changed)
+        });
+        return croppedCanvas.toDataURL('image/png'); // Get the cropped image as base64
+      });
+
+      console.log('Cropped Images:', croppedImages);
+      // Here you can send the cropped images to the server using an AJAX request, for example.
+    });
+  </script>
+
+</body>
+</html>

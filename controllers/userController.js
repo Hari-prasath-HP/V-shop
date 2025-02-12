@@ -6,6 +6,7 @@ const Category = require('../models/category');
 const Product = require('../models/product');
 const Otp = require('../models/renderotp');
 const passport = require("passport");
+const Cart = require('../models/Cart'); 
 //handle signup
 exports.renderSignup = (req, res) => {
   if (req.session.logstate) {
@@ -30,7 +31,11 @@ exports.handleSignup = async (req, res) => {
         });
     }
     const otp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpires = new Date(Date.now() + 1 * 60 * 1000); 
+    const otpExpires = new Date(Date.now() + 1 * 60 * 1000); // Expires in 1 min
+
+    // Store otpExpires in session
+    req.session.otpExpires = otpExpires;
+
     await Otp.findOneAndUpdate(
       { email },
       { otp, otpExpires },
@@ -144,26 +149,49 @@ exports.resendOtp = async (req, res) => {
 };
 exports.verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
+
   try {
     if (!email || !otp) {
-      req.session.signerr = "Email and OTP are required.";
-      return res.redirect(`/verifyOtp?email=${email}`);
+      return res.render("user/verifyOtp", {
+        email,
+        signerr: "Email and OTP are required.",
+        otpExpires: req.session.otpExpires ? new Date(req.session.otpExpires) : null 
+      });
     }
+
     const otpRecord = await Otp.findOne({ email });
+
     if (!otpRecord) {
-      req.session.signerr = "OTP not found. Please request a new OTP.";
-      return res.redirect(`/verifyOtp?email=${email}`);
+      return res.render("user/verifyOtp", {
+        email,
+        signerr: "OTP not found. Please request a new OTP.",
+        otpExpires: req.session.otpExpires ? new Date(req.session.otpExpires) : null
+      });
     }
-    if (Date.now() > otpRecord.otpExpires) {
-      req.session.signerr = "OTP has expired. Please request a new one.";
-      return res.redirect(`/verifyOtp?email=${email}`);
+
+    // Store OTP expiration in session if not already set
+    req.session.otpExpires = req.session.otpExpires || otpRecord.otpExpires;
+
+    if (Date.now() > new Date(req.session.otpExpires)) {
+      return res.render("user/verifyOtp", {
+        email,
+        signerr: "OTP has expired. Please request a new one.",
+        otpExpires: new Date(req.session.otpExpires)
+      });
     }
+
     if (String(otpRecord.otp) !== String(otp)) {
-      req.session.signerr = "Invalid OTP. Please try again.";
-      return res.redirect(`/verifyOtp?email=${email}`);
+      return res.render("user/verifyOtp", {
+        email,
+        signerr: "Invalid OTP. Please try again.",
+        otpExpires: new Date(req.session.otpExpires) // Convert back to Date
+      });
     }
+
+    // OTP is valid, proceed with user registration
     await Otp.deleteOne({ email });
-    req.session.signerr = null;
+    req.session.otpExpires = null; // Clear session after successful OTP verification
+
     const { username, phone, password } = req.session.signupData;
     const newUser = new User({
       username,
@@ -171,16 +199,21 @@ exports.verifyOtp = async (req, res) => {
       phone,
       password: await bcrypt.hash(password, 10)
     });
+
     await newUser.save();
     return res.render("user/login", {
       email, 
       loginerr: null,
-      error:null
+      error: null
     });
+
   } catch (err) {
     console.error("Error during OTP verification:", err);
-    req.session.signerr = "An error occurred. Please try again.";
-    return res.redirect(`/verifyOtp?email=${email}`);
+    return res.render("user/verifyOtp", {
+      email,
+      signerr: "An error occurred. Please try again.",
+      otpExpires: req.session.otpExpires ? new Date(req.session.otpExpires) : null
+    });
   }
 };
 // Render home
@@ -223,8 +256,22 @@ exports.renderhome = async (req, res) => {
 };
 exports.getShopProducts = async (req, res) => {
   try {
+    let user = req.session.user ||null;
+    let username = "";
+    if (req.session.user) {
+      const user = await User.findOne({ email: req.session.user.email });
+      if (user) {
+        username = user.username;
+      }
+    }    
+    const currentPage = parseInt(req.query.page) || 1;
+    const itemsPerPage = 8;
+    const totalProducts = await Product.countDocuments({ isDeleted: { $ne: true } });
+    const totalPages = Math.ceil(totalProducts / itemsPerPage);
     const products = await Product.find({ isDeleted: { $ne: true } })
-    .populate('category');
+      .skip((currentPage - 1) * itemsPerPage) 
+      .limit(itemsPerPage)
+      .populate('category');
     products.forEach(product => {
       product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
       if (product.offerPrice > 0) {
@@ -236,6 +283,20 @@ exports.getShopProducts = async (req, res) => {
         product.offerPrice = product.price.toFixed(2);
       }
     });
+    res.render('user/shopproduct', {
+      user,
+      products,
+      username,
+      currentPage,
+      totalPages
+    });
+  } catch (err) {
+    console.error('Error fetching products:', err);
+    res.status(500).send('Server Error');
+  }
+};
+exports.viewProduct = async (req, res) => {
+  let user = req.session.user ||null;
     let username = "";
     if (req.session.user) {
       const user = await User.findOne({ email: req.session.user.email });
@@ -243,13 +304,6 @@ exports.getShopProducts = async (req, res) => {
         username = user.username;
       }
     }
-    res.render('user/shopproduct', { products, username });
-  } catch (err) {
-    console.error('Error fetching products:', err);
-    res.status(500).send('Server Error');
-  }
-};
-exports.viewProduct = async (req, res) => {
   try {
     const productId = req.params.id;
     const product = await Product.findById(productId).populate('category');
@@ -283,17 +337,62 @@ exports.viewProduct = async (req, res) => {
         relatedProduct.offerPrice = relatedProduct.price.toFixed(2); 
       }
     });
-    let username = "";
-    if (req.session.user) {
-      const user = await User.findOne({ email: req.session.user.email });
-      if (user) {
-        username = user.username;
-      }
-    }
-    res.render('user/product-detail', { product, username, relatedProducts });
+    res.render('user/product-detail', { user, product, username, relatedProducts });
   } catch (err) {
     console.error('Error fetching product details:', err);
     res.status(500).send(`Server Error: ${err.message}`);
+  }
+};
+exports.addToCart = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
+  try {
+    const { productId, quantity } = req.body;
+    const userId = req.session.user.id;
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).send('Product not found');
+    }
+    let cartItem = await Cart.findOne({ userId, productId });
+    if (cartItem) {
+      cartItem.quantity += parseInt(quantity, 10);
+    } else {
+      cartItem = new Cart({ userId, productId, quantity });
+    }
+    await cartItem.save();
+    res.redirect('/cart');
+  } catch (err) {
+    console.error('Error adding to cart:', err);
+    res.status(500).send('Server Error');
+  }
+};
+exports.viewCart = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  try {
+    const userId = req.session.user.id; 
+    const cartItems = await Cart.find({ userId }).populate('productId');
+    if (!cartItems || cartItems.length === 0) {
+      return res.render('user/cart', { cart: [], username: req.session.user.username });
+    }
+    const cart = cartItems.map(item => ({
+      _id: item._id,
+      productId: item.productId._id,
+      name: item.productId.name,
+      description: item.productId.description,
+      price: item.productId.price,
+      image: item.productId.images[0],
+      quantity: item.quantity,
+      subtotal: item.quantity * item.productId.price
+    }));
+    console.log("Processed Cart Data:", cart);
+    res.render('user/cart', { cart, username: req.session.user.username });
+  } catch (err) {
+    console.error('Error viewing cart:', err);
+    res.status(500).send('Server Error');
   }
 };
 exports.logout = (req, res) => {
