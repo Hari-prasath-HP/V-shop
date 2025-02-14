@@ -323,7 +323,9 @@ exports.manageProductPage = async (req, res) => {
         category: product.category ? { name: product.category.name } : { name: "Uncategorized" },
         imageURLs: product.images.map(image => `/uploads/products/${image}`),
         offerPrice: finalPrice,
-        discountPrice: product.price - finalPrice
+        discountPrice: product.price - finalPrice,
+        quantity: product.quantity ? product.quantity.value : null,
+        unit: product.quantity ? product.quantity.unit : null
       };
     });
 
@@ -345,10 +347,16 @@ exports.addProductPage = async (req, res) => {
     const categories = await Category.find();
     const errorMessage = req.session.error || null;
     req.session.error = null;
+
+    const quantity = 0; // Default value for a new product
+    const unit = ''; // Default unit for a new product (you can customize this as needed)
+
     res.render('admin/addProduct', {
       categories,
       product: null,
       error: errorMessage,
+      quantity, // Pass quantity to the view
+      unit, // Pass unit to the view
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -356,9 +364,10 @@ exports.addProductPage = async (req, res) => {
   }
 };
 
+
 exports.addProduct = async (req, res) => {
   try {
-    const { name, description, price, category, stock, offerPrice } = req.body;
+    const { name, description, price, category, stock, offerPrice, quantity, unit } = req.body;
     const existingProduct = await Product.findOne({ name: new RegExp(`^${name}$`, 'i') });
     if (existingProduct) {
       req.session.error = 'Product already exists';
@@ -384,6 +393,10 @@ exports.addProduct = async (req, res) => {
       images,
       offerPrice: offerPriceValue,
       isListed: true,
+      quantity: {
+        value: quantity,
+        unit: unit
+      }
     });
 
     await newProduct.save();
@@ -402,7 +415,8 @@ exports.editProductPage = async (req, res) => {
     if (!product) {
       return res.status(404).send('Product not found');
     }
-    res.render('admin/editProduct', { product, categories });
+    res.render('admin/editProduct', { product, categories,quantity: product.quantity.value,
+      unit: product.quantity.unit, });  
   } catch (error) {
     console.error('Error fetching product or categories:', error);
     res.status(500).send('Internal Server Error');
@@ -411,31 +425,43 @@ exports.editProductPage = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const productId = req.params.id;
-    const { name, description, price, category, stock, isListed, offerPrice } = req.body;
-    console.log(offerPrice)
+    const { name, description, price, category, stock, isListed, offerPrice, quantity, unit } = req.body;
+    
+    // Ensure the isListed flag is properly cast to boolean
     const isListedBool = isListed === 'true';
 
+    // Fetch the existing product from the database
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).send('Product not found');
     }
+
+    // Default image array from the current product if no new files are uploaded
     let images = product.images;
+
+    // Handle new images if uploaded
     if (req.files && req.files.length > 0) {
+      // Delete old images from the server
       product.images.forEach(image => {
         const imagePath = path.join(__dirname, '../uploads/products', image);
         if (fs.existsSync(imagePath)) {
           fs.unlinkSync(imagePath);
         }
       });
+      // Store the newly uploaded image filenames
       images = req.files.map(file => file.filename);
     }
+
+    // Calculate the discount based on the offer price
     let updatedOfferPrice = parseFloat(offerPrice) || product.offerPrice || price;
     let discount = 0;
     if (updatedOfferPrice < price) {
-      discount = Math.round(((price - updatedOfferPrice) / price) * 100); 
+      discount = Math.round(((price - updatedOfferPrice) / price) * 100);
     } else {
       updatedOfferPrice = price;
     }
+
+    // Update the product in the database
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
       { 
@@ -447,15 +473,21 @@ exports.updateProduct = async (req, res) => {
         isListed: isListedBool, 
         images, 
         offerPrice: updatedOfferPrice,
-        discount 
+        discount,
+        quantity: {
+          value: quantity,
+          unit: unit
+        }
       },
       { new: true }
     );
 
+    // If the product was not updated, return an error
     if (!updatedProduct) {
       return res.status(404).send('Product not found');
     }
 
+    // Redirect to the admin product management page
     res.redirect('/admin/product');
   } catch (error) {
     console.error("Error updating product:", error);

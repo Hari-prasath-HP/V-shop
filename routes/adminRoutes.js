@@ -4,7 +4,6 @@ const adminController = require('../controllers/adminController');
 const { productUpload} = require('../config/multerConfig');
 const { categoryUpload } = require('../config/multerConfig');
 const { adminAuth } = require("../middlewares/authMiddleware");
-
 // Admin Login Route
 adminrouter.get('/login', adminController.loginPage);
 adminrouter.post('/login', adminController.login); 

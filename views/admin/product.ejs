@@ -37,6 +37,7 @@
                 <th style="width: 15%;">Name</th>
                 <th style="width: 10%;">Price (₹)</th>
                 <th style="width: 10%;">Stock</th>
+                <th style="width: 10%;">Quantity</th>
                 <th style="width: 30%;">Description</th>
                 <th style="width: 10%;">Category</th>
                 <th style="width: 20%;">Images</th>
@@ -66,12 +67,13 @@
                     <% } %>
                   </td>                 
                   <td><%= product.stock %></td>
+                  <td><%= product.quantity %> <%= product.unit %></td>
                   <td style="word-wrap: break-word; white-space: normal;">
                     <%= product.description.length > 50 ? product.description.substring(0, 50) + '...' : product.description %>
                   </td>
                   <td>
                     <% if (product.category && product.category.name) { %>
-                      <%= product.category.name %> <!-- Display category name -->
+                      <%= product.category.name %>
                     <% } else { %>
                       <p>No category available</p>
                     <% } %>

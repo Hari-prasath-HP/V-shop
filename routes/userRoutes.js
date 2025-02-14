@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const UserController = require('../controllers/userController');
+const cartController = require('../controllers/cartController')
+const checkUserStatus = require('../middlewares/checkUserStatus');
 const passport = require("passport");
+const accountController = require("../controllers/accountController")
 //signup
 router.get("/signup", UserController.renderSignup);
 router.post('/signup', UserController.handleSignup);
@@ -19,11 +22,25 @@ router.post("/resendOtp", UserController.resendOtp);
 router.post('/verifyOtp', UserController.verifyOtp);
 
 //product
-router.get('/', UserController.renderhome);
-router.get('/shop', UserController.getShopProducts);
-router.get('/product/:id', UserController.viewProduct);
-router.post('/add-to-cart', UserController.addToCart);
-router.get('/cart', UserController.viewCart);
+router.get('/', checkUserStatus , UserController.renderhome);
+router.get('/shop', checkUserStatus , UserController.getShopProducts);
+router.get('/product/:id', checkUserStatus , UserController.viewProduct);
+router.post('/add-to-cart', checkUserStatus , cartController.addToCart);
+router.get('/cart', checkUserStatus , cartController.viewCart);
+router.post('/update-quantity', cartController.updateQuantity);
+router.get('/remove/:productId', cartController.removeFromCart);
+
+router.get('/userdetails', accountController.viewUserDetails);
+router.post('/update-user',accountController.updateUser);
+router.get('/add-address', accountController.addAddress);
+
+// Post the Add Address form data
+router.post('/add-address', accountController.saveAddress);
+router.get('/address', accountController.getAddresses);
+router.get('/edit-address/:id', accountController.getEditAddress);
+router.post('/update-address/:id', accountController.updateAddress);
+router.get('/delete-address/:id', accountController.deleteAddress);
+router.get('/set-default-address/:id', accountController.setDefaultAddress);
 // logout
 router.post('/logout', UserController.logout);
 

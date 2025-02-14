@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Address</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/style.css"> <!-- Link to your CSS file -->
+    <style>
+        .card-link {
+            text-decoration: none; /* Remove the default underline */
+            color: inherit; /* Inherit the text color from the parent */
+        }
+        body {
+            background-color: #f8f9fa;
+        }
+        .breadcrumb {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 10px 15px;
+        }
+        .user-info {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .user-info h4 {
+            border-bottom: 2px solid #00ccff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background-color: #00bfff;
+            border: none;
+            padding: 10px 15px;
+            font-weight: bold;
+        }
+        .btn-primary:hover {
+            background-color: #0077e6;
+        }
+        .btn-danger {
+            background-color: #ff4d4d;
+            border: none;
+            padding: 10px 15px;
+            font-weight: bold;
+        }
+        .btn-danger:hover {
+            background-color: #cc0000;
+        }
+        .user-option {
+        border: 1px solid #ddd; /* Light border */
+        border-radius: 8px; /* Rounded corners */
+        background-color: #f8f9fa; /* Light background */
+    }
+
+    .user-option:hover {
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow on hover */
+        transform: translateY(-5px); /* Slight lift effect */
+        transition: all 0.3s ease-in-out; /* Smooth transition */
+    }
+    </style>
+</head>
+<body>
+
+    <nav aria-label="breadcrumb" class="mt-3">
+        <ol class="breadcrumb container">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">My Address</li>
+        </ol>
+    </nav>
+    <!-- User Options Grid -->
+    <div class="container mt-2">
+        <div class="row g-2">
+            <div class="col-md-2">
+                <a href="/userdetails" class="card-link">
+                    <div class="card user-option">
+                        <div class="card-body text-center">
+                            <p class="card-title">My Account</p>
+                        </div>
+                    </div>
+                </a>
+            </div>                
+            <div class="col-md-2">
+                <a href="/address" class="card-link">
+                    <div class="card user-option">
+                        <div class="card-body text-center">
+                            <p class="card-title">My Address</p>
+                        </div>
+                    </div>
+                </a>
+            </div> 
+            <div class="col-md-2">
+                <a href="/add-address" class="card-link">
+                    <div class="card user-option">
+                        <div class="card-body text-center">
+                            <p class="card-title">Add Address</p>
+                        </div>
+                    </div>
+                </a>
+            </div> 
+            <div class="col-md-2">
+                <div class="card user-option">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Wallet</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card user-option">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Wishlist</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card user-option">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">All Orders</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container mt-4">
+        <div class="card user-info">
+            <div class="card-body">
+                <h4 class="card-title">My Addresses</h4>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>House No.</th>
+                            <th>Area</th>
+                            <th>City</th>
+                            <th>State</th>
+                            <th>Pincode</th>
+                            <th>Title</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% addresses.forEach((address, index) => { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= address.name %></td>
+                            <td><%= address.phone %></td>
+                            <td><%= address.houseNo %></td>
+                            <td><%= address.area %></td>
+                            <td><%= address.city %></td>
+                            <td><%= address.state %></td>
+                            <td><%= address.pincode %></td>
+                            <td><%= address.title %></td>
+                            <td>
+                                <a href="/edit-address/<%= address._id %>" class="btn btn-primary btn-sm">Edit</a>
+                                <a href="/delete-address/<%= address._id %>" class="btn btn-danger btn-sm">Delete</a>
+                                <% if (!address.isDefault) { %>
+                                    <a href="/set-default-address/<%= address._id %>" class="btn btn-secondary btn-sm">Set as Default</a>
+                                <% } else { %>
+                                    <span class="badge bg-success">Default</span>
+                                <% } %>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

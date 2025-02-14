@@ -32,7 +32,7 @@ const productFileFilter = (req, file, cb) => {
 const productUpload = multer({
   storage: productStorage,
   fileFilter: productFileFilter
-}).array('images', 3);
+}).array('images', 10);
 
   const categoryStorage = multer.diskStorage({
     destination: (req, file, cb) => {

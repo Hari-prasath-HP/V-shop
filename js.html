@@ -1,147 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multiple Image Upload and Crop</title>
-  <link href="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.css" rel="stylesheet" />
-  <style>
-    .image-preview-container {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-    .image-preview-wrapper {
-      position: relative;
-      display: inline-block;
-      width: 200px;
-      height: 200px;
-    }
-    .image-preview {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .remove-btn {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background-color: red;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      padding: 5px;
-      cursor: pointer;
-    }
-    #upload-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    #saveImagesButton {
-      display: none;
-      margin-top: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <!-- Link to Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css"> <!-- Your custom styles -->
 </head>
 <body>
 
-  <h1>Upload and Crop Multiple Images</h1>
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/cart">Cart</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+        </ol>
+    </nav>
 
-  <div id="upload-container">
-    <input type="file" id="imageUpload" multiple accept="image/*">
-    <button id="saveImagesButton">Save Images</button>
-  </div>
+<!-- Address Details (Modified with table header and dynamic address details in the next row) -->
+<div class="address-details">
+    <h3>Shipping Address</h3>
+    <!-- Display shipping address dynamically from DB -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th><strong>Name</strong></th>
+                <th><strong>Sno</strong></th>
+                <th><strong>Home No</strong></th>
+                <th><strong>Area</strong></th>
+                <th><strong>City</strong></th>
+                <th><strong>State</strong></th>
+                <th><strong>Pincode</strong></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><%= address.name %></td>
+                <td><%= address.sno %></td>
+                <td><%= address.homeNo %></td>
+                <td><%= address.area %></td>
+                <td><%= address.city %></td>
+                <td><%= address.state %></td>
+                <td><%= address.pincode %></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="mt-3">
+        <button class="btn btn-secondary">Change Address</button>
+        <button class="btn btn-primary">Add New Address</button>
+    </div>
+</div>
 
-  <div class="image-preview-container" id="imagePreviewContainer"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.js"></script>
-  <script>
-    const imageUpload = document.getElementById('imageUpload');
-    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-    const saveImagesButton = document.getElementById('saveImagesButton');
-    let cropperInstances = [];
 
-    // Upload and preview multiple images
-    imageUpload.addEventListener('change', function(event) {
-      const files = event.target.files;
-      const fileArray = Array.from(files);
-      
-      // Clear previous previews and cropper instances
-      imagePreviewContainer.innerHTML = "";
-      cropperInstances.forEach(cropper => cropper.destroy());
-      cropperInstances = [];
-
-      // Handle each selected image
-      fileArray.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const imagePreviewWrapper = document.createElement('div');
-          imagePreviewWrapper.classList.add('image-preview-wrapper');
-
-          const imagePreview = document.createElement('img');
-          imagePreview.src = e.target.result;
-          imagePreview.classList.add('image-preview');
-          imagePreviewWrapper.appendChild(imagePreview);
-
-          const removeBtn = document.createElement('button');
-          removeBtn.innerHTML = 'X';
-          removeBtn.classList.add('remove-btn');
-          removeBtn.onclick = function() {
-            removeImage(index);
-          };
-          imagePreviewWrapper.appendChild(removeBtn);
-
-          imagePreviewContainer.appendChild(imagePreviewWrapper);
-
-          // Initialize cropper for the new image
-          const cropper = new Cropper(imagePreview, {
-            aspectRatio: 1,
-            viewMode: 1,
-            responsive: true,
-            zoomable: true,
-            scalable: true,
-            rotatable: true,
-            cropBoxResizable: true,
-          });
-          cropperInstances.push(cropper);
-        };
-        reader.readAsDataURL(file);
-      });
-
-      // Show the save button
-      saveImagesButton.style.display = 'inline-block';
-    });
-
-    // Remove image functionality
-    function removeImage(index) {
-      // Remove the preview and destroy the cropper instance
-      const previewWrappers = imagePreviewContainer.querySelectorAll('.image-preview-wrapper');
-      previewWrappers[index].remove();
-      cropperInstances[index].destroy();
-      cropperInstances.splice(index, 1);
-
-      // Hide save button if there are no images
-      if (cropperInstances.length === 0) {
-        saveImagesButton.style.display = 'none';
-      }
-    }
-
-    // Save cropped images
-    saveImagesButton.addEventListener('click', () => {
-      const croppedImages = cropperInstances.map((cropper, index) => {
-        const croppedCanvas = cropper.getCroppedCanvas({
-          width: 300, // Set fixed width (can be changed)
-          height: 300, // Set fixed height (can be changed)
-        });
-        return croppedCanvas.toDataURL('image/png'); // Get the cropped image as base64
-      });
-
-      console.log('Cropped Images:', croppedImages);
-      // Here you can send the cropped images to the server using an AJAX request, for example.
-    });
-  </script>
-
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

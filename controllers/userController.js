@@ -216,38 +216,40 @@ exports.verifyOtp = async (req, res) => {
     });
   }
 };
-// Render home
 exports.renderhome = async (req, res) => {
   try {
-    let user = req.session.user ||null;
-    let username = "";
-    if (req.session.user) {
-      user = await User.findOne({ email: req.session.user.email });
-      if (user) {
-        username = user.username;
-      }
-    }
+    let user = req.user || null;
+    let username = user ? user.username : "";
+
     const categories = await Category.find({ isDeleted: { $ne: true } });
     const products = await Product.find({ isDeleted: { $ne: true } }).populate('category');
+
     const calculateOfferPercentage = (price, offerPrice) => {
       if (price > 0 && offerPrice > 0) {
         return ((price - offerPrice) / price) * 100;
       }
       return 0;
     };
+
     products.forEach(product => {
       product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
       product.discountedPrice = product.offerPrice > 0 ? product.offerPrice : product.price;
       product.offerPercentage = calculateOfferPercentage(product.price, product.offerPrice);
+
+      // Accessing quantity value and unit
+      product.quantityValue = product.quantity.value;
+      product.quantityUnit = product.quantity.unit;
     });
+
     const topOfferProducts = products.sort((a, b) => b.offerPercentage - a.offerPercentage).slice(0, 4);
+
     res.render("user/home", {
       user,
       username,
       phone: user ? user.phone : null,
       categories,
-      topOfferProducts, 
-      isLoggedIn: !!req.session.user,
+      topOfferProducts,
+      isLoggedIn: !!user,
     });
   } catch (err) {
     console.error("Error fetching user data:", err);
@@ -256,35 +258,40 @@ exports.renderhome = async (req, res) => {
 };
 exports.getShopProducts = async (req, res) => {
   try {
-    let user = req.session.user ||null;
+    let user = req.session.user || null;
     let username = "";
     if (req.session.user) {
       const user = await User.findOne({ email: req.session.user.email });
       if (user) {
         username = user.username;
       }
-    }    
+    }
     const currentPage = parseInt(req.query.page) || 1;
     const itemsPerPage = 8;
     const totalProducts = await Product.countDocuments({ isDeleted: { $ne: true } });
     const totalPages = Math.ceil(totalProducts / itemsPerPage);
     const products = await Product.find({ isDeleted: { $ne: true } })
-      .skip((currentPage - 1) * itemsPerPage) 
+      .skip((currentPage - 1) * itemsPerPage)
       .limit(itemsPerPage)
       .populate('category');
     products.forEach(product => {
       product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
       if (product.offerPrice > 0) {
         const discountPercentage = ((product.price - product.offerPrice) / product.price) * 100;
-        product.offerPercentage = discountPercentage.toFixed(2); 
+        product.offerPercentage = discountPercentage.toFixed(2);
         product.offerPrice = product.offerPrice.toFixed(2);
       } else {
         product.offerPercentage = 0;
         product.offerPrice = product.price.toFixed(2);
       }
+
+      // Add quantity and unit to the product object
+      product.quantity = product.stock; // Assuming stock represents quantity
+      product.unit = product.unit || 'Unit'; // Replace 'Unit' with the actual unit if available
     });
     res.render('user/shopproduct', {
       user,
+      username,
       products,
       username,
       currentPage,
@@ -295,15 +302,16 @@ exports.getShopProducts = async (req, res) => {
     res.status(500).send('Server Error');
   }
 };
+
 exports.viewProduct = async (req, res) => {
-  let user = req.session.user ||null;
-    let username = "";
-    if (req.session.user) {
-      const user = await User.findOne({ email: req.session.user.email });
-      if (user) {
-        username = user.username;
-      }
+  let user = req.session.user || null;
+  let username = "";
+  if (req.session.user) {
+    const user = await User.findOne({ email: req.session.user.email });
+    if (user) {
+      username = user.username;
     }
+  }
   try {
     const productId = req.params.id;
     const product = await Product.findById(productId).populate('category');
@@ -313,29 +321,36 @@ exports.viewProduct = async (req, res) => {
     product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
     if (product.offerPrice > 0) {
       const discountPercentage = ((product.price - product.offerPrice) / product.price) * 100;
-      product.offerPercentage = discountPercentage.toFixed(2); 
-      product.offerPrice = product.offerPrice.toFixed(2); 
+      product.offerPercentage = discountPercentage.toFixed(2);
+      product.offerPrice = product.offerPrice.toFixed(2);
     } else {
-      product.offerPercentage = 0; 
-      product.offerPrice = product.price.toFixed(2);  
+      product.offerPercentage = 0;
+      product.offerPrice = product.price.toFixed(2);
     }
     if (product.offerPrice !== product.price.toFixed(2)) {
       product.offerPercentageDisplay = product.offerPercentage + "% OFF";
     }
+    product.quantity = product.stock; // Assuming stock represents quantity
+    product.unit = product.unit || 'Unit'; // Replace 'Unit' with the actual unit if available
+
     const relatedProducts = await Product.find({
       category: product.category,
-      _id: { $ne: productId } 
-    }).limit(4);
+      _id: { $ne: productId }
+    }).limit(3);
     relatedProducts.forEach(relatedProduct => {
       relatedProduct.imagePaths = relatedProduct.images.map(image => `/uploads/products/${image}`);
       if (relatedProduct.offerPrice > 0) {
         const relatedDiscountPercentage = ((relatedProduct.price - relatedProduct.offerPrice) / relatedProduct.price) * 100;
-        relatedProduct.offerPercentage = relatedDiscountPercentage.toFixed(2); 
-        relatedProduct.offerPrice = relatedProduct.offerPrice.toFixed(2); 
+        relatedProduct.offerPercentage = relatedDiscountPercentage.toFixed(2);
+        relatedProduct.offerPrice = relatedProduct.offerPrice.toFixed(2);
       } else {
-        relatedProduct.offerPercentage = 0; 
-        relatedProduct.offerPrice = relatedProduct.price.toFixed(2); 
+        relatedProduct.offerPercentage = 0;
+        relatedProduct.offerPrice = relatedProduct.price.toFixed(2);
       }
+
+      // Add quantity and unit to related product
+      relatedProduct.quantity = relatedProduct.stock; // Assuming stock represents quantity
+      relatedProduct.unit = relatedProduct.unit || 'Unit'; // Replace 'Unit' with the actual unit if available
     });
     res.render('user/product-detail', { user, product, username, relatedProducts });
   } catch (err) {
@@ -343,58 +358,7 @@ exports.viewProduct = async (req, res) => {
     res.status(500).send(`Server Error: ${err.message}`);
   }
 };
-exports.addToCart = async (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/login');
-  }
 
-  try {
-    const { productId, quantity } = req.body;
-    const userId = req.session.user.id;
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).send('Product not found');
-    }
-    let cartItem = await Cart.findOne({ userId, productId });
-    if (cartItem) {
-      cartItem.quantity += parseInt(quantity, 10);
-    } else {
-      cartItem = new Cart({ userId, productId, quantity });
-    }
-    await cartItem.save();
-    res.redirect('/cart');
-  } catch (err) {
-    console.error('Error adding to cart:', err);
-    res.status(500).send('Server Error');
-  }
-};
-exports.viewCart = async (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/login');
-  }
-  try {
-    const userId = req.session.user.id; 
-    const cartItems = await Cart.find({ userId }).populate('productId');
-    if (!cartItems || cartItems.length === 0) {
-      return res.render('user/cart', { cart: [], username: req.session.user.username });
-    }
-    const cart = cartItems.map(item => ({
-      _id: item._id,
-      productId: item.productId._id,
-      name: item.productId.name,
-      description: item.productId.description,
-      price: item.productId.price,
-      image: item.productId.images[0],
-      quantity: item.quantity,
-      subtotal: item.quantity * item.productId.price
-    }));
-    console.log("Processed Cart Data:", cart);
-    res.render('user/cart', { cart, username: req.session.user.username });
-  } catch (err) {
-    console.error('Error viewing cart:', err);
-    res.status(500).send('Server Error');
-  }
-};
 exports.logout = (req, res) => {
   try {
     req.session.destroy((err) => {

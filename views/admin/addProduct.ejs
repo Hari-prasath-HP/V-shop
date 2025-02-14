@@ -64,7 +64,22 @@
               <textarea id="description" name="description" class="form-control" placeholder="Enter product description" rows="4" ></textarea>
               <span id="descriptionError" class="error"></span>
             </div>
-            
+            <div class="mb-3">
+              <label for="quantity" class="form-label">Product Quantity</label>
+              <div class="input-group">
+                <!-- Pre-fill quantity with the existing product quantity -->
+                <input type="number" id="quantity" name="quantity" class="form-control" placeholder="Enter quantity" min="0.1" step="0.1" value="<%= quantity %>" />
+                
+                <select id="unit" name="unit" class="form-select">
+                  <!-- Set the selected option to the existing product unit -->
+                  <option value="gm" <%= unit === 'gm' ? 'selected' : '' %>>gm</option>
+                  <option value="kg" <%= unit === 'kg' ? 'selected' : '' %>>kg</option>
+                  <option value="ml" <%= unit === 'ml' ? 'selected' : '' %>>ml</option>
+                  <option value="litre" <%= unit === 'litre' ? 'selected' : '' %>>litre</option>
+                </select>
+              </div>
+              <span id="quantityError" class="error"></span>
+            </div>            
             <div class="mb-3">
               <label for="stock" class="form-label">Number of Stock</label>
               <input type="number" id="stock" name="stock" class="form-control" placeholder="Enter number of stock" min="1"  />
@@ -73,9 +88,9 @@
             
             <div class="container mt-4">
               <label for="images" class="form-label">Upload Images</label>
-              <input type="file" id="images" class="form-control" multiple accept="image/*">
+              <input type="file" id="images" name="images" class="form-control" multiple accept="image/*" onchange="previewImages()">
               <div id="previewContainer" class="d-flex gap-2 flex-wrap mt-2"></div>
-            </div>
+            </div>            
             </div>
             <div class="d-grid">
               <button type="submit" class="btn btn-custom">Add Product</button>
@@ -111,137 +126,81 @@
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.12/cropper.min.js"></script>
 <script>
-  document.getElementById('images').addEventListener('change', function(event) {
-    const files = event.target.files;
-    const imageContainer = document.getElementById('previewContainer');
-    imageContainer.innerHTML = '';  // Clear previous preview if any.
+  function previewImages() {
+    const previewContainer = document.getElementById('previewContainer');
+    previewContainer.innerHTML = ''; // Clear previous previews
+    const files = document.getElementById('images').files;
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const reader = new FileReader();
+      
+      reader.onload = function (e) {
+        const imgElement = document.createElement('img');
+        imgElement.src = e.target.result;
+        imgElement.classList.add('img-thumbnail', 'm-2');
+        imgElement.style.width = '100px'; 
+        imgElement.style.cursor = 'pointer';
+        imgElement.setAttribute('data-index', i);
+        imgElement.onclick = () => replaceImage(i);
+        
+        const removeButton = document.createElement('button');
+        removeButton.textContent = 'Remove';
+        removeButton.classList.add('btn', 'btn-danger', 'btn-sm', 'mt-1');
+        removeButton.onclick = () => removeImage(i);
+        
+        const imageContainer = document.createElement('div');
+        imageContainer.classList.add('d-flex', 'flex-column', 'align-items-center');
+        imageContainer.appendChild(imgElement);
+        imageContainer.appendChild(removeButton);
+        
+        previewContainer.appendChild(imageContainer);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
 
-    Array.from(files).forEach(file => {
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const imageBox = document.createElement('div');
-                imageBox.classList.add('image-box');
-                imageBox.style.position = 'relative';
+  function removeImage(index) {
+    const files = document.getElementById('images').files;
+    const dt = new DataTransfer(); // Create a new DataTransfer object to manipulate the file list
 
-                const img = document.createElement('img');
-                img.src = event.target.result;
-                img.classList.add('cropper-container');
-                img.style.maxWidth = '200px';
+    for (let i = 0; i < files.length; i++) {
+      if (i !== index) {
+        dt.items.add(files[i]); // Keep only non-deleted files
+      }
+    }
 
-                const saveBtn = document.createElement('button');
-                saveBtn.innerText = 'Save Cropped Image';
-                saveBtn.classList.add('save-btn');
-                saveBtn.style.marginTop = '10px';
+    document.getElementById('images').files = dt.files; // Update input
+    previewImages(); // Refresh preview
+  }
 
-                imageBox.appendChild(img);
-                imageBox.appendChild(saveBtn);
-                imageContainer.appendChild(imageBox);
+  function replaceImage(index) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    
+    input.onchange = function (event) {
+      const newFile = event.target.files[0];
+      if (newFile) {
+        const files = document.getElementById('images').files;
+        const dt = new DataTransfer();
 
-                // Initialize Cropper after image is loaded.
-                const cropper = new Cropper(img, {
-                    aspectRatio: 1,  // Optional: Customize as needed
-                    viewMode: 2,     // Optional: Allows zooming and panning.
-                    responsive: true,
-                    autoCropArea: 0.65
-                });
-
-                // Save the cropped image when the button is clicked.
-                saveBtn.addEventListener('click', function() {
-                    const croppedCanvas = cropper.getCroppedCanvas();
-                    if (croppedCanvas) {
-                        const croppedImage = croppedCanvas.toDataURL('image/png');
-                        console.log('Cropped Image:', croppedImage); // You can upload this image to your server if needed
-                        // You can also use the `croppedImage` to replace the preview or upload to your server.
-                    }
-                });
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-  });
-</script>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-      const imageInput = document.getElementById("images");
-      const previewContainer = document.getElementById("previewContainer");
-      let imageFiles = [];
-
-      imageInput.addEventListener("change", function (event) {
-          const files = Array.from(event.target.files);
-
-          if (imageFiles.length + files.length < 3) {
-              alert("You need to upload a minimum of 3 images.");
-              return;
+        for (let i = 0; i < files.length; i++) {
+          if (i === index) {
+            dt.items.add(newFile); // Replace the selected file
+          } else {
+            dt.items.add(files[i]); // Keep others unchanged
           }
+        }
 
-          files.forEach((file) => {
-              if (!file.type.startsWith("image/")) return;
-
-              const reader = new FileReader();
-              reader.onload = function (e) {
-                  const imgIndex = imageFiles.length;
-                  imageFiles.push(file);
-
-                  const imgWrapper = document.createElement("div");
-                  imgWrapper.className = "position-relative d-inline-block m-2";
-                  
-                  const img = document.createElement("img");
-                  img.src = e.target.result;
-                  img.className = "img-thumbnail";
-                  img.style.width = "100px";
-                  img.style.cursor = "pointer";
-
-                  const replaceInput = document.createElement("input");
-                  replaceInput.type = "file";
-                  replaceInput.className = "d-none";
-                  replaceInput.accept = "image/*";
-
-                  replaceInput.addEventListener("change", function (e) {
-                      const newFile = e.target.files[0];
-                      if (!newFile.type.startsWith("image/")) return;
-
-                      const newReader = new FileReader();
-                      newReader.onload = function (event) {
-                          img.src = event.target.result;
-                          imageFiles[imgIndex] = newFile;
-                      };
-                      newReader.readAsDataURL(newFile);
-                  });
-
-                  img.addEventListener("click", function () {
-                      replaceInput.click();
-                  });
-
-                  const deleteButton = document.createElement("button");
-                  deleteButton.innerHTML = "X";
-                  deleteButton.className = "btn btn-danger btn-sm position-absolute";
-                  deleteButton.style.top = "0";
-                  deleteButton.style.right = "0";
-                  deleteButton.style.borderRadius = "50%";
-
-                  deleteButton.addEventListener("click", function () {
-                      if (imageFiles.length > 3) {
-                          imageFiles.splice(imgIndex, 1);
-                          previewContainer.removeChild(imgWrapper);
-                      } else {
-                          alert("You must have at least 3 images.");
-                      }
-                  });
-
-                  imgWrapper.appendChild(img);
-                  imgWrapper.appendChild(replaceInput);
-                  imgWrapper.appendChild(deleteButton);
-                  previewContainer.appendChild(imgWrapper);
-              };
-              reader.readAsDataURL(file);
-          });
-
-          imageInput.value = ""; // Reset input field after selection
-      });
-  });
-</script>
-
+        document.getElementById('images').files = dt.files; // Update file input
+        previewImages(); // Refresh preview
+      }
+    };
+    
+    input.click(); // Trigger file selection
+  }
+</script> 
 <script>
 function handleProductSubmit (event) {
   event.preventDefault();

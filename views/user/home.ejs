@@ -220,7 +220,10 @@ h1, h2, h3, p {
     position: relative;
     z-index: 1000; /* Ensures navbar stays on top */
 }
-
+.quantity {
+      font-weight: bold;
+      color: #ff6347; /* Highlight color (Tomato) */
+    }
 .navbar-collapse {
     padding: 10px;
     border-radius: 5px;
@@ -272,15 +275,15 @@ h1, h2, h3, p {
               <ul class="navbar-nav">
                 <% if (user) { %>  <!-- Check if user is logged in -->
                   <li class="nav-item">
-                    <a href="/account" class="nav-link text-success" style="font-size: 22px;">
+                    <a href="/userdetails" class="nav-link text-success" style="font-size: 16px;font-weight: bold;">
                       <i class="icofont-user"></i> <%= user.name || user.username %>
                     </a>
                   </li>
                   <!-- Show Signout button when the user is logged in -->
                   <li class="nav-item me-2">
                     <form action="/logout" method="POST">
-                      <button type="submit" class="btn btn-danger text-white" style="font-size: 22px">
-                        Signout
+                      <button type="submit" class="btn btn-dark text-white" style="font-size: 16px">
+                        logout
                       </button>
                     </form>
                   </li>
@@ -350,7 +353,8 @@ h1, h2, h3, p {
                     <span class="text-success fw-bold fs-5"> ₹<%= (product.price - (product.price * product.offerPercentage / 100)).toFixed(2) %></span>
                     <small class="text-muted d-block">(<%= product.offerPercentage.toFixed(2) %>% OFF)</small>
                   </div>
-              
+                  <!-- Display quantity and unit -->
+                  <p><span class="quantity"><%= product.quantity.value %> <%= product.quantity.unit %></span></p>
                   <% if (product.imagePaths && product.imagePaths.length > 0) { %>
                     <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
                       <div class="carousel-inner rounded">

@@ -41,6 +41,7 @@
             align-items: center;
             justify-content: center;
             gap: 5px;
+            height: 90px;
         }
 
         .quantity-control input {
@@ -49,7 +50,14 @@
             border: none;
             background: transparent;
         }
-
+                .quantity-control button {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
         .checkout-btn {
             display: flex;
             justify-content: flex-end;
@@ -65,6 +73,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb justify-content-center">
                     <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/shop">Shop</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Cart</li>
                 </ol>
             </nav>
@@ -93,13 +102,16 @@
                         <td><%= item.name %></td>
                         <td>₹<%= item.price %></td>
                         <td class="quantity-control">
-                            <button class="btn btn-sm btn-primary decrease" onclick="updateQuantity('reduce', <%= item.stock %>, this)">-</button>
-                            <input type="text" id="product-quantity" value="<%= item.quantity %>" readonly>
-                            <input type="hidden" id="hidden-quantity" value="<%= item.quantity %>">
-                            <button class="btn btn-sm btn-primary increase" onclick="updateQuantity('add', <%= item.stock %>, this)">+</button>
-                        </td>
+                            <button class="btn btn-sm btn-primary decrease">-</button>
+                            <input type="text" class="product-quantity" value="<%= item.quantity %>" readonly>
+                            <button class="btn btn-sm btn-primary increase">+</button>
+                        </td>                        
                         <td class="subTotal">₹<%= subTotal.toFixed(2) %></td>
-                        <td><a href="/cart/remove/<%= item.productId %>" class="btn btn-sm btn-danger">Remove</a></td>
+                        <td>
+                            <a href="/remove/<%= item.productId %>" class="btn btn-sm btn-danger">
+                              Remove
+                            </a>
+                          </td>
                     </tr>
                 <% }); %>
                 <tr class="total-row">
@@ -114,47 +126,64 @@
     </div>
 
     <script>
-        function updateQuantity(action, stock, button) {
-            let row = button.closest('tr');
-            let quantityInput = row.querySelector('#product-quantity');
-            let hiddenQuantity = row.querySelector('#hidden-quantity');
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".quantity-control button").forEach(button => {
+        button.addEventListener("click", async function () {
+            let row = this.closest("tr");
+            let productId = row.getAttribute("data-id"); // Ensure this is correctly set in HTML
+            let price = parseFloat(row.getAttribute("data-price"));
+            let stock = parseInt(row.getAttribute("data-stock"));
+            let quantityInput = row.querySelector(".product-quantity");
+            let subTotalElement = row.querySelector(".subTotal");
+            let action = this.classList.contains("increase") ? "add" : "reduce";
             let currentQuantity = parseInt(quantityInput.value);
 
-            if (action === 'add' && currentQuantity < stock) {
-                quantityInput.value = currentQuantity + 1;
-            } else if (action === 'reduce' && currentQuantity > 1) {
-                quantityInput.value = currentQuantity - 1;
+            // Prevent invalid quantity changes
+            if (action === "add" && currentQuantity >= stock) {
+                Swal.fire("Error", "Stock limit reached!", "warning");
+                return;
+            } else if (action === "reduce" && currentQuantity <= 1) {
+                return;
             }
 
-            // Update hidden input to send correct quantity
-            hiddenQuantity.value = quantityInput.value;
+            let newQuantity = action === "add" ? currentQuantity + 1 : currentQuantity - 1;
 
-            // Update subtotal and grand total
-            let price = parseFloat(row.dataset.price);
-            let subTotalElement = row.querySelector('.subTotal');
-            let subTotal = price * parseInt(quantityInput.value);
-            subTotalElement.textContent = `₹${subTotal.toFixed(2)}`;
+            try {
+                let response = await fetch("/update-quantity", {  // Fixed endpoint
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ cartItemId: productId, quantity: newQuantity }),
+                });
 
-            updateGrandTotal();
-        }
-
-        // Sync the quantity input change to the hidden field
-        document.getElementById('cartBody').addEventListener('input', function(e) {
-            if (e.target.id === 'product-quantity') {
-                let row = e.target.closest('tr');
-                let hiddenQuantity = row.querySelector('#hidden-quantity');
-                hiddenQuantity.value = e.target.value;
-                updateGrandTotal();
+                let data = await response.json();
+                if (response.ok && data.success) {
+                    // Update UI only if the backend update is successful
+                    quantityInput.value = data.updatedQuantity;
+                    subTotalElement.textContent = `₹${data.updatedSubTotal}`;
+                    updateGrandTotal();
+                } else {
+                    Swal.fire("Error", data.message || "Failed to update quantity", "error");
+                    quantityInput.value = currentQuantity; // Revert on failure
+                }
+            } catch (error) {
+                console.error("Error updating quantity:", error);
+                Swal.fire("Error", "Something went wrong!", "error");
+                quantityInput.value = currentQuantity; // Revert on failure
             }
         });
+    });
 
-        function updateGrandTotal() {
-            let total = 0;
-            document.querySelectorAll('.subTotal').forEach(function(subTotal) {
-                total += parseFloat(subTotal.textContent.replace('₹', ''));
-            });
-            document.getElementById('grandTotal').textContent = `₹${total.toFixed(2)}`;
-        }
+    function updateGrandTotal() {
+        let total = 0;
+        document.querySelectorAll(".subTotal").forEach(subTotal => {
+            total += parseFloat(subTotal.textContent.replace("₹", ""));
+        });
+        document.getElementById("grandTotal").textContent = `₹${total.toFixed(2)}`;
+    }
+});
+
     </script>
 </body>
 

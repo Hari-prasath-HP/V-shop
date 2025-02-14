@@ -82,6 +82,10 @@
         .breadcrumb-item a:hover {
         text-decoration: underline;
         }
+        .quantity {
+        font-weight: bold;
+        color: #ff6347; /* Highlight color (Tomato) */
+        }
         </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
@@ -117,14 +121,14 @@
             <ul class="navbar-nav">
                 <% if (user) { %> 
                     <li class="nav-item">
-                        <a href="/account" class="nav-link text-success" style="font-size: 22px;">
-                          <i class="icofont-user"></i> <%= user.name || user.username %>
+                        <a href="/account" class="nav-link text-white" style="font-size: 18px;font-weight: bold;">
+                          <i class="icofont-user"></i>My Account
                         </a>
                     </li>
                     <!-- Show Signout button only when the user is logged in -->
                     <li class="nav-item me-2">
                         <form action="/logout" method="POST">
-                            <button type="submit" class="btn btn-danger text-white" style="font-size: 22px">
+                            <button type="submit" class="btn btn-danger text-white" style="font-size: 16px">
                                 Signout
                             </button>
                         </form>
@@ -133,7 +137,7 @@
                     <!-- Show Sign in button only when the user is not logged in -->
                     <li class="nav-item me-2">
                         <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
-                            Sign in
+                            Signin
                         </a>
                     </li>
                 <% } %>
@@ -157,7 +161,7 @@
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4" id="product-list">
                 <% products.forEach(function(product) { %>
                     <div class="col mb-4 product-item">
-                        <div class="product">
+                        <div class="product" style="background-color: #d6e6ed;">
                             <h5 class="product-name"><%= product.name %></h5>
                             <% if (product.offerPercentage && product.offerPercentage > 0) { %>
                                 <p class="product-price">
@@ -169,7 +173,7 @@
                             <% } else { %>
                                 <p class="product-price">₹<%= product.price.toFixed(2) %></p>
                             <% } %>
-                            
+                            <p><span class="quantity"><%= product.quantity.value %> <%= product.quantity.unit %></span></p>
                             <% if (product.imagePaths && product.imagePaths.length > 0) { %>
                                 <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
                                     <div class="carousel-inner">
