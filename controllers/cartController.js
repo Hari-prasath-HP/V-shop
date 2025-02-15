@@ -1,35 +1,26 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/product');
-
-// Add product to the cart
+const User = require('../models/User');
+const Address = require('../models/address');
+const Order = require('../models/order')
 exports.addToCart = async (req, res) => {
     try {
-      console.log('Session user:', req.session.user); // Check if user is in session
-  
-      // Ensure that user is authenticated and exists in the session
+      console.log('Session user:', req.session.user);
       if (!req.session.user) {
         return res.redirect('/login')
       }
-  
       const { productId, quantity } = req.body;
-      const userId = req.session.user.id; // Access user ID from session
-  
-      // Check if the product exists
+      const userId = req.session.user.id;
       const product = await Product.findById(productId);
       if (!product) {
         return res.status(404).json({ error: 'Product not found' });
       }
-  
-      // Find the existing cart item for this user and product
       const existingCartItem = await Cart.findOne({ userId, productId });
-  
       if (existingCartItem) {
-        // If product already in cart, update the quantity
         existingCartItem.quantity += parseInt(quantity);
         await existingCartItem.save();
         return res.redirect('/cart');
       } else {
-        // If product not in cart, create a new cart entry
         const newCartItem = new Cart({
           userId,
           productId,
@@ -48,17 +39,19 @@ exports.addToCart = async (req, res) => {
     return res.redirect('/login');
   }
   try {
+    const user = req.session.user;
+    if (!user) {
+      return res.redirect('/login'); // Redirect to login if not authenticated
+  }
     const userId = req.session.user.id;
     const cartItems = await Cart.find({ userId }).populate('productId');
     if (!cartItems || cartItems.length === 0) {
       return res.render('user/cart', { cart: [], username: req.session.user.username });
     }
-
     const cart = cartItems.map(item => {
       if (!item.productId) {
-        return null; // Or handle the error appropriately
+        return null; 
       }
-
       return {
         _id: item._id,
         productId: item.productId._id,
@@ -70,7 +63,7 @@ exports.addToCart = async (req, res) => {
         subtotal: item.quantity * item.productId.price,
       };
     }).filter(item => item !== null);
-    res.render('user/cart', { cart, username: req.session.user.username });
+    res.render('user/cart', { cart, username: req.session.user.username,user });
   } catch (err) {
     console.error('Error viewing cart:', err);
     res.status(500).send('Server Error');
@@ -111,7 +104,6 @@ exports.updateQuantity = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
-// Remove product from the cart
 exports.removeFromCart = async (req, res) => {
     try {
       console.log('Session user:', req.session.user);
@@ -130,4 +122,130 @@ exports.removeFromCart = async (req, res) => {
       return res.status(500).json({ error: 'Server error' });
     }
   };
+  exports.getCheckoutPage = async (req, res) => {
+    try {
+        if (!req.session.user) {
+            return res.redirect('/login');
+        }
+
+        const userId = req.session.user.id;
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        // Fetch the default address
+        const defaultAddress = await Address.findOne({ userId: userId, isDefault: true }) || null;
+
+        // Check if the user has a pending order with a selected address
+        const order = await Order.findOne({ user: userId, orderStatus: 'Pending' });
+
+        // Determine the address to display
+        const checkoutAddress = order?.shippingAddress || defaultAddress;
+
+        res.render('user/checkout1', { user, checkoutAddress });
+    } catch (error) {
+        console.error('Error fetching checkout page:', error);
+        res.status(500).send('Internal Server Error');
+    }
+};
+exports.changeaddress = async (req, res) => {
+  try {
+      if (!req.session.user) {
+          return res.redirect('/login');
+      }
+
+      const userId = req.session.user.id;
+      const user = await User.findById(userId);
+      
+      if (!user) {
+          return res.status(404).send('User not found');
+      }
+
+      // Fetch all addresses of the user
+      const addresses = await Address.find({ userId: userId });
+
+      res.render('user/changeaddress', { user, addresses });
+  } catch (error) {
+      console.error('Error fetching checkout page:', error);
+      res.status(500).send('Internal Server Error');
+  }
+};
+exports.selectAddress = async (req, res) => {
+  try {
+    const { selectedAddress } = req.body;
+    const userId = req.session.user.id;
+    if (!selectedAddress) {
+        console.log("No address selected");
+        return res.redirect('/address');
+    }
+
+    // Fetch the full address from the database
+    const address = await Address.findById(selectedAddress);
+
+    if (!address) {
+        console.log("Address not found in DB");
+        return res.redirect('/address');
+    }
+
+    console.log("Fetched Address:", address);
+
+    // Ensure totalAmount and paymentMethod are properly passed
+    const totalAmount = req.body.totalAmount || 0;  // Get from frontend or cart logic
+    const paymentMethod = req.body.paymentMethod || 'COD'; // Default to Cash on Delivery
+
+    // Create and save the new order
+    const newOrder = new Order({
+        user: req.session.user.id,
+        shippingAddress: {
+          userId: userId, // Store user reference
+          name: address.name,  // Name from Address model
+          phone: address.phone,
+          houseNo: address.houseNo,
+          area: address.area,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+          title: address.title,
+        },
+        paymentMethod: paymentMethod,
+        totalAmount: totalAmount,
+    });
+
+    await newOrder.save();
+    console.log("Order saved successfully!");
+    res.redirect('/checkout-1');
+
+} catch (error) {
+    console.error('Error saving selected address:', error);
+    res.redirect('/address');
+}
+};
+exports.getCheckoutPage2 = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    if (!userId) {
+      return res.redirect('/login');
+    }
+
+    const user = await User.findById(userId);
+    const defaultAddress = await Address.findOne({ userId: userId, isDefault: true }) || null;
+    const checkoutAddress = order?.shippingAddress || defaultAddress;
+    // Retrieve the latest order for the user to get the selected address
+    const lastOrder = await Order.findOne({ user: userId })
+      .sort({ createdAt: -1 }) // Get the latest order
+      .select('shippingAddress');
+
+    res.render('user/checkout-2', { user,checkoutAddress});
+
+  } catch (error) {
+    console.error("Error fetching selected address from order:", error);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
+
+
+
 

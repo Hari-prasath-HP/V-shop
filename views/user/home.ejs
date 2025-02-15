@@ -125,9 +125,8 @@
         }
 
         .row {
-            justify-content: center; /* Centers content */
+            justify-content: center;
         }
-        /* Product Cards */
         .product-card {
             background: white;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -232,7 +231,13 @@ h1, h2, h3, p {
     position: relative;
     z-index: 1;
 }
-
+#HomeLink {
+            color: #ffffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            height: 100%; /* Ensures it takes the full height of the navbar */
+        }
     </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/icofont@1.0.0/icofont.min.css">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
@@ -255,7 +260,7 @@ h1, h2, h3, p {
             </form>
               <ul class="navbar-nav ms-auto">
                 <li class="nav-item active">
-                    <a class="nav-link" href="/" style="font-weight: bold; font-size: 22px;">
+                    <a class="nav-link" id="HomeLink" href="/" style="font-weight: bold; font-size: 22px;">
                       <!-- <i class="fas fa-home"></i> -->
                       Home
                     </a>

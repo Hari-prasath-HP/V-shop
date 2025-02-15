@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <!-- Link to Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css"> <!-- Your custom styles -->
+    <style>
+        .progress-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px;
+}
+.step {
+    width: 30px;
+    height: 30px;
+    background-color: gray;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+.step.active {
+    background-color: green;
+}
+.line {
+    width: 100px;
+    height: 5px;
+    background-color: gray;
+    margin: 15px 5px;
+    transition: background-color 0.3s;
+}
+.line.active {
+    background-color: green;
+}
+.navbar {
+            background-color: #333;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .navbar .navbar-brand h3 {
+            color: #fff;
+        }
+
+        .navbar .nav-link {
+            color: #ccc;
+        }
+
+        .navbar .nav-link:hover {
+            color: #fff;
+        }
+
+        .navbar-toggler-icon {
+            background-color: #fff;
+        }
+        @media (max-width: 991px) { /* Applies only on smaller screens */
+            .navbar-collapse {
+                background-color: white !important; /* Change to desired color */
+                padding: 10px;
+                border-radius: 5px;
+            }
+            .navbar-nav{
+                margin-bottom: 5px;
+            }
+        }
+        .navbar {
+            position: relative;
+            z-index: 1000; /* Ensures navbar stays on top */
+        }
+        .navbar-collapse {
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="height:10vh">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <h1>V-shop</h1>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <form class="d-flex me-3" onsubmit="return false;">
+                <input class="form-control me-2" type="text" id="searchInput" placeholder="Search products..." onkeyup="searchProducts()">
+            </form>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/" id="homeLink" style="font-weight: bold; font-size: 22px;">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/shop" id="shopLink" style="font-weight: bold; font-size: 22px;">Products</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/cart" id="cartLink" style="font-weight: bold; font-size: 22px;">Cart</a>
+                </li>
+            </ul>                               
+              <ul class="navbar-nav">
+                <% if (user) { %>  <!-- Check if user is logged in -->
+                  <li class="nav-item">
+                    <a href="/userdetails" class="nav-link text-success" style="font-size: 16px;font-weight: bold;">
+                      <i class="icofont-user"></i> <%= user.name || user.username %>
+                    </a>
+                  </li>
+                  <!-- Show Signout button when the user is logged in -->
+                  <li class="nav-item me-2">
+                    <form action="/logout" method="POST">
+                      <button type="submit" class="btn btn-dark text-white" style="font-size: 16px">
+                        logout
+                      </button>
+                    </form>
+                  </li>
+                <% } else { %>
+                  <!-- Show Sign in button when the user is not logged in -->
+                  <li class="nav-item me-2">
+                    <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
+                      Sign in
+                    </a>
+                  </li>
+                <% } %>
+              </ul>
+                             
+            </div>
+        </div>
+    </nav>
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/cart">Cart</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+        </ol>
+    </nav>
+
+<!-- Address Details (Modified with table header and dynamic address details in the next row) -->
+<div class="address-details">
+    <h3>CheckOut-1</h3>
+    
+    <div class="progress-container pt-5 pb-5">
+        <div class="step active">1</div>
+        <div class="line"></div>
+        <div class="step">2</div>
+        <div class="line"></div>
+        <div class="step">3</div>
+    </div>
+
+    <div class="container d-flex justify-content-center" style="width: 90%;"> 
+        <div class="card shadow p-3 mb-4 bg-white rounded w-100"> 
+            <div class="card-body">
+                <h3 class="text-center">Change Address</h3>
+                <form action="/select-address" method="POST">
+                    <table class="table table-bordered text-center">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Select</th>
+                                <th>S No.</th>
+                                <th>Name</th>
+                                <th>Home No</th>
+                                <th>Area</th>
+                                <th>City</th>
+                                <th>State</th>
+                                <th>Pincode</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (addresses && addresses.length > 0) { %>
+                                <% addresses.forEach((address, index) => { %>
+                                    <tr>
+                                        <td>
+                                            <input type="radio" name="selectedAddress" value="<%= address._id %>" required>
+                                        </td>
+                                        <td><%= index + 1 %></td>
+                                        <td><%= address.name %></td>
+                                        <td><%= address.houseNo %></td>
+                                        <td><%= address.area %></td>
+                                        <td><%= address.city %></td>
+                                        <td><%= address.state %></td>
+                                        <td><%= address.pincode %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="8">No address found</td>
+                                </tr>
+                            <% } %>
+                        </tbody>               
+                    </table>
+                    <div class="text-center mt-3">
+                        <button type="submit" class="btn btn-primary">Select Address</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

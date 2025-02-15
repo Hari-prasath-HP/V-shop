@@ -29,12 +29,16 @@ router.post('/add-to-cart', checkUserStatus , cartController.addToCart);
 router.get('/cart', checkUserStatus , cartController.viewCart);
 router.post('/update-quantity', cartController.updateQuantity);
 router.get('/remove/:productId', cartController.removeFromCart);
+router.get('/checkout-1', cartController.getCheckoutPage);
+router.get('/checkoutaddress', cartController.changeaddress);
+router.post('/select-address', cartController.selectAddress);
+router.get('/checkout-2',  cartController.getCheckoutPage2);
+
 
 router.get('/userdetails', accountController.viewUserDetails);
 router.post('/update-user',accountController.updateUser);
 router.get('/add-address', accountController.addAddress);
 
-// Post the Add Address form data
 router.post('/add-address', accountController.saveAddress);
 router.get('/address', accountController.getAddresses);
 router.get('/edit-address/:id', accountController.getEditAddress);

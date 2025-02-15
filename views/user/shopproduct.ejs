@@ -86,6 +86,13 @@
         font-weight: bold;
         color: #ff6347; /* Highlight color (Tomato) */
         }
+        #ProductLink {
+            color: #ffffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            height: 100%; /* Ensures it takes the full height of the navbar */
+        }
         </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
@@ -108,7 +115,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/shop" style="font-weight: bold; font-size: 22px;">
+                    <a class="nav-link" id="ProductLink" href="/shop" style="font-weight: bold; font-size: 22px;">
                        Products
                     </a>
                 </li>
