@@ -191,31 +191,42 @@
                 </tr>
             </thead>
             <tbody id="cartBody">
-                <% let grandTotal = 0; %>
-                <% cart.forEach(function(item) { %>
-                    <% let subTotal = item.price * item.quantity; %>
-                    <% grandTotal += subTotal; %>
-                    <tr data-id="<%= item.productId %>" data-price="<%= item.price %>" data-stock="<%= item.stock %>">
-                        <td><img src="/uploads/products/<%= item.image %>" class="cart-image" alt="<%= item.name %>"></td>
-                        <td><%= item.name %></td>
-                        <td>₹<%= item.price %></td>
-                        <td class="quantity-control">
-                            <button class="btn btn-sm btn-primary decrease">-</button>
-                            <input type="text" class="product-quantity" value="<%= item.quantity %>" readonly>
-                            <button class="btn btn-sm btn-primary increase">+</button>
-                        </td>                        
-                        <td class="subTotal">₹<%= subTotal.toFixed(2) %></td>
-                        <td>
-                            <a href="/remove/<%= item.productId %>" class="btn btn-sm btn-danger">
-                              Remove
-                            </a>
+                <% if (cart.length > 0) { %> 
+                    <% let grandTotal = 0; %>
+                    <% cart.forEach(function(item) { %>
+                      <% let subTotal = item.offerPrice * item.quantity; %>
+                      <% grandTotal += subTotal; %>
+                      <tr data-id="<%= item.productId %>" data-price="<%= item.offerPrice %>" data-stock="<%= item.stock %>">
+                          <td><img src="/uploads/products/<%= item.image %>" class="cart-image" alt="<%= item.name %>"></td>
+                          <td><%= item.name %></td>
+                          <td>₹<%= item.offerPrice %></td>
+                          <td class="quantity-control">
+                              <button class="btn btn-sm btn-primary decrease">-</button>
+                              <input type="text" class="product-quantity" value="<%= item.quantity %>" readonly>
+                              <button class="btn btn-sm btn-primary increase">+</button>
+                          </td>                        
+                          <td class="subTotal">₹<%= subTotal.toFixed(2) %></td>
+                          <td>
+                              <a href="/remove/<%= item.productId %>" class="btn btn-sm btn-danger">Remove</a>
                           </td>
+                      </tr>
+                    <% }); %>
+                  
+                    <!-- Grand Total Row -->
+                    <tr class="total-row">
+                        <td colspan="4" class="text-end">Grand Total:</td>
+                        <td colspan="2" id="grandTotal">₹<%= grandTotal.toFixed(2) %></td>
                     </tr>
-                <% }); %>
-                <tr class="total-row">
-                    <td colspan="4" class="text-end">Grand Total:</td>
-                    <td colspan="2" id="grandTotal">₹<%= grandTotal.toFixed(2) %></td>
-                </tr>
+                  
+                  <% } else { %> 
+                    <!-- If cart is empty, show message -->
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <h4>Your cart is empty!</h4>
+                            <a href="/shop" class="btn btn-primary mt-2">Shop Now</a>
+                        </td>
+                    </tr>
+                  <% } %>                  
             </tbody>
         </table>
         <div class="checkout-btn">
@@ -238,7 +249,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Prevent invalid quantity changes
             if (action === "add" && currentQuantity >= stock) {
-                Swal.fire("Error", "Stock limit reached!", "warning");
+                Swal.fire({title: "Oops...",
+                    text: "Maximum quantity reached!",
+                    icon: "warning",
+                    confirmButtonText: "OK"});
                 return;
             } else if (action === "reduce" && currentQuantity <= 1) {
                 return;
@@ -262,7 +276,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     subTotalElement.textContent = `₹${data.updatedSubTotal}`;
                     updateGrandTotal();
                 } else {
-                    Swal.fire("Error", data.message || "Failed to update quantity", "error");
+                    Swal.fire("Oops...", data.message || "Failed to update quantity", "warning");
                     quantityInput.value = currentQuantity; // Revert on failure
                 }
             } catch (error) {

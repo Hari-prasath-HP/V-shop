@@ -260,22 +260,54 @@ exports.getShopProducts = async (req, res) => {
   try {
     let user = req.session.user || null;
     let username = "";
+
     if (req.session.user) {
-      const user = await User.findOne({ email: req.session.user.email });
-      if (user) {
-        username = user.username;
+      const userData = await User.findOne({ email: req.session.user.email });
+      if (userData) {
+        username = userData.username;
       }
     }
+
+    // Extract query parameters
     const currentPage = parseInt(req.query.page) || 1;
     const itemsPerPage = 8;
-    const totalProducts = await Product.countDocuments({ isDeleted: { $ne: true } });
+    const searchQuery = req.query.search || "";
+    const sortOption = req.query.sort || "";
+
+    // Define sorting criteria
+    let sortCriteria = {};
+    if (sortOption === "low-high") {
+      sortCriteria = { offerPrice: 1 };
+    } else if (sortOption === "high-low") {
+      sortCriteria = { offerPrice: -1 };
+    } else if (sortOption === "a-z") {
+      sortCriteria = { name: 1 };
+    } else if (sortOption === "z-a") {
+      sortCriteria = { name: -1 };
+    } else if (sortOption === "new-arrivals") {
+      sortCriteria = { createdAt: -1 }; // Assuming timestamps are enabled
+    }
+
+    // Search filter
+    let searchFilter = { isDeleted: { $ne: true } };
+    if (searchQuery) {
+      searchFilter.name = { $regex: searchQuery, $options: "i" }; // Case-insensitive search
+    }
+
+    // Fetch total count for pagination
+    const totalProducts = await Product.countDocuments(searchFilter);
     const totalPages = Math.ceil(totalProducts / itemsPerPage);
-    const products = await Product.find({ isDeleted: { $ne: true } })
+
+    // Fetch products with sorting, pagination & search
+    const products = await Product.find(searchFilter)
+      .sort(sortCriteria)
       .skip((currentPage - 1) * itemsPerPage)
       .limit(itemsPerPage)
-      .populate('category');
-    products.forEach(product => {
-      product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
+      .populate("category");
+
+    // Process product details
+    products.forEach((product) => {
+      product.imagePaths = product.images.map((image) => `/uploads/products/${image}`);
       if (product.offerPrice > 0) {
         const discountPercentage = ((product.price - product.offerPrice) / product.price) * 100;
         product.offerPercentage = discountPercentage.toFixed(2);
@@ -287,22 +319,25 @@ exports.getShopProducts = async (req, res) => {
 
       // Add quantity and unit to the product object
       product.quantity = product.stock; // Assuming stock represents quantity
-      product.unit = product.unit || 'Unit'; // Replace 'Unit' with the actual unit if available
+      product.unit = product.unit || "Unit"; // Replace 'Unit' with the actual unit if available
     });
-    res.render('user/shopproduct', {
+
+    // Render the updated product list
+    res.render("user/shopproduct", {
       user,
       username,
       products,
-      username,
       currentPage,
-      totalPages
+      totalPages,
+      searchQuery, // Pass the search query to keep the input field populated
+      sortOption,  // Pass the sort option to retain selected filter
     });
+
   } catch (err) {
-    console.error('Error fetching products:', err);
-    res.status(500).send('Server Error');
+    console.error("Error fetching products:", err);
+    res.status(500).send("Server Error");
   }
 };
-
 exports.viewProduct = async (req, res) => {
   let user = req.session.user || null;
   let username = "";

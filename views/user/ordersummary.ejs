@@ -76,6 +76,54 @@
             padding: 10px;
             border-radius: 5px;
         }
+        .cart-container {
+            max-width: 73%; /* Adjust width as needed */
+            margin: auto; /* Center the table */
+        }
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .cart-table th, .cart-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .cart-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .cart-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .quantity-control input {
+            width: 50px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+
+        #grandTotal {
+            color: #28a745;
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body>
@@ -137,74 +185,114 @@
             <li class="breadcrumb-item"><a href="/">Home</a></li>
             <li class="breadcrumb-item"><a href="/cart">Cart</a></li>
             <li class="breadcrumb-item"><a href="/checkout1">Checkout-1</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Checkout-2</li>
+            <li class="breadcrumb-item"><a href="/checkout-2">Checkout-2</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Payment</li>
         </ol>
     </nav>
 
 <!-- Address Details (Modified with table header and dynamic address details in the next row) -->
 <div class="address-details">
-    <h3>CheckOut-2</h3>
+    <h1>Order Summary</h1>
     
     <div class="progress-container pt-5 pb-5">
         <div class="step active">1</div>
         <div class="line"></div>
         <div class="step active">2</div>
         <div class="line"></div>
-        <div class="step">3</div>
+        <div class="step active">3</div>
     </div>
-    <!-- Display shipping address dynamically from DB -->
-    <form action="/paymentMethod" method="POST">
+    <form action="/placeorder" method="POST">
+        <div class="cart-container">
+            <table class="cart-table table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Image</th>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Sub Total</th>
+                    </tr>
+                </thead>
+                <tbody id="cartBody">
+                    <% let grandTotal = 0; %>
+                    <% orderSummaryData.cartItems.forEach(function(item) { %>
+                        <% let subTotal = item.productId.offerPrice * item.quantity; %>
+                        <% grandTotal += subTotal; %>
+                        <tr data-id="<%= item.productId %>" data-price="<%= item.productId.offerPrice %>" data-stock="<%= item.productId.stock %>">
+                            <td>
+                                <img src="/uploads/products/<%= item.productId.images[0] %>" class="cart-image" alt="<%= item.productId.name %>">
+                            </td>
+                            <td><%= item.productId.name %></td>
+                            <td class="quantity-control">
+                                <input type="text" class="product-quantity form-control" value="<%= item.quantity %>" readonly>
+                            </td>                        
+                            <td class="subTotal">₹<%= subTotal.toFixed(2) %></td>
+    
+                            <!-- Hidden inputs for each product details -->
+                            <input type="hidden" name="products[<%= item.productId._id %>][name]" value="<%= item.productId.name %>">
+                            <input type="hidden" name="products[<%= item.productId._id %>][quantity]" value="<%= item.quantity %>">
+                            <input type="hidden" name="products[<%= item.productId._id %>][price]" value="<%= item.productId.price %>">
+                            <input type="hidden" name="products[<%= item.productId._id %>][offerPrice]" value="<%= item.productId.offerPrice %>">
+                            <input type="hidden" name="products[<%= item.productId._id %>][subTotal]" value="<%= subTotal.toFixed(2) %>">
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>    
+    
         <div class="container d-flex justify-content-center" style="width: 90%;">
             <div class="card shadow p-3 mb-4 bg-white rounded w-100">
                 <div class="card-body">
-                    <h3 class="text-center">Shipping Information</h3>
-                    <% if (checkoutAddress) { %>
+                    <h2 class="text-center">Shipping Information</h2>
+                    <% if (orderSummaryData.shippingAddress) { %>
                         <div class="mb-3">
-                            <p><strong>Name:</strong> <%= checkoutAddress.name %></p>
-                            <p><strong>Home No:</strong> <%= checkoutAddress.houseNo %></p>
-                            <p><strong>Area:</strong> <%= checkoutAddress.area %></p>
-                            <p><strong>City:</strong> <%= checkoutAddress.city %></p>
-                            <p><strong>State:</strong> <%= checkoutAddress.state %></p>
-                            <p><strong>Pincode:</strong> <%= checkoutAddress.pincode %></p>
-                            <input type="hidden" name="name" value="<%= checkoutAddress.name %>">
-                            <input type="hidden" name="houseNo" value="<%= checkoutAddress.houseNo %>">
-                            <input type="hidden" name="area" value="<%= checkoutAddress.area %>">
-                            <input type="hidden" name="city" value="<%= checkoutAddress.city %>">
-                            <input type="hidden" name="state" value="<%= checkoutAddress.state %>">
-                            <input type="hidden" name="pincode" value="<%= checkoutAddress.pincode %>">
+                            <h3>Shipping Address:</h3>
+                            <p><%= orderSummaryData.shippingAddress.name %></p>
+                            <p><%= orderSummaryData.shippingAddress.houseNo %></p>
+                            <p><%= orderSummaryData.shippingAddress.area %></p>
+                            <p><%= orderSummaryData.shippingAddress.city %></p>
+                            <p><%= orderSummaryData.shippingAddress.state %></p>
+                            <p><%= orderSummaryData.shippingAddress.pincode %></p>
                         </div>
                     <% } else { %>
                         <p class="text-center text-danger">No address found</p>
                     <% } %>
-                    <hr>
-                    <h3 class="text-center mt-4">Payment Methods</h3>
-                    <div class="mt-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="paymentMethod" id="cod" value="COD" required>
-                            <label class="form-check-label" for="cod">Cash on Delivery</label>
+                    <div>
+                        <p><h3>Payment Method:</h3> <%= orderSummaryData.paymentMethod %></p>
+                    </div>
+                    <hr> 
+                    <div class="mb-3">
+                        <h5>Order Summary</h5>
+                        <% orderSummaryData.cartItems.forEach(item => { %>
+                            <div class="order-item">
+                              <p><strong><%= item.productId.name %></strong> ₹<%= item.productId.offerPrice %></p>
+                            </div>
+                            <% let subTotal = item.productId.offerPrice * item.quantity; %>
+                        <div class="mb-3">
+                            <p><strong>Sub Total: </strong>₹<%= subTotal.toFixed(2) %></p>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="paymentMethod" id="online" value="online">
-                            <label class="form-check-label" for="online">Online Payment</label>
+                        <% }); %>
+                        
+                        <% let shippingCharge = (grandTotal < 700) ? orderSummaryData.shippingCost : 0; %>
+                        <div class="shipping-cost">
+                            <p><strong>Shipping Cost:</strong> ₹<%= shippingCharge.toFixed(2) %></p>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="paymentMethod" id="wallet" value="Wallet">
-                            <label class="form-check-label" for="wallet">Wallet</label>
+                        <% grandTotal += shippingCharge; %>
+                        <div class="mb-3">
+                            <h5><strong>Grand Total: </strong>₹<%= grandTotal.toFixed(2) %></h5>
                         </div>
                     </div>
+                    <input type="hidden" name="grandTotal" value="<%= grandTotal.toFixed(2) %>">
+                    <!-- Hidden input for COD -->
+                    <input type="hidden" name="paymentMethod" value="COD">
         
                     <div class="mt-3 text-center">
                         <button type="submit" class="btn btn-success">Continue</button>
                     </div>
                 </div>
             </div>
-        </div>
-    </form>    
-
-</div>
-
-
-
+        </div>  
+    </form>
+       
     <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>

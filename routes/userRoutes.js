@@ -32,8 +32,11 @@ router.get('/remove/:productId', cartController.removeFromCart);
 router.get('/checkout-1', cartController.getCheckoutPage);
 router.get('/checkoutaddress', cartController.changeaddress);
 router.post('/select-address', cartController.selectAddress);
+router.post('/checkout--2', cartController.proceedToPayment);
 router.get('/checkout-2',  cartController.getCheckoutPage2);
-
+router.post('/paymentMethod', cartController.savePaymentMethod)
+router.get('/ordersummary', cartController.getOrderSummary)
+router.post('/placeorder', cartController.placeOrder)
 
 router.get('/userdetails', accountController.viewUserDetails);
 router.post('/update-user',accountController.updateUser);
