@@ -6,26 +6,117 @@
     <title>Add Address</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
-        .card-link {
-            text-decoration: none; /* Remove the default underline */
-            color: inherit; /* Inherit the text color from the parent */
+        /* General Body Styling */
+        body {
+            background-color: #fffbfb;
+            color: #000000;
+            font-family: Arial, sans-serif;
         }
-        .user-option {
-        border: 1px solid #ddd; /* Light border */
-        border-radius: 8px; /* Rounded corners */
-        background-color: #f8f9fa; /* Light background */
-    }
 
-    .user-option:hover {
-        cursor: pointer;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow on hover */
-        transform: translateY(-5px); /* Slight lift effect */
-        transition: all 0.3s ease-in-out; /* Smooth transition */
-    }
-    .breadcrumb {
-            background-color: #fff;
+        /* Breadcrumb Styling */
+        .breadcrumb {
+            background-color: #fbf9f9;
             border-radius: 8px;
             padding: 10px 15px;
+            color: #000000;
+        }
+
+        .breadcrumb a {
+            color: #00bcd4;
+        }
+
+        /* Container for User Options Grid */
+        .container {
+            padding-top: 20px;
+        }
+
+        /* Address Form Container */
+        .address-form-container {
+            width: 85%;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h3 {
+            color: #333333;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+
+        /* Address Form Styling */
+        .form-label {
+            color: #4a4a4a;
+            font-weight: 500;
+        }
+
+        .form-control {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            color: #333;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #00bcd4;
+            background-color: #ffffff;
+            color: #333;
+            box-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
+        }
+
+        button[type="submit"] {
+            background-color: #00bcd4;
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            color: #fff;
+            margin-top: 20px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0097a7;
+        }
+
+        /* Adjusting margin-bottom for input fields */
+        .mb-3 {
+            margin-bottom: 15px;
+        }
+        .user-option {
+            border: 1px solid #ddd; /* Light border */
+            border-radius: 8px; /* Rounded corners */
+            background-color: #f8f9fa; /* Light background */
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Shadow */
+            transition: transform 0.3s ease-in-out; /* Smooth transition */
+        }
+        .user-option:hover {
+            cursor: pointer;
+            transform: scale(1.05); /* Slight zoom effect on hover */
+        }
+        @media (max-width: 768px) {
+            .user-option {
+                margin-bottom: 10px;
+            }
+
+            /* Stack the user options vertically */
+            .row.g-2 {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .card-link {
+                width: 100%;
+            }
+
+            .container {
+                padding-top: 10px;
+            }
         }
     </style>
 </head>
@@ -36,9 +127,10 @@
             <li class="breadcrumb-item active" aria-current="page">Add Address</li>
         </ol>
     </nav>
+
     <!-- User Options Grid -->
-    <div class="container mt-2">
-        <div class="row g-2">
+    <div class="container mt-2 mb-3">
+        <div class="row g-3">
             <div class="col-md-2">
                 <a href="/userdetails" class="card-link">
                     <div class="card user-option">
@@ -81,48 +173,52 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card user-option">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">All Orders</h5>
+                <a href="/orders" class="card-link">
+                    <div class="card user-option">
+                        <div class="card-body text-center">
+                            <p class="card-title">All Orders</p>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </a>
+            </div> 
         </div>
     </div>
-    <div class="container mt-4">
+
+    <!-- Address Form Section -->
+    <div class="address-form-container">
         <h3>Add Address</h3>
         <form action="/add-address" method="POST">
             <div class="mb-3">
                 <label for="name" class="form-label">Name</label>
-                <input type="text" class="form-control" id="name" name="name" >
+                <input type="text" class="form-control" id="name" name="name">
             </div>
             <div class="mb-3">
                 <label for="phone" class="form-label">Phone</label>
-                <input type="text" class="form-control" id="phone" name="phone" >
+                <input type="text" class="form-control" id="phone" name="phone">
             </div>
             <div class="mb-3">
                 <label for="houseNo" class="form-label">House No.</label>
-                <input type="text" class="form-control" id="houseNo" name="houseNo" >
+                <input type="text" class="form-control" id="houseNo" name="houseNo">
             </div>
             <div class="mb-3">
                 <label for="area" class="form-label">Area</label>
-                <input type="text" class="form-control" id="area" name="area" >
+                <input type="text" class="form-control" id="area" name="area">
             </div>
             <div class="mb-3">
                 <label for="city" class="form-label">City</label>
-                <input type="text" class="form-control" id="city" name="city" >
+                <input type="text" class="form-control" id="city" name="city">
             </div>
             <div class="mb-3">
                 <label for="state" class="form-label">State</label>
-                <input type="text" class="form-control" id="state" name="state" >
+                <input type="text" class="form-control" id="state" name="state">
             </div>
             <div class="mb-3">
                 <label for="pincode" class="form-label">Pincode</label>
-                <input type="text" class="form-control" id="pincode" name="pincode" >
+                <input type="text" class="form-control" id="pincode" name="pincode">
             </div>
             <div class="mb-3">
                 <label for="title" class="form-label">Title</label>
-                <select class="form-control" id="title" name="title" >
+                <select class="form-control" id="title" name="title">
                     <option value="Home">Home</option>
                     <option value="Office">Office</option>
                 </select>

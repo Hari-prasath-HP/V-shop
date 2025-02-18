@@ -5,35 +5,50 @@ const Address = require('../models/address');
 const Order = require('../models/order');
 const product = require('../models/product');
 exports.addToCart = async (req, res) => {
-    try {
-      if (!req.session.user) {
-        return res.redirect('/login')
-      }
-      const { productId, quantity } = req.body;
-      const userId = req.session.user.id;
-      const product = await Product.findById(productId);
-      if (!product) {
-        return res.status(404).json({ error: 'Product not found' });
-      }
-      const existingCartItem = await Cart.findOne({ userId, productId });
-      if (existingCartItem) {
-        existingCartItem.quantity = parseInt(quantity);
-        await existingCartItem.save();
-        return res.redirect('/cart');
-      } else {
-        const newCartItem = new Cart({
-          userId,
-          productId,
-          quantity: parseInt(quantity),
-        });
-        await newCartItem.save();
-        return res.redirect('/cart');
-      }
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Server error' });
+  try {
+    if (!req.session.user) {
+      return res.redirect('/login');
     }
-  };
+    
+    const { productId, quantity } = req.body;
+    const userId = req.session.user.id;
+    
+    // Find the product by ID
+    const product = await Product.findById(productId);
+    
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    const requestedQuantity = parseInt(quantity, 10);
+
+    // Check if enough stock is available
+    if (product.stock < requestedQuantity) {
+      req.session.errorMessage = "Insufficient stock available!";
+      return res.redirect(`/product/${productId}`);  // Redirect to product details page
+    }
+    const existingCartItem = await Cart.findOne({ userId, productId });
+    
+    if (existingCartItem) {
+      // Update the existing cart item with the new quantity
+      existingCartItem.quantity = parseInt(quantity);
+      await existingCartItem.save();
+      return res.redirect('/cart');
+    } else {
+      // Create a new cart item
+      const newCartItem = new Cart({
+        userId,
+        productId,
+        quantity: parseInt(quantity),
+      });
+      await newCartItem.save();
+      return res.redirect('/cart');
+    }
+    
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
   exports.viewCart = async (req, res) => {
     if (!req.session.user) {
       return res.redirect('/login');

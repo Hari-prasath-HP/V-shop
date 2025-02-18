@@ -48,6 +48,8 @@ router.get('/edit-address/:id', accountController.getEditAddress);
 router.post('/update-address/:id', accountController.updateAddress);
 router.get('/delete-address/:id', accountController.deleteAddress);
 router.get('/set-default-address/:id', accountController.setDefaultAddress);
+router.get('/orders/', accountController.getAllOrdersForUser);
+router.get('/order/view/:id',accountController.getOrderDetails)
 // logout
 router.post('/logout', UserController.logout);
 

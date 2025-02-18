@@ -6,6 +6,7 @@ const path = require('path');
 require('dotenv').config();
 const connectDB = require('./config/mongo');
 const passport = require("passport");
+const flash = require('connect-flash');
 require("./config/passport");
 
 // Initialize Express App
@@ -29,6 +30,7 @@ app.use(session({
   saveUninitialized: true,
   cookie: { secure: false }
 }));
+app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 // **Cache-Control Middleware (Prevents storing previous pages)**

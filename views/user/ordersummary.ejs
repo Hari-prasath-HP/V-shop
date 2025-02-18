@@ -228,6 +228,7 @@
                             <td class="subTotal">₹<%= subTotal.toFixed(2) %></td>
     
                             <!-- Hidden inputs for each product details -->
+                            <input type="hidden" name="products[<%= item.productId._id %>][productId]" value="<%= item.productId._id %>">
                             <input type="hidden" name="products[<%= item.productId._id %>][name]" value="<%= item.productId.name %>">
                             <input type="hidden" name="products[<%= item.productId._id %>][quantity]" value="<%= item.quantity %>">
                             <input type="hidden" name="products[<%= item.productId._id %>][price]" value="<%= item.productId.price %>">

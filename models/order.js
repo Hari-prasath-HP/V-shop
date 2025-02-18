@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const orderSchema = new mongoose.Schema(
   {
     user: {
-      type: mongoose.Schema.Types.ObjectId,ref: 'Users',required: true,
+      type: mongoose.Schema.Types.ObjectId,ref: 'User',required: true,
     },
     products: [
       {product: {type: mongoose.Schema.Types.ObjectId,ref: 'Product',},
@@ -17,7 +17,7 @@ const orderSchema = new mongoose.Schema(
     paymentStatus: {type: String,enum: ['Pending', 'Completed', 'Failed', 'Refunded'],default: 'Pending',},
     orderStatus: {type: String,enum: ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],default: 'Pending',},
     shippingAddress: {
-        userId: {type: mongoose.Schema.Types.ObjectId,ref: 'Users',required: true,},
+        userId: {type: mongoose.Schema.Types.ObjectId,ref: 'User',required: true,},
         name: {type: String,required: true,},
         phone: {type: String,required: true,},
         houseNo: {type: String,required: true,},

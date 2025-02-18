@@ -12,7 +12,8 @@
             color: inherit; /* Inherit the text color from the parent */
         }
         body {
-            background-color: #f8f9fa;
+            background-color: #f4f6f9; /* Soft background */
+            font-family: 'Arial', sans-serif;
         }
         .breadcrumb {
             background-color: #fff;
@@ -20,46 +21,69 @@
             padding: 10px 15px;
         }
         .user-info {
-            background-color: #fff;
+            background-color: #ffffff;
             padding: 20px;
             border-radius: 12px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
         }
         .user-info h4 {
-            border-bottom: 2px solid #00ccff;
+            border-bottom: 3px solid #6c757d;
             padding-bottom: 10px;
             margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #495057;
         }
         .btn-primary {
-            background-color: #00bfff;
+            background-color: #28a745;
             border: none;
             padding: 10px 15px;
             font-weight: bold;
         }
         .btn-primary:hover {
-            background-color: #0077e6;
+            background-color: #218838;
         }
         .btn-danger {
-            background-color: #ff4d4d;
+            background-color: #dc3545;
             border: none;
             padding: 10px 15px;
             font-weight: bold;
         }
         .btn-danger:hover {
-            background-color: #cc0000;
+            background-color: #c82333;
+        }
+        .btn-secondary {
+            background-color: #ffc107;
+            border: none;
+            padding: 10px 15px;
+            font-weight: bold;
+        }
+        .btn-secondary:hover {
+            background-color: #e0a800;
         }
         .user-option {
-        border: 1px solid #ddd; /* Light border */
-        border-radius: 8px; /* Rounded corners */
-        background-color: #f8f9fa; /* Light background */
-    }
+            border: 1px solid #ddd; /* Light border */
+            border-radius: 8px; /* Rounded corners */
+            background-color: #f8f9fa; /* Light background */
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Shadow */
+            transition: transform 0.3s ease-in-out; /* Smooth transition */
+        }
 
-    .user-option:hover {
-        cursor: pointer;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow on hover */
-        transform: translateY(-5px); /* Slight lift effect */
-        transition: all 0.3s ease-in-out; /* Smooth transition */
-    }
+        .user-option:hover {
+            cursor: pointer;
+            transform: scale(1.05); /* Slight zoom effect on hover */
+        }
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .table thead {
+            background-color: #f1f1f1;
+            font-weight: bold;
+        }
+        .table-striped tbody tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
     </style>
 </head>
 <body>
@@ -70,9 +94,10 @@
             <li class="breadcrumb-item active" aria-current="page">My Address</li>
         </ol>
     </nav>
+    
     <!-- User Options Grid -->
     <div class="container mt-2">
-        <div class="row g-2">
+        <div class="row g-3">
             <div class="col-md-2">
                 <a href="/userdetails" class="card-link">
                     <div class="card user-option">
@@ -115,19 +140,22 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card user-option">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">All Orders</h5>
+                <a href="/orders" class="card-link">
+                    <div class="card user-option">
+                        <div class="card-body text-center">
+                            <p class="card-title">All Orders</p>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </a>
+            </div> 
         </div>
     </div>
+
     <div class="container mt-4">
         <div class="card user-info">
             <div class="card-body">
                 <h4 class="card-title">My Addresses</h4>
-                <table class="table table-bordered">
+                <table class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th>S.No</th>

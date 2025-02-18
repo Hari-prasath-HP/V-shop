@@ -8,59 +8,80 @@
     <link rel="stylesheet" href="/css/style.css"> <!-- Link to your CSS file -->
     <style>
       body {
-          background-color: #f8f9fa;
+          background-color: #f4f7fc;
+          font-family: 'Arial', sans-serif;
       }
-      .card-link {
-            text-decoration: none; /* Remove the default underline */
-            color: inherit; /* Inherit the text color from the parent */
-        }
       .breadcrumb {                                                                                                                                                                                                                                                                             
-          background-color: #fff;
+          background-color: #ffffff;
           border-radius: 8px;
           padding: 10px 15px;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       }
 
       .user-option {
         border: 1px solid #ddd; /* Light border */
         border-radius: 8px; /* Rounded corners */
-        background-color: #f8f9fa; /* Light background */
-    }
+        background-color: #ffffff; /* Light background */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
 
-    .user-option:hover {
+      .user-option:hover {
         cursor: pointer;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow on hover */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Shadow on hover */
         transform: translateY(-5px); /* Slight lift effect */
-        transition: all 0.3s ease-in-out; /* Smooth transition */
-    }
-    .card-body {
+      }
+
+      .card-body {
         padding: 15px;
-    }
+      }
+
       .user-info {
-          background-color: #fff;
-          padding: 20px;
+          background-color: #ffffff;
+          padding: 30px;
           border-radius: 12px;
           box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
       }
 
       .user-info h4 {
-          border-bottom: 2px solid #00ccff;
+          border-bottom: 2px solid #6c757d;
           padding-bottom: 10px;
           margin-bottom: 20px;
+          font-size: 1.5rem;
       }
 
       .form-control {
           border-radius: 8px;
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-label {
+          font-weight: bold;
+          color: #495057;
       }
 
       .btn-primary {
-          background-color: #00bfff;
+          background-color: #007bff;
           border: none;
-          padding: 10px 15px;
+          padding: 10px 20px;
           font-weight: bold;
+          border-radius: 8px;
+          transition: background-color 0.3s ease;
       }
 
       .btn-primary:hover {
-          background-color: #0077e6;
+          background-color: #0056b3;
+      }
+
+      .user-info button {
+          width: 100%;
+      }
+
+      .card-title {
+          font-size: 1.2rem;
+      }
+
+      .user-info .mb-3 {
+          margin-bottom: 20px;
       }
     </style>
 </head>
@@ -73,60 +94,62 @@
         </ol>
     </nav>
 
-        <!-- User Options Grid -->
-        <div class="container mt-2">
-            <div class="row g-2">
-                <div class="col-md-2">
-                    <a href="/userdetails" class="card-link">
-                        <div class="card user-option">
-                            <div class="card-body text-center">
-                                <p class="card-title">My Account</p>
-                            </div>
-                        </div>
-                    </a>
-                </div>                
-                <div class="col-md-2">
-                    <a href="/address" class="card-link">
-                        <div class="card user-option">
-                            <div class="card-body text-center">
-                                <p class="card-title">My Address</p>
-                            </div>
-                        </div>
-                    </a>
-                </div> 
-                <div class="col-md-2">
-                    <a href="/add-address" class="card-link">
-                        <div class="card user-option">
-                            <div class="card-body text-center">
-                                <p class="card-title">Add Address</p>
-                            </div>
-                        </div>
-                    </a>
-                </div> 
-                <div class="col-md-2">
+    <!-- User Options Grid -->
+    <div class="container mt-3">
+        <div class="row g-2">
+            <div class="col-md-2">
+                <a href="/userdetails" class="card-link">
                     <div class="card user-option">
                         <div class="card-body text-center">
-                            <h5 class="card-title">Wallet</h5>
+                            <p class="card-title">My Account</p>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-2">
+                </a>
+            </div>
+            <div class="col-md-2">
+                <a href="/address" class="card-link">
                     <div class="card user-option">
                         <div class="card-body text-center">
-                            <h5 class="card-title">Wishlist</h5>
+                            <p class="card-title">My Address</p>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-2">
+                </a>
+            </div>
+            <div class="col-md-2">
+                <a href="/add-address" class="card-link">
                     <div class="card user-option">
                         <div class="card-body text-center">
-                            <h5 class="card-title">All Orders</h5>
+                            <p class="card-title">Add Address</p>
                         </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-2">
+                <div class="card user-option">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Wallet</h5>
                     </div>
                 </div>
             </div>
+            <div class="col-md-2">
+                <div class="card user-option">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Wishlist</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <a href="/orders" class="card-link">
+                    <div class="card user-option">
+                        <div class="card-body text-center">
+                            <p class="card-title">All Orders</p>
+                        </div>
+                    </div>
+                </a>
+            </div> 
         </div>
-        
+    </div>
+    
     <div class="container mt-4">
         <div class="card user-info">
             <div class="card-body">
@@ -144,7 +167,7 @@
                         <label for="email" class="form-label">Email</label>
                         <input type="email" class="form-control" id="email" value="<%= user.email %>" readonly>
                     </div>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="submit" class="btn btn-dark btn-sm" style="width: auto;">Save Changes</button>
                 </form>
             </div>
         </div>

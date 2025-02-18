@@ -18,6 +18,10 @@
             transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
         }
         .product {
+            min-height: 450px; /* Adjust as needed */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
             padding: 15px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
@@ -34,13 +38,18 @@
         .product img:hover {
             transform: scale(1.1);
         }
-        .product-price {
+        .product .product-price {
             font-size: 18px;
             font-weight: bold;
+            min-height: 40px;
         }
-        .product-name {
+        .product .product-name {
             font-size: 16px;
             font-weight: 600;
+            min-height: 50px;
+        }
+        .product .carousel {
+            min-height: 200px; /* Ensures image carousel remains consistent */
         }
         .navbar {
             background-color: #333333;

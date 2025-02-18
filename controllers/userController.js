@@ -347,6 +347,7 @@ exports.viewProduct = async (req, res) => {
       username = user.username;
     }
   }
+  
   try {
     const productId = req.params.id;
     const product = await Product.findById(productId).populate('category');
@@ -382,12 +383,15 @@ exports.viewProduct = async (req, res) => {
         relatedProduct.offerPercentage = 0;
         relatedProduct.offerPrice = relatedProduct.price.toFixed(2);
       }
-
+      
       // Add quantity and unit to related product
       relatedProduct.quantity = relatedProduct.stock; // Assuming stock represents quantity
       relatedProduct.unit = relatedProduct.unit || 'Unit'; // Replace 'Unit' with the actual unit if available
     });
-    res.render('user/product-detail', { user, product, username, relatedProducts });
+    let errorMessage = req.session.errorMessage;
+    req.session.errorMessage = null;  // Clear after reading
+
+    res.render('user/product-detail', { user, product, username, relatedProducts , errorMessage});
   } catch (err) {
     console.error('Error fetching product details:', err);
     res.status(500).send(`Server Error: ${err.message}`);

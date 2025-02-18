@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Address = require('../models/address');
+const Order = require('../models/order');
 
 exports.viewUserDetails = async (req, res) => {
     if (!req.session.user) {
@@ -142,3 +143,73 @@ exports.deleteAddress = async (req, res) => {
         res.status(500).send('Server Error');
     }
 };
+exports.getAllOrdersForUser = async (req, res) => {
+    try {
+        const userId = req.session.user.id; // Get the userId from URL parameters
+        const page = parseInt(req.query.page) || 1; // Get current page, default to 1
+        const limit = 5; // Number of orders per page
+        const totalOrders = await Order.countDocuments({ user: userId });
+        const totalPages = Math.ceil(totalOrders / limit);
+        if (!userId) {
+            return res.redirect('/login')
+        }
+        // Fetch all orders for the user
+        const orders = await Order.find({ user: userId })
+            .select('-products') // Exclude products field
+            .sort({ orderedAt: -1 }) // Sort latest orders first
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        if (orders.length === 0) {
+            return res.status(404).render('user-orders', { message: 'No orders found for this user.' });
+        }
+        res.render('user/orders', {
+            orders,
+            currentPage: page,
+            totalPages,
+            totalOrders
+        });
+    } catch (error) {
+        console.error('Error fetching user orders:', error);
+        res.status(500).send('Server Error');
+    }
+};
+exports.getOrderDetails = async (req, res) => {
+    try {
+      const orderId = req.params.id;
+      const order = await Order.findById(orderId)
+        .populate('user', 'username email') // Populating the user details
+        .populate('products.product', 'name images price') // Populating the product details
+        .populate('shippingAddress.userId', 'username email'); // Populating shipping address user
+  
+      if (!order) {
+        return res.status(404).render('error', { message: 'Order not found' });
+      }
+      // Structure the product details correctly with safeguards
+      const orderProducts = order.products.map(item => ({
+        image: item.product && item.product.images ? item.product.images[0] : '', // Fallback if no images
+        name: item.product ? item.product.name : 'Unknown', // Fallback if no product
+        price: item.price,
+        offerPrice: item.offerPrice,
+        quantity: item.quantity,
+        subtotal: item.quantity * (item.offerPrice || item.price),
+        productId: item.product ? item.product._id : '',
+      }));
+  
+      res.render('user/vieworders', {
+        orderId: order._id,
+        orderedAt: order.orderedAt,
+        shippingAddress: order.shippingAddress,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        grandTotal: order.totalAmount,
+        orderStatus: order.orderStatus,
+        products: orderProducts,
+      });
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      res.status(500).render('error', { message: 'Internal Server Error' });
+    }
+  };
+  
+  
