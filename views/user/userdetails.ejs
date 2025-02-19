@@ -24,7 +24,10 @@
         background-color: #ffffff; /* Light background */
         transition: transform 0.3s ease, box-shadow 0.3s ease;
       }
-
+      .user-option .card-title {
+          font-size: 16px;
+          font-weight: bold;
+      }
       .user-option:hover {
         cursor: pointer;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Shadow on hover */
@@ -83,6 +86,53 @@
       .user-info .mb-3 {
           margin-bottom: 20px;
       }
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        background-color: #f8f9fa;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .main-content {
+        flex: 1; /* This will push the footer to the bottom */
+    }
+
+    footer {
+        background-color: #333;
+        color: white;
+        padding: 20px 0;
+        text-align: center;
+        width: 100%;
+    }
+        footer .text-muted {
+            color: #aaa;
+        }
+
+        footer .social-icons a {
+            color: #fff;
+            margin: 0 10px;
+            font-size: 18px;
+        }
+
+        footer .social-icons a:hover {
+            color: #ff6600;
+        }
+        .breadcrumb a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .breadcrumb-item a {
+            color: #6e7478; /* Set a neutral color similar to text */
+            font-weight: normal;
+        }
+        .card-link {
+            text-decoration: none; /* Remove the default underline */
+            color: inherit; /* Inherit the text color from the parent */
+        }
     </style>
 </head>
 <body>
@@ -93,7 +143,7 @@
             <li class="breadcrumb-item active" aria-current="page">User Details</li>
         </ol>
     </nav>
-
+<div class="main-content">
     <!-- User Options Grid -->
     <div class="container mt-3">
         <div class="row g-2">
@@ -172,7 +222,21 @@
             </div>
         </div>
     </div>
-
+</div>
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <p>&copy; 2025 Vegishop. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <a href="privacy.html" class="text-white mx-2">Privacy Policy</a>
+                <a href="terms.html" class="text-white mx-2">Terms of Service</a>
+            </div>
+        </div>
+    </div>
+</footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

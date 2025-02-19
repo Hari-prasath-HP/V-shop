@@ -159,10 +159,6 @@ exports.getAllOrdersForUser = async (req, res) => {
             .sort({ orderedAt: -1 }) // Sort latest orders first
             .skip((page - 1) * limit)
             .limit(limit);
-
-        if (orders.length === 0) {
-            return res.status(404).render('user-orders', { message: 'No orders found for this user.' });
-        }
         res.render('user/orders', {
             orders,
             currentPage: page,
@@ -178,24 +174,28 @@ exports.getOrderDetails = async (req, res) => {
     try {
       const orderId = req.params.id;
       const order = await Order.findById(orderId)
-        .populate('user', 'username email') // Populating the user details
-        .populate('products.product', 'name images price') // Populating the product details
-        .populate('shippingAddress.userId', 'username email'); // Populating shipping address user
-  
+      .populate({
+        path: 'products.product',   // Ensure the 'product' field inside 'products' array is populated
+        model: 'Product',
+        select: 'name images price offerPrice'
+      }) // Populating the user details
+      .populate('user', 'username email')
+        .populate('shippingAddress.userId', 'username email') // Populating shipping address user
+        .exec();
       if (!order) {
         return res.status(404).render('error', { message: 'Order not found' });
       }
       // Structure the product details correctly with safeguards
       const orderProducts = order.products.map(item => ({
-        image: item.product && item.product.images ? item.product.images[0] : '', // Fallback if no images
-        name: item.product ? item.product.name : 'Unknown', // Fallback if no product
+        image: item.product && item.product.images.length > 0 ? item.product.images[0] : '/images/default.jpg', // Use first image or fallback
+        name: item.product ? item.product.name : 'Unknown', // Get product name or use fallback
         price: item.price,
         offerPrice: item.offerPrice,
         quantity: item.quantity,
+        status:item.status,
         subtotal: item.quantity * (item.offerPrice || item.price),
         productId: item.product ? item.product._id : '',
       }));
-  
       res.render('user/vieworders', {
         orderId: order._id,
         orderedAt: order.orderedAt,

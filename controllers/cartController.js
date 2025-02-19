@@ -421,7 +421,15 @@ exports.placeOrder = async (req, res) => {
     }
 
     // Add new products to the order
-    existingOrder.products.push(...productEntries);
+    existingOrder.products.push(
+      ...productEntries.map(product => ({
+        product: product.productId, // ✅ Reference to Product model
+        quantity: product.quantity,
+        price: product.price,
+        offerPrice: product.offerPrice || 0,
+        status: 'Ordered'
+      }))
+    );
     existingOrder.totalAmount = grandTotal;
     existingOrder.paymentMethod = paymentMethod;
     existingOrder.shippingAddress = checkoutAddress;
@@ -469,5 +477,61 @@ exports.placeOrder = async (req, res) => {
     return res.redirect('/login')
   }
 };
+exports.cancelProduct = async (req, res) => {
+  try {
+      const { orderId, productId, reason } = req.body;
+      const order = await Order.findById(orderId);
 
+      if (!order) {
+          return res.status(404).json({ message: "Order not found" });
+      }
+
+      const productIndex = order.products.findIndex(p => p.product.toString() === productId);
+      if (productIndex === -1) {
+          return res.status(404).json({ message: "Product not found in order" });
+      }
+
+      if (order.products[productIndex].status !== 'Ordered') {
+          return res.status(400).json({ message: "Product cannot be canceled" });
+      }
+
+      order.products[productIndex].status = 'Canceled';
+      order.products[productIndex].cancellationReason = reason;
+      await order.save();
+
+      res.json({ message: "Product canceled successfully." });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.returnProduct = async (req, res) => {
+  try {
+      const { orderId, productId, reason } = req.body;
+      const order = await Order.findById(orderId);
+
+      if (!order) {
+          return res.status(404).json({ message: "Order not found" });
+      }
+
+      const productIndex = order.products.findIndex(p => p.product.toString() === productId);
+      if (productIndex === -1) {
+          return res.status(404).json({ message: "Product not found in order" });
+      }
+
+      if (order.products[productIndex].status !== 'Delivered') {
+          return res.status(400).json({ message: "Product cannot be returned" });
+      }
+
+      order.products[productIndex].status = 'Returned';
+      order.products[productIndex].returnReason = reason;
+      await order.save();
+
+      res.json({ message: "Product returned successfully." });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server error" });
+  }
+};
 

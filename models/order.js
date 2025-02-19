@@ -6,12 +6,20 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,ref: 'User',required: true,
     },
     products: [
-      {product: {type: mongoose.Schema.Types.ObjectId,ref: 'Product',},
-        quantity: {type: Number,required: true,min: 1,},
-        price: {type: Number,required: true,},
-        offerPrice: {type: Number,required: true,},
-      },
-    ],
+      {
+        product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+        quantity: { type: Number, required: true, min: 1 },
+        price: { type: Number, required: true },
+        offerPrice: { type: Number, required: true },
+        status: { 
+          type: String, 
+          enum: ['Ordered', 'Shipped', 'Delivered', 'Canceled', 'Returned'], 
+          default: 'Ordered' 
+        },
+        cancellationReason: { type: String, default: null },
+        returnReason: { type: String, default: null }
+      }
+    ],    
     totalAmount: {type: Number,required: true,},
     paymentMethod: {type: String,enum: ['COD', 'Online Payment', 'Wallet'],required: true,},
     paymentStatus: {type: String,enum: ['Pending', 'Completed', 'Failed', 'Refunded'],default: 'Pending',},
@@ -30,6 +38,8 @@ const orderSchema = new mongoose.Schema(
     deliveredAt: {type: Date,},
     isCancelled: {type: Boolean,default: false,},
     isReturned: {type: Boolean,default: false,},
+    cancellationReason: { type: String, default: null },
+    returnReason: { type: String, default: null },
   },
   { timestamps: true }
 );
