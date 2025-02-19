@@ -37,8 +37,10 @@ router.get('/checkout-2',  cartController.getCheckoutPage2);
 router.post('/paymentMethod', cartController.savePaymentMethod)
 router.get('/ordersummary', cartController.getOrderSummary)
 router.post('/placeorder', cartController.placeOrder)
-router.post('/order/cancel', cartController.cancelProduct);
-router.post('/order/return', cartController.returnProduct);
+router.post('/product/cancel', cartController.cancelProduct);
+router.post('/product/return', cartController.returnProduct);
+router.post('/order/cancel/:orderId', cartController.cancelOrder);
+router.post('/order/return/:orderId', cartController.returnOrder);
 
 router.get('/userdetails', accountController.viewUserDetails);
 router.post('/update-user',accountController.updateUser);

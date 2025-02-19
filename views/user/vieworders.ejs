@@ -216,20 +216,19 @@
         opacity: 1;
     }
 
-    /* Confirmation Popup */
     .confirmation-popup {
         display: none;
         position: fixed;
-        top: 50%;
+        top: 10%;
         left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: rgb(250, 0, 0);
+        transform: translate(-10%, -50%);
+        background: rgb(49, 224, 18);
         padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        text-align: center;
-        z-index: 10;
+        border-radius: 5px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
     }
+
     .modal {
         display: none;  /* Hide initially */
         position: fixed;
@@ -514,16 +513,22 @@
     }
 
     function showConfirmationPopup(message) {
-    console.log("showConfirmationPopup called with message:", message); // Debugging line
+        console.log("Inside showConfirmationPopup with message:", message); // Debugging
 
-    const popup = document.getElementById("confirmationPopup");
-    document.getElementById("confirmationMessage").innerText = message;
-    popup.style.display = "block";
+        const popup = document.getElementById("confirmationPopup");
+        if (!popup) {
+            console.error("Popup element not found!");
+            return;
+        }
+        document.getElementById("confirmationMessage").innerText = message;
+        popup.style.display = "block";
 
-    setTimeout(() => {
-        popup.style.display = "none";
-    }, 4000);
-}
+        setTimeout(() => {
+            console.log("Hiding Confirmation Popup"); // Debugging
+            popup.style.display = "none";
+        }, 4000);
+    }
+
     function submitReason() {
         const reason = document.getElementById("reasonInput").value;
         if (!reason) {
@@ -531,29 +536,28 @@
             return;
         }
 
-        fetch(`/order/${actionType}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ orderId, productId, reason })
-})
-.then(response => response.json())  // Ensure JSON is parsed
-.then(data => {
-    console.log("Server Response:", data); // Debugging line
+        fetch(`/product/${actionType}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId, productId, reason })
+        })
+        .then(response => response.json().catch(() => ({ error: true, message: "Invalid JSON response" }))) // Catch JSON parsing errors
+        .then(data => {
+            console.log("Server Response:", data); // Debugging line
 
-    if (data.error) {
-        showToast(data.message, true);
-    } else {
-        console.log("Showing Confirmation Popup"); // Debugging line
-        showConfirmationPopup(`Product ${actionType === 'cancel' ? 'canceled' : 'returned'} successfully.`);
-        
-        setTimeout(() => location.reload(), 4000);
-    }
-})
-.catch(err => {
-    console.error("Error:", err);
-    showToast("Something went wrong. Try again later.", true);
-});
-
+            if (data.error) {
+                showToast(data.message, true);
+            } else {
+                console.log("Showing Confirmation Popup"); // Debugging line
+                showConfirmationPopup(`Product ${actionType === 'cancel' ? 'canceled' : 'returned'} successfully.`);
+                
+                setTimeout(() => location.reload(), 4000);
+            }
+        })
+        .catch(err => {
+            console.error("Fetch Error:", err);
+            showToast("Something went wrong. Try again later.", true);
+        });
     }
 </script>
 </body>

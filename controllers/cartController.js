@@ -386,7 +386,6 @@ exports.placeOrder = async (req, res) => {
   try {
     const { products, paymentMethod, grandTotal } = req.body;
     const userId = req.session.user.id;
-    console.log(req.body)
     const user = await User.findById(userId);
     if (!user) return res.redirect('/login');
 
@@ -457,7 +456,6 @@ exports.placeOrder = async (req, res) => {
           );
           // Optionally, you can log the updated product
   const updatedProduct = await Product.findById(item.productId);
-  console.log('Updated Product:', updatedProduct);
       }
     }
     // Clear the cart from the database
@@ -534,4 +532,62 @@ exports.returnProduct = async (req, res) => {
       res.status(500).json({ message: "Server error" });
   }
 };
+exports.cancelOrder = async (req, res) => {
+  try {
+      const { orderId } = req.params;
+      const { reason } = req.body;
 
+      // Find the order by ID
+      const order = await Order.findById(orderId);
+      if (!order) {
+          return res.json({ success: false, message: 'Order not found' });
+      }
+
+      // Update the status of each product in the order
+      order.products.forEach(product => {
+          product.status = 'Canceled';
+      });
+
+      // Update the overall order status and cancellation reason
+      order.orderStatus = 'Cancelled';
+      order.cancellationReason = reason;
+
+      // Save the updated order
+      await order.save();
+
+      res.json({ success: true, message: 'Order cancelled successfully' });
+  } catch (error) {
+      console.error(error);
+      res.json({ success: false, message: 'Error cancelling order' });
+  }
+};
+
+exports.returnOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { reason } = req.body;
+
+    // Find the order by ID
+    const order = await Order.findById(orderId);
+    if (!order) {
+        return res.json({ success: false, message: 'Order not found' });
+    }
+
+    // Update the status of each product in the order
+    order.products.forEach(product => {
+        product.status = 'Returned';
+    });
+
+    // Update the overall order status and cancellation reason
+    order.orderStatus = 'Returned';
+    order.cancellationReason = reason;
+
+    // Save the updated order
+    await order.save();
+
+    res.json({ success: true, message: 'Order Returned successfully' });
+  } catch (error) {
+      console.error(error);
+      res.json({ success: false, message: 'Error returning order' });
+  }
+};
