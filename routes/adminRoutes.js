@@ -39,6 +39,9 @@ adminrouter.get('/deleteProduct/:id', adminController.softDeleteProduct);
 adminrouter.get('/listProduct/:id', adminController.listProduct); 
 adminrouter.get('/unlistProduct/:id', adminController.unlistProduct); 
 
+adminrouter.get('/orders', adminController.getOrders);
+adminrouter.post('/orders/update-status/:orderId', adminController.updateOrderStatus);
+adminrouter.get('/orders/view/:orderId', adminController.viewOrder);
 
 adminrouter.get('/logout', adminController.logout);
 

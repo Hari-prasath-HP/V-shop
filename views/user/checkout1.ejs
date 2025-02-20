@@ -14,19 +14,22 @@
     margin: 20px;
 }
 .step {
-    width: 30px;
-    height: 30px;
-    background-color: gray;
+    width: 40px;
+    height: 40px;
+    background-color: #aaa;
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    transition: background-color 0.3s;
+    font-size: 18px;
+    transition: background 0.3s, transform 0.2s ease-in-out;
 }
+
 .step.active {
-    background-color: green;
+    background-color: #008000;
+    transform: scale(1.1);
 }
 .line {
     width: 100px;
@@ -44,15 +47,19 @@
         }
 
         .navbar .navbar-brand h3 {
-            color: #fff;
+            font-weight: bold;
+        color: #ffcc00;
+        text-transform: uppercase;
         }
 
         .navbar .nav-link {
-            color: #ccc;
+            color: #ddd;
+            font-size: 18px;
+            transition: color 0.3s;
         }
 
         .navbar .nav-link:hover {
-            color: #fff;
+            color: #ffcc00;
         }
 
         .navbar-toggler-icon {
@@ -96,14 +103,15 @@
         footer .social-icons a:hover {
             color: #ff6600;
         }
+        /* Breadcrumb */
         .breadcrumb a {
-            text-decoration: none;
-            color: inherit;
+            color: #ff6600;
+            font-weight: bold;
+            transition: color 0.3s;
         }
 
-        .breadcrumb-item a {
-            color: #6e7478; /* Set a neutral color similar to text */
-            font-weight: normal;
+        .breadcrumb a:hover {
+            color: #00b894;
         }
     </style>
 </head>

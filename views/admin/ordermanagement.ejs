@@ -96,16 +96,17 @@
                         <td><%= order.paymentMethod %></td>
                         <td>
                             <select class="status-dropdown" data-order-id="<%= order._id %>">
-                              <option value="Pending" <%= order.status === 'Confirmed' ? 'selected' : '' %>>Change the Status</option>
-                                <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
-                                <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
-                                <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
-                                <option value="Returned" <%= order.status === 'Returned' ? 'selected' : '' %>>Returned</option>
+                                <option disabled selected>Change the Status</option> <!-- Fixed the default option -->
+                                <option value="Ordered" <%= order.orderStatus === 'Ordered' ? 'selected' : '' %>>Ordered</option>
+                                <option value="Shipped" <%= order.orderStatus === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                                <option value="Delivered" <%= order.orderStatus === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                                <option value="Cancelled" <%= order.orderStatus === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                <option value="Returned" <%= order.orderStatus === 'Returned' ? 'selected' : '' %>>Returned</option>
                             </select>
                         </td>
                         <td>
                             <button class="view-btn" onclick="window.location.href='/admin/orders/view/<%= order._id %>'">View</button>
-                        </td>
+                        </td>                        
                     </tr>
                 <% }) %>
             </tbody>
@@ -125,18 +126,31 @@
 
     <script>
         document.querySelectorAll('.status-dropdown').forEach(select => {
-            select.addEventListener('change', function() {
-                const orderId = this.dataset.orderId;
-                const newStatus = this.value;
-                fetch(`/admin/orders/update-status/${orderId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: newStatus })
-                }).then(response => response.json())
-                  .then(data => alert(data.message))
-                  .catch(error => console.error('Error:', error));
-            });
-        });
+    select.addEventListener('change', function() {
+        const orderId = this.dataset.orderId; // Correctly getting order ID
+        const newStatus = this.value;
+
+        if (!orderId || !newStatus) {
+            alert("Invalid order ID or status.");
+            return;
+        }
+
+        fetch(`/admin/orders/update-status/${orderId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert(data.message);
+            } else {
+                alert("Error updating status.");
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
     </script>
 </body>
 </html>

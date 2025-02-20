@@ -13,7 +13,7 @@ const orderSchema = new mongoose.Schema(
         offerPrice: { type: Number, required: true },
         status: { 
           type: String, 
-          enum: ['Ordered', 'Shipped', 'Delivered', 'Canceled', 'Returned'], 
+          enum: ['Ordered', 'Shipped', 'Delivered', 'Cancelled', 'Returned'], 
           default: 'Ordered' 
         },
         cancellationReason: { type: String, default: null },
@@ -23,7 +23,7 @@ const orderSchema = new mongoose.Schema(
     totalAmount: {type: Number,required: true,},
     paymentMethod: {type: String,enum: ['COD', 'Online Payment', 'Wallet'],required: true,},
     paymentStatus: {type: String,enum: ['Pending', 'Completed', 'Failed', 'Refunded'],default: 'Pending',},
-    orderStatus: {type: String,enum: ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],default: 'Pending',},
+    orderStatus: {type: String,enum: ['Pending', 'Ordered', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],default: 'Pending',},
     shippingAddress: {
         userId: {type: mongoose.Schema.Types.ObjectId,ref: 'User',required: true,},
         name: {type: String,required: true,},

@@ -8,103 +8,170 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css"> <!-- Your custom styles -->
     <style>
-        .progress-container {
+        /* General Page Styling */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+/* Navbar Styling */
+.navbar {
+    background: linear-gradient(to right, #222, #444);
+    padding: 15px 0;
+}
+
+.navbar .navbar-brand h1 {
+    font-weight: bold;
+    color: #ffcc00;
+    text-transform: uppercase;
+}
+
+.navbar .nav-link {
+    color: #ddd;
+    font-size: 18px;
+    transition: color 0.3s;
+}
+
+.navbar .nav-link:hover {
+    color: #ffcc00;
+}
+
+/* Progress Bar */
+.progress-container {
     display: flex;
     justify-content: center;
-    margin: 20px;
+    align-items: center;
+    margin: 30px 0;
 }
+
 .step {
-    width: 30px;
-    height: 30px;
-    background-color: gray;
+    width: 40px;
+    height: 40px;
+    background-color:#aaa;
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    transition: background-color 0.3s;
+    font-size: 18px;
+    transition: background 0.3s, transform 0.2s ease-in-out;
 }
+
 .step.active {
-    background-color: green;
+    background-color: #008000;
+    transform: scale(1.1);
 }
+
 .line {
-    width: 100px;
+    width: 120px;
     height: 5px;
-    background-color: gray;
-    margin: 15px 5px;
-    transition: background-color 0.3s;
+    background: #ddd;
+    margin: 0 10px;
 }
+
 .line.active {
-    background-color: green;
+    background: linear-gradient(135deg, #00b894, #00cec9);
 }
-.navbar {
-            background-color: #333;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-        }
 
-        .navbar .navbar-brand h3 {
-            color: #fff;
-        }
+/* Checkout Card Styling */
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    transition: transform 0.3s;
+}
 
-        .navbar .nav-link {
-            color: #ccc;
-        }
+.card:hover {
+    transform: translateY(-5px);
+}
 
-        .navbar .nav-link:hover {
-            color: #fff;
-        }
+.card h3 {
+    font-weight: bold;
+    color: #333;
+}
 
-        .navbar-toggler-icon {
-            background-color: #fff;
-        }
-        @media (max-width: 991px) { /* Applies only on smaller screens */
-            .navbar-collapse {
-                background-color: white !important; /* Change to desired color */
-                padding: 10px;
-                border-radius: 5px;
-            }
-            .navbar-nav{
-                margin-bottom: 5px;
-            }
-        }
-        .navbar {
-            position: relative;
-            z-index: 1000; /* Ensures navbar stays on top */
-        }
-        .navbar-collapse {
-            padding: 10px;
-            border-radius: 5px;
-        }
-        /* Footer */
-        footer {
-            background-color: #333;
-            color: white;
-            padding: 30px 0;
-        }
+/* Shipping Information */
+.card p {
+    font-size: 16px;
+    color: #555;
+}
 
-        footer .text-muted {
-            color: #aaa;
-        }
+/* Payment Methods */
+.form-check-label {
+    font-size: 18px;
+    font-weight: 500;
+    color: #222;
+    cursor: pointer;
+}
 
-        footer .social-icons a {
-            color: #fff;
-            margin: 0 10px;
-            font-size: 18px;
-        }
+.form-check-input {
+    transform: scale(1.2);
+    margin-right: 10px;
+}
 
-        footer .social-icons a:hover {
-            color: #ff6600;
-        }
-        .breadcrumb a {
-            text-decoration: none;
-            color: inherit;
-        }
+.form-check:hover .form-check-label {
+    color: #636363;
+}
 
-        .breadcrumb-item a {
-            color: #6e7478; /* Set a neutral color similar to text */
-            font-weight: normal;
-        }
+/* Continue Button */
+.btn-success {
+    background: linear-gradient(135deg, #ff6600, #ffcc00);
+    color: white;
+    font-size: 18px;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    transition: all 0.3s ease-in-out;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #00b894, #00cec9);
+    transform: scale(1.05);
+}
+
+/* Breadcrumb */
+.breadcrumb a {
+    color: #ff6600;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+.breadcrumb a:hover {
+    color: #00b894;
+}
+
+/* Footer */
+footer {
+    background: linear-gradient(to right, #222, #444);
+    color: white;
+    padding: 40px 0;
+    text-align: center;
+}
+
+footer p {
+    margin: 0;
+}
+
+footer .social-icons a {
+    color: white;
+    margin: 0 12px;
+    font-size: 20px;
+    transition: transform 0.3s ease-in-out, color 0.3s;
+}
+
+footer .social-icons a:hover {
+    color: #ff6600;
+    transform: scale(1.2);
+}
+hr {
+    height: 4px;
+    background-color: #878584; /* Change to your preferred color */
+    border: none;
+}
+
     </style>
 </head>
 <body>

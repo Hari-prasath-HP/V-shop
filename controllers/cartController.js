@@ -437,7 +437,7 @@ exports.placeOrder = async (req, res) => {
 
     
     // Confirm order
-    await Order.findByIdAndUpdate(existingOrder._id, { orderStatus: 'Confirmed' });
+    await Order.findByIdAndUpdate(existingOrder._id, { orderStatus: 'Ordered' });
     // Reduce stock for ordered products
     for (const item of productEntries) {
       const quantity = Number(item.quantity);
@@ -486,14 +486,14 @@ exports.cancelProduct = async (req, res) => {
       }
 
       if (order.products[productIndex].status !== 'Ordered') {
-          return res.status(400).json({ message: "Product cannot be canceled" });
+          return res.status(400).json({ message: "Product cannot be cancelled" });
       }
 
-      order.products[productIndex].status = 'Canceled';
+      order.products[productIndex].status = 'Cancelled';
       order.products[productIndex].cancellationReason = reason;
       await order.save();
 
-      res.json({ message: "Product canceled successfully." });
+      res.json({ message: "Product cancelled successfully." });
   } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Server error" });
@@ -537,7 +537,7 @@ exports.cancelOrder = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    // Check if the order is already canceled
+    // Check if the order is already cancelled
     if (order.isCancelled) {
       return res.status(400).json({ message: 'Order is already cancelled' });
     }
@@ -550,7 +550,7 @@ exports.cancelOrder = async (req, res) => {
     // Update each product status and set the cancellation reason
     order.products = order.products.map(product => ({
       ...product,
-      status: 'Canceled',
+      status: 'Cancelled',
       cancellationReason: reason
     }));
 

@@ -295,7 +295,7 @@
                                     </a>
                                 </td>
                                 <td>
-                                    <% if (order.orderStatus === 'Confirmed') { %>
+                                    <% if (order.orderStatus === 'Ordered') { %>
                                         <button class="btn btn-danger" onclick="showPopup('<%= order._id %>', '<%= order.productId %>', 'cancel')">Cancel Order</button>
                                     <% } %>                                    
                                     <% if (order.orderStatus === 'Delivered') { %>

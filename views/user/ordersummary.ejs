@@ -14,8 +14,8 @@
     margin: 20px;
 }
 .step {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     background-color: gray;
     color: white;
     border-radius: 50%;
@@ -153,6 +153,12 @@
             color: #6e7478; /* Set a neutral color similar to text */
             font-weight: normal;
         }
+        hr {
+    height: 4px;
+    background-color: #878584; /* Change to your preferred color */
+    border: none;
+}
+
     </style>
 </head>
 <body>
@@ -286,6 +292,7 @@
                     <% } else { %>
                         <p class="text-center text-danger">No address found</p>
                     <% } %>
+                    <hr>
                     <div>
                         <p><h3>Payment Method:</h3> <%= orderSummaryData.paymentMethod %></p>
                     </div>

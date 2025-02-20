@@ -4,7 +4,7 @@ const Category = require('../models/category');
 const Product = require('../models/product')
 const path = require('path');
 const fs = require('fs');
-
+const Order = require('../models/order');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -545,6 +545,107 @@ exports.unlistProduct = async (req, res) => {
     res.status(500).send('Server Error');
   }
 } ;
+// Get all orders with user and product details
+exports.getOrders = async (req, res) => {
+  try {
+      let perPage = 10; // Number of orders per page
+      let page = req.query.page || 1;
+
+      const totalOrders = await Order.countDocuments();
+      const orders = await Order.find()
+          .populate('user', 'username email') // Populate user details (name and email)
+          .populate('products.product', 'name price images') // Populate product details
+          .sort({ orderedAt: -1 })
+          .skip((perPage * page) - perPage)
+          .limit(perPage);
+
+      res.render('admin/ordermanagement', {
+          orders: orders.map(order => ({
+              _id: order._id,
+              userName: order.user.username,
+              userEmail: order.user.email,
+              products: order.products.map(p => ({
+                  productId: p.product._id,
+                  name: p.product.name,
+                  price: p.price,
+                  offerPrice: p.offerPrice,
+                  quantity: p.quantity,
+                  status: p.status,
+              })),
+              totalAmount: order.totalAmount,
+              paymentMethod: order.paymentMethod,
+              paymentStatus: order.paymentStatus,
+              orderStatus: order.orderStatus,
+              shippingAddress: order.shippingAddress,
+              orderedAt: order.orderedAt,
+              deliveredAt: order.deliveredAt
+          })),
+          currentPage: page,
+          totalPages: Math.ceil(totalOrders / perPage)
+      });
+  } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.status(500).send("Internal Server Error");
+  }
+};
+exports.updateOrderStatus = async (req, res) => {
+  try {
+      const { status } = req.body;
+      const { orderId } = req.params; // Correct way to get the order ID
+
+      console.log("Received Order ID:", orderId);
+      console.log("New Status:", status);
+
+      if (!orderId || !status) {
+          return res.status(400).json({ message: "Invalid request data" });
+      }
+
+      const order = await Order.findById(orderId);
+      if (!order) {
+          return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Update order status
+      order.orderStatus = status;
+      
+      // Update each product's status inside the order
+      order.products.forEach(product => {
+          product.status = status; // Syncing product status with order status
+      });
+
+      // If the order is delivered, update the delivery timestamp
+      if (status === 'Delivered') {
+          order.deliveredAt = new Date();
+      }
+
+      await order.save();
+
+      res.json({ message: 'Order and product statuses updated successfully', order });
+
+  } catch (error) {
+      console.error("Error updating order status:", error);
+      res.status(500).json({ message: 'Server Error' });
+  }
+};
+// Get details of a single order
+exports.viewOrder = async (req, res) => {
+  try {
+      const { orderId } = req.params;
+      const order = await Order.findById(orderId)
+          .populate('user', 'name email phone')
+          .populate('products.product', 'name price images');
+
+      if (!order) {
+          return res.status(404).send("Order not found");
+      }
+
+      res.render('admin/orderDetails', { order });
+  } catch (error) {
+      console.error("Error fetching order details:", error);
+      res.status(500).send("Internal Server Error");
+  }
+};
+
 exports.logout = (req, res) => {
   req.session.destroy((err) => {
     if (err) {
