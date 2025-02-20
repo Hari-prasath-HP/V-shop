@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            color: black;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        thead th {
+            background-color: #444;
+            color: white;
+        }
+        .status-dropdown {
+            padding: 5px;
+            border: 1px solid #777;
+            background: #222;
+            color: white;
+        }
+        .view-btn {
+            background: #28a745;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            cursor: pointer;
+        }
+        .view-btn:hover {
+            background: #218838;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .pagination a {
+            margin: 0 5px;
+            padding: 8px 12px;
+            text-decoration: none;
+            background: #444;
+            color: white;
+        }
+        .pagination a:hover {
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Order Management</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Name</th>
+                    <th>Total Amount</th>
+                    <th>Payment Method</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% orders.forEach(order => { %>
+                    <tr>
+                        <td><%= order._id %></td>
+                        <td><%= order.userName %></td>
+                        <td>₹<%= order.totalAmount.toFixed(2) %></td>
+                        <td><%= order.paymentMethod %></td>
+                        <td>
+                            <select class="status-dropdown" data-order-id="<%= order._id %>">
+                              <option value="Pending" <%= order.status === 'Confirmed' ? 'selected' : '' %>>Change the Status</option>
+                                <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                                <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                                <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                <option value="Returned" <%= order.status === 'Returned' ? 'selected' : '' %>>Returned</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="view-btn" onclick="window.location.href='/admin/orders/view/<%= order._id %>'">View</button>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <% if (currentPage > 1) { %>
+                <a href="?page=<%= currentPage - 1 %>">Previous</a>
+            <% } %>
+            <span>Page <%= currentPage %> of <%= totalPages %></span>
+            <% if (currentPage < totalPages) { %>
+                <a href="?page=<%= currentPage + 1 %>">Next</a>
+            <% } %>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.status-dropdown').forEach(select => {
+            select.addEventListener('change', function() {
+                const orderId = this.dataset.orderId;
+                const newStatus = this.value;
+                fetch(`/admin/orders/update-status/${orderId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                }).then(response => response.json())
+                  .then(data => alert(data.message))
+                  .catch(error => console.error('Error:', error));
+            });
+        });
+    </script>
+</body>
+</html>

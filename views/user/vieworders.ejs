@@ -217,18 +217,22 @@
     }
 
     .confirmation-popup {
-        display: none;
+        display: none; /* Initially hidden */
         position: fixed;
-        top: 10%;
-        left: 50%;
-        transform: translate(-10%, -50%);
-        background: rgb(49, 224, 18);
-        padding: 20px;
-        border-radius: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        top: 10%; /* Adjusts the popup to be near the top */
+        left: 50%; /* Centers horizontally */
+        transform: translate(-50%, 0); /* Ensures perfect centering */
+        background: rgb(49, 224, 18); /* Green background */
+        color: white; /* White text for contrast */
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         z-index: 1000;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        min-width: 250px; /* Ensures a readable size */
     }
-
     .modal {
         display: none;  /* Hide initially */
         position: fixed;

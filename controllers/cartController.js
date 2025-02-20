@@ -128,7 +128,6 @@ exports.updateQuantity = async (req, res) => {
 };
 exports.removeFromCart = async (req, res) => {
     try {
-      console.log('Session user:', req.session.user);
       if (!req.session.user) {
         return res.redirect('/login')
       }
@@ -199,7 +198,6 @@ exports.selectAddress = async (req, res) => {
     }
     const address = await Address.findById(selectedAddress);
     if (!address) {
-      console.log("Address not found in DB");
       return res.redirect('/address');
     }
     const totalAmount = req.body.totalAmount || 0;
@@ -443,8 +441,6 @@ exports.placeOrder = async (req, res) => {
     // Reduce stock for ordered products
     for (const item of productEntries) {
       const quantity = Number(item.quantity);
-      console.log(quantity);
-      console.log(item.productId)
       if (isNaN(quantity)) {
           console.log('Error: Invalid quantity');
       } else {
@@ -534,57 +530,49 @@ exports.returnProduct = async (req, res) => {
 };
 exports.cancelOrder = async (req, res) => {
   try {
-      const { orderId } = req.params;
-      const { reason } = req.body;
+    const { orderId, reason } = req.body; // Get order ID and cancellation reason from request
+    console.log(orderId)
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
 
-      // Find the order by ID
-      const order = await Order.findById(orderId);
-      if (!order) {
-          return res.json({ success: false, message: 'Order not found' });
-      }
+    // Check if the order is already canceled
+    if (order.isCancelled) {
+      return res.status(400).json({ message: 'Order is already cancelled' });
+    }
 
-      // Update the status of each product in the order
-      order.products.forEach(product => {
-          product.status = 'Canceled';
-      });
+    // Update order status
+    order.isCancelled = true;
+    order.orderStatus = 'Cancelled';
+    order.cancellationReason = reason;
 
-      // Update the overall order status and cancellation reason
-      order.orderStatus = 'Cancelled';
-      order.cancellationReason = reason;
+    // Update each product status and set the cancellation reason
+    order.products = order.products.map(product => ({
+      ...product,
+      status: 'Canceled',
+      cancellationReason: reason
+    }));
 
-      // Save the updated order
-      await order.save();
+    // Explicitly mark the products array as modified
+    order.markModified('products');
 
-      res.json({ success: true, message: 'Order cancelled successfully' });
+    await order.save();
+
+    return res.status(200).json({ message: 'Order cancelled successfully', order,success: true });
   } catch (error) {
-      console.error(error);
-      res.json({ success: false, message: 'Error cancelling order' });
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
-
 exports.returnOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { reason } = req.body;
-
-    // Find the order by ID
-    const order = await Order.findById(orderId);
-    if (!order) {
-        return res.json({ success: false, message: 'Order not found' });
-    }
-
-    // Update the status of each product in the order
-    order.products.forEach(product => {
-        product.status = 'Returned';
-    });
-
-    // Update the overall order status and cancellation reason
-    order.orderStatus = 'Returned';
-    order.cancellationReason = reason;
-
-    // Save the updated order
-    await order.save();
-
+    await Order.findByIdAndUpdate(orderId, {
+      orderStatus: 'Returned',
+      cancellationReason: reason
+  });
     res.json({ success: true, message: 'Order Returned successfully' });
   } catch (error) {
       console.error(error);
