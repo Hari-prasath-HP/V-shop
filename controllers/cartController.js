@@ -351,30 +351,21 @@ exports.getOrderSummary = async (req, res) => {
   try {
     const user = req.session.user;
     const userId = req.session.user.id;
-
-    // Fetch the cart items for the user
-    const cartItems = await Cart.find({ userId }).populate('productId'); // Populating product details
+    const cartItems = await Cart.find({ userId }).populate('productId');
     if (!cartItems || cartItems.length === 0) {
       return res.redirect('/cart'); 
     }
-
-    // Fetch the most recent order details
     const orderDetails = await Order.findOne({ 'shippingAddress.userId': userId }).sort({ createdAt: -1 });
     if (!orderDetails) {
       return res.redirect('/checkout-1');
     }
-
     const { shippingAddress, paymentMethod  } = orderDetails;
-
-    // Prepare data to send to the order summary page, including cart items and shipping address
     const orderSummaryData = {
       cartItems,
       shippingAddress,
       shippingCost: 40.00,
       paymentMethod,
     };
-
-    // Render the order summary page and pass the data
     res.render('user/ordersummary', { user, orderSummaryData });
   } catch (error) {
     res.redirect('/login')
@@ -386,11 +377,7 @@ exports.placeOrder = async (req, res) => {
     const userId = req.session.user.id;
     const user = await User.findById(userId);
     if (!user) return res.redirect('/login');
-
-    // Convert products object into an array
     const productEntries = Object.values(products);
-
-    // Validate products
     for (const product of productEntries) {
       if (!product.offerPrice || !product.quantity) {
         return res.status(400).json({ message: "Price and quantity are required for each product." });
@@ -403,24 +390,18 @@ exports.placeOrder = async (req, res) => {
         return res.status(400).json({ message: "Invalid price or quantity." });
       }
     }
-
-    // Get last shipping address
     const lastOrder = await Order.findOne({ user: userId })
       .sort({ createdAt: -1 })
       .select('shippingAddress');
     const defaultAddress = await Address.findOne({ userId: userId, isDefault: true }) || null;
     const checkoutAddress = lastOrder ? lastOrder.shippingAddress : defaultAddress;
-
-    // Find existing pending order
     const existingOrder = await Order.findOne({ user: userId, orderStatus: 'Pending' });
     if (!existingOrder) {
       return res.status(404).json({ message: 'No pending order found for the user.' });
     }
-
-    // Add new products to the order
     existingOrder.products.push(
       ...productEntries.map(product => ({
-        product: product.productId, // ✅ Reference to Product model
+        product: product.productId, 
         quantity: product.quantity,
         price: product.price,
         offerPrice: product.offerPrice || 0,
@@ -431,32 +412,22 @@ exports.placeOrder = async (req, res) => {
     existingOrder.paymentMethod = paymentMethod;
     existingOrder.shippingAddress = checkoutAddress;
     existingOrder.paymentStatus = paymentMethod === 'COD' ? 'Pending' : 'Completed';
-
-    // Save the updated order
     await existingOrder.save();
-
-    
-    // Confirm order
     await Order.findByIdAndUpdate(existingOrder._id, { orderStatus: 'Ordered' });
-    // Reduce stock for ordered products
     for (const item of productEntries) {
       const quantity = Number(item.quantity);
       if (isNaN(quantity)) {
           console.log('Error: Invalid quantity');
       } else {
-          // Proceed with reducing the stock
           await Product.findByIdAndUpdate(
               item.productId,
               { $inc: { stock: -quantity } },
               { new: true }
           );
-          // Optionally, you can log the updated product
   const updatedProduct = await Product.findById(item.productId);
       }
     }
-    // Clear the cart from the database
     await Cart.deleteMany({ userId });
-    // Clear session cart if necessary
     req.session.cart = {};
     await req.session.save();
 
@@ -530,31 +501,23 @@ exports.returnProduct = async (req, res) => {
 };
 exports.cancelOrder = async (req, res) => {
   try {
-    const { orderId, reason } = req.body; // Get order ID and cancellation reason from request
+    const { orderId, reason } = req.body;
     console.log(orderId)
     const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-
-    // Check if the order is already cancelled
     if (order.isCancelled) {
       return res.status(400).json({ message: 'Order is already cancelled' });
     }
-
-    // Update order status
     order.isCancelled = true;
     order.orderStatus = 'Cancelled';
     order.cancellationReason = reason;
-
-    // Update each product status and set the cancellation reason
     order.products = order.products.map(product => ({
       ...product,
       status: 'Cancelled',
       cancellationReason: reason
     }));
-
-    // Explicitly mark the products array as modified
     order.markModified('products');
 
     await order.save();
@@ -569,13 +532,26 @@ exports.returnOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { reason } = req.body;
-    await Order.findByIdAndUpdate(orderId, {
-      orderStatus: 'Returned',
-      cancellationReason: reason
-  });
-    res.json({ success: true, message: 'Order Returned successfully' });
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    if (order.orderStatus === 'Returned') {
+      return res.status(400).json({ message: 'Order is already returned' });
+    }
+    order.orderStatus = 'Returned';
+    order.returnReason = reason;
+    order.products = order.products.map(product => ({
+      ...product,
+      status: 'Returned',
+      returnReason: reason
+    }));
+    order.markModified('products');
+    await order.save();
+    res.json({ success: true, message: 'Order returned successfully', order });
   } catch (error) {
-      console.error(error);
-      res.json({ success: false, message: 'Error returning order' });
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error returning order' });
   }
 };
+

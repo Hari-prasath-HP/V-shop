@@ -196,26 +196,27 @@
     .close { float: right; font-size: 28px; cursor: pointer; }
     /* Toast Notification */
     .toast {
-        visibility: hidden;
-        min-width: 250px;
-        background-color: #333;
-        color: #fff;
-        text-align: center;
-        padding: 16px;
-        position: fixed;
-        z-index: 1;
-        left: 50%;
-        bottom: 30px;
-        transform: translateX(-50%);
-        border-radius: 8px;
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
-    }
-    .toast.show {
-        visibility: visible;
-        opacity: 1;
-    }
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #d9534f; /* Default color for error */
+    color: white;
+    text-align: center;
+    border-radius: 5px;
+    padding: 12px;
+    position: fixed;
+    z-index: 1000;
+    right: 20px;
+    top: 20px;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.5s, top 0.5s;
+}
 
+.toast.show {
+    visibility: visible;
+    opacity: 1;
+    top: 30px;
+}
     .confirmation-popup {
         display: none; /* Initially hidden */
         position: fixed;
@@ -507,14 +508,26 @@
 
     function showToast(message, isError = false) {
         const toast = document.getElementById("toast");
+        const progress = document.createElement("div");
+        progress.classList.add("toast-progress");
+
         toast.innerText = message;
-        toast.style.backgroundColor = isError ? "#d9534f" : "#5cb85c";
+        toast.style.backgroundColor = isError ? "#f8d7da" : "#d4edda"; 
+        toast.style.color = isError ? "#721c24" : "#155724"; 
+
+        toast.appendChild(progress); // Add progress bar to toast
         toast.classList.add("show");
 
         setTimeout(() => {
+            progress.style.width = "0%"; // Shrink progress bar
+        }, 100); // Small delay to start animation
+
+        setTimeout(() => {
             toast.classList.remove("show");
+            setTimeout(() => progress.remove(), 500); // Remove progress bar after hiding
         }, 3000);
     }
+
 
     function showConfirmationPopup(message) {
         console.log("Inside showConfirmationPopup with message:", message); // Debugging
@@ -534,35 +547,31 @@
     }
 
     function submitReason() {
-        const reason = document.getElementById("reasonInput").value;
-        if (!reason) {
-            showToast("Please provide a reason.", true);
-            return;
-        }
-
-        fetch(`/product/${actionType}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId, productId, reason })
-        })
-        .then(response => response.json().catch(() => ({ error: true, message: "Invalid JSON response" }))) // Catch JSON parsing errors
-        .then(data => {
-            console.log("Server Response:", data); // Debugging line
-
-            if (data.error) {
-                showToast(data.message, true);
-            } else {
-                console.log("Showing Confirmation Popup"); // Debugging line
-                showConfirmationPopup(`Product ${actionType === 'cancel' ? 'canceled' : 'returned'} successfully.`);
-                
-                setTimeout(() => location.reload(), 4000);
-            }
-        })
-        .catch(err => {
-            console.error("Fetch Error:", err);
-            showToast("Something went wrong. Try again later.", true);
-        });
+    const reason = document.getElementById("reasonInput").value.trim();
+    
+    if (!reason) {
+        showToast("Please provide a reason.", true);
+        return;
     }
+
+    fetch(`/product/${actionType}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, productId, reason })
+    })
+    .then(response => response.json().catch(() => ({ error: true, message: "Invalid JSON response" })))
+    .then(data => {
+        if (data.error) {
+            showToast(data.message, true);
+        } else {
+            showConfirmationPopup(`Product ${actionType === 'cancel' ? 'canceled' : 'returned'} successfully.`);
+            setTimeout(() => location.reload(), 4000);
+        }
+    })
+    .catch(err => {
+        showToast("Something went wrong. Try again later.", true);
+    });
+}
 </script>
 </body>
 </html>

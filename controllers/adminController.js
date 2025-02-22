@@ -182,7 +182,7 @@ exports.addCategory = async (req, res) => {
   }
   try {
     const { name, description } = req.body;
-    const categoryNameLower = name.toLowerCase(); // Convert input name to lowercase
+    const categoryNameLower = name.toLowerCase(); 
     const existingCategory = await Category.findOne({ 
       name: { $regex: new RegExp(`^${name}$`, 'i') }, 
       isDeleted: { $ne: true }
@@ -348,15 +348,15 @@ exports.addProductPage = async (req, res) => {
     const errorMessage = req.session.error || null;
     req.session.error = null;
 
-    const quantity = 0; // Default value for a new product
-    const unit = ''; // Default unit for a new product (you can customize this as needed)
+    const quantity = 0;
+    const unit = ''; 
 
     res.render('admin/addProduct', {
       categories,
       product: null,
       error: errorMessage,
-      quantity, // Pass quantity to the view
-      unit, // Pass unit to the view
+      quantity,
+      unit,
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -426,33 +426,21 @@ exports.updateProduct = async (req, res) => {
   try {
     const productId = req.params.id;
     const { name, description, price, category, stock, isListed, offerPrice, quantity, unit } = req.body;
-    
-    // Ensure the isListed flag is properly cast to boolean
     const isListedBool = isListed === 'true';
-
-    // Fetch the existing product from the database
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).send('Product not found');
     }
-
-    // Default image array from the current product if no new files are uploaded
     let images = product.images;
-
-    // Handle new images if uploaded
     if (req.files && req.files.length > 0) {
-      // Delete old images from the server
       product.images.forEach(image => {
         const imagePath = path.join(__dirname, '../uploads/products', image);
         if (fs.existsSync(imagePath)) {
           fs.unlinkSync(imagePath);
         }
       });
-      // Store the newly uploaded image filenames
       images = req.files.map(file => file.filename);
     }
-
-    // Calculate the discount based on the offer price
     let updatedOfferPrice = parseFloat(offerPrice) || product.offerPrice || price;
     let discount = 0;
     if (updatedOfferPrice < price) {
@@ -460,8 +448,6 @@ exports.updateProduct = async (req, res) => {
     } else {
       updatedOfferPrice = price;
     }
-
-    // Update the product in the database
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
       { 
@@ -481,13 +467,9 @@ exports.updateProduct = async (req, res) => {
       },
       { new: true }
     );
-
-    // If the product was not updated, return an error
     if (!updatedProduct) {
       return res.status(404).send('Product not found');
     }
-
-    // Redirect to the admin product management page
     res.redirect('/admin/product');
   } catch (error) {
     console.error("Error updating product:", error);
@@ -545,16 +527,15 @@ exports.unlistProduct = async (req, res) => {
     res.status(500).send('Server Error');
   }
 } ;
-// Get all orders with user and product details
 exports.getOrders = async (req, res) => {
   try {
-      let perPage = 10; // Number of orders per page
+      let perPage = 10;
       let page = req.query.page || 1;
 
       const totalOrders = await Order.countDocuments();
       const orders = await Order.find()
-          .populate('user', 'username email') // Populate user details (name and email)
-          .populate('products.product', 'name price images') // Populate product details
+          .populate('user', 'username email')
+          .populate('products.product', 'name price images')
           .sort({ orderedAt: -1 })
           .skip((perPage * page) - perPage)
           .limit(perPage);
@@ -591,55 +572,55 @@ exports.getOrders = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
       const { status } = req.body;
-      const { orderId } = req.params; // Correct way to get the order ID
-
-      console.log("Received Order ID:", orderId);
-      console.log("New Status:", status);
-
+      const { orderId } = req.params;
       if (!orderId || !status) {
           return res.status(400).json({ message: "Invalid request data" });
       }
-
       const order = await Order.findById(orderId);
       if (!order) {
           return res.status(404).json({ message: "Order not found" });
       }
-
-      // Update order status
       order.orderStatus = status;
-      
-      // Update each product's status inside the order
       order.products.forEach(product => {
-          product.status = status; // Syncing product status with order status
+          product.status = status;
       });
-
-      // If the order is delivered, update the delivery timestamp
       if (status === 'Delivered') {
           order.deliveredAt = new Date();
       }
-
       await order.save();
-
       res.json({ message: 'Order and product statuses updated successfully', order });
-
   } catch (error) {
       console.error("Error updating order status:", error);
       res.status(500).json({ message: 'Server Error' });
   }
 };
-// Get details of a single order
 exports.viewOrder = async (req, res) => {
   try {
       const { orderId } = req.params;
       const order = await Order.findById(orderId)
           .populate('user', 'name email phone')
-          .populate('products.product', 'name price images');
+          .populate({
+            path: 'products.product',
+            model: 'Product',
+            select: 'name images price offerPrice'
+          })
 
       if (!order) {
           return res.status(404).send("Order not found");
       }
-
-      res.render('admin/orderDetails', { order });
+      const orderProducts = order.products.map(item => ({
+        image: item.product && item.product.images.length > 0 ? item.product.images[0] : '/images/default.jpg',
+        name: item.product ? item.product.name : 'Unknown',
+        price: item.price,
+        offerPrice: item.offerPrice,
+        quantity: item.quantity,
+        status:item.status,
+        subtotal: item.quantity * (item.offerPrice || item.price),
+        productId: item.product ? item.product._id : '',
+        cancellationReason: item.status === 'Cancelled' ? item.cancellationReason || 'No reason provided' : null,
+        returnReason: item.status === 'Returned' ? item.returnReason || 'No reason provided' : null,
+      }));
+      res.render('admin/vieworder', { order , products: orderProducts,});
   } catch (error) {
       console.error("Error fetching order details:", error);
       res.status(500).send("Internal Server Error");

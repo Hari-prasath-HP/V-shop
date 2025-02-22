@@ -24,6 +24,31 @@
             background-color: #6c757d;
             color: #fff;
         }
+        .image-container {
+        display: flex;
+        flex-wrap: wrap; /* Allows wrapping if too many images */
+        gap: 15px; /* Space between images */
+        align-items: center;
+    }
+
+    .image-preview {
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .image-preview img {
+        width: 120px; /* Adjust image size */
+        height: 120px;
+        object-fit: cover;
+        border-radius: 10px; /* Rounded corners */
+        border: 2px solid #ddd; /* Light border */
+        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2); /* Soft shadow */
+    }
+
+    .image-preview:hover {
+        transform: scale(1.05); /* Slight zoom effect */
+    }
     </style>
 </head>
 <body>
@@ -80,12 +105,18 @@
                                   </select>
                                   
                             </div>
+                            <div class="image-container">
                                 <% if (product.images && product.images.length > 0) { %>
-                                    <% product.images.forEach(image => { %>
-                                        <img src="/uploads/products/<%= image %>" alt="Product Image" width="100" />
+                                    <% product.images.forEach((image, index) => { %>
+                                        <div class="image-preview">
+                                            <label for="imageInput<%= index %>">
+                                                <img src="/uploads/products/<%= image %>" alt="Product Image" id="preview<%= index %>" />
+                                            </label>
+                                            <input type="file" name="images" id="imageInput<%= index %>" accept="image/*" style="display: none;" onchange="previewImage(event, <%= index %>)" />
+                                        </div>
                                     <% }) %>
                                 <% } %>
-                                <input type="file" name="images" accept="image/*" multiple />
+                            </div>
                             <div class="mb-3">
                                 <label for="isListed" class="form-label">Active</label>
                                 <select name="isListed" id="isListed" class="form-control">
@@ -106,5 +137,14 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function previewImage(event, index) {
+            const reader = new FileReader();
+            reader.onload = function () {
+                document.getElementById("preview" + index).src = reader.result;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    </script>
 </body>
 </html>

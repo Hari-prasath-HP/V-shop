@@ -137,7 +137,7 @@ exports.deleteAddress = async (req, res) => {
         if (!address) {
             return res.status(404).send('Address not found');
         }
-        res.redirect('/addresses');
+        res.redirect('/address');
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -145,18 +145,17 @@ exports.deleteAddress = async (req, res) => {
 };
 exports.getAllOrdersForUser = async (req, res) => {
     try {
-        const userId = req.session.user.id; // Get the userId from URL parameters
-        const page = parseInt(req.query.page) || 1; // Get current page, default to 1
-        const limit = 5; // Number of orders per page
+        const userId = req.session.user.id;
+        const page = parseInt(req.query.page) || 1;
+        const limit = 5; 
         const totalOrders = await Order.countDocuments({ user: userId });
         const totalPages = Math.ceil(totalOrders / limit);
         if (!userId) {
             return res.redirect('/login')
         }
-        // Fetch all orders for the user
         const orders = await Order.find({ user: userId })
-            .select('-products') // Exclude products field
-            .sort({ orderedAt: -1 }) // Sort latest orders first
+            .select('-products') 
+            .sort({ orderedAt: -1 }) 
             .skip((page - 1) * limit)
             .limit(limit);
         res.render('user/orders', {
@@ -175,20 +174,19 @@ exports.getOrderDetails = async (req, res) => {
       const orderId = req.params.id;
       const order = await Order.findById(orderId)
       .populate({
-        path: 'products.product',   // Ensure the 'product' field inside 'products' array is populated
+        path: 'products.product', 
         model: 'Product',
         select: 'name images price offerPrice'
-      }) // Populating the user details
+      }) 
       .populate('user', 'username email')
-        .populate('shippingAddress.userId', 'username email') // Populating shipping address user
+        .populate('shippingAddress.userId', 'username email')
         .exec();
       if (!order) {
         return res.status(404).render('error', { message: 'Order not found' });
       }
-      // Structure the product details correctly with safeguards
       const orderProducts = order.products.map(item => ({
-        image: item.product && item.product.images.length > 0 ? item.product.images[0] : '/images/default.jpg', // Use first image or fallback
-        name: item.product ? item.product.name : 'Unknown', // Get product name or use fallback
+        image: item.product && item.product.images.length > 0 ? item.product.images[0] : '/images/default.jpg', 
+        name: item.product ? item.product.name : 'Unknown',
         price: item.price,
         offerPrice: item.offerPrice,
         quantity: item.quantity,

@@ -168,8 +168,6 @@ exports.verifyOtp = async (req, res) => {
         otpExpires: req.session.otpExpires ? new Date(req.session.otpExpires) : null
       });
     }
-
-    // Store OTP expiration in session if not already set
     req.session.otpExpires = req.session.otpExpires || otpRecord.otpExpires;
 
     if (Date.now() > new Date(req.session.otpExpires)) {
@@ -184,13 +182,11 @@ exports.verifyOtp = async (req, res) => {
       return res.render("user/verifyOtp", {
         email,
         signerr: "Invalid OTP. Please try again.",
-        otpExpires: new Date(req.session.otpExpires) // Convert back to Date
+        otpExpires: new Date(req.session.otpExpires) 
       });
     }
-
-    // OTP is valid, proceed with user registration
     await Otp.deleteOne({ email });
-    req.session.otpExpires = null; // Clear session after successful OTP verification
+    req.session.otpExpires = null; 
 
     const { username, phone, password } = req.session.signupData;
     const newUser = new User({
@@ -235,8 +231,6 @@ exports.renderhome = async (req, res) => {
       product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
       product.discountedPrice = product.offerPrice > 0 ? product.offerPrice : product.price;
       product.offerPercentage = calculateOfferPercentage(product.price, product.offerPrice);
-
-      // Accessing quantity value and unit
       product.quantityValue = product.quantity.value;
       product.quantityUnit = product.quantity.unit;
     });
@@ -267,14 +261,10 @@ exports.getShopProducts = async (req, res) => {
         username = userData.username;
       }
     }
-
-    // Extract query parameters
     const currentPage = parseInt(req.query.page) || 1;
     const itemsPerPage = 8;
     const searchQuery = req.query.search || "";
     const sortOption = req.query.sort || "";
-
-    // Define sorting criteria
     let sortCriteria = {};
     if (sortOption === "low-high") {
       sortCriteria = { offerPrice: 1 };
@@ -285,27 +275,19 @@ exports.getShopProducts = async (req, res) => {
     } else if (sortOption === "z-a") {
       sortCriteria = { name: -1 };
     } else if (sortOption === "new-arrivals") {
-      sortCriteria = { createdAt: -1 }; // Assuming timestamps are enabled
+      sortCriteria = { createdAt: -1 };
     }
-
-    // Search filter
     let searchFilter = { isDeleted: { $ne: true } };
     if (searchQuery) {
-      searchFilter.name = { $regex: searchQuery, $options: "i" }; // Case-insensitive search
+      searchFilter.name = { $regex: searchQuery, $options: "i" }; 
     }
-
-    // Fetch total count for pagination
     const totalProducts = await Product.countDocuments(searchFilter);
     const totalPages = Math.ceil(totalProducts / itemsPerPage);
-
-    // Fetch products with sorting, pagination & search
     const products = await Product.find(searchFilter)
       .sort(sortCriteria)
       .skip((currentPage - 1) * itemsPerPage)
       .limit(itemsPerPage)
       .populate("category");
-
-    // Process product details
     products.forEach((product) => {
       product.imagePaths = product.images.map((image) => `/uploads/products/${image}`);
       if (product.offerPrice > 0) {
@@ -316,21 +298,17 @@ exports.getShopProducts = async (req, res) => {
         product.offerPercentage = 0;
         product.offerPrice = product.price.toFixed(2);
       }
-
-      // Add quantity and unit to the product object
-      product.quantity = product.stock; // Assuming stock represents quantity
-      product.unit = product.unit || "Unit"; // Replace 'Unit' with the actual unit if available
+      product.quantity = product.stock;
+      product.unit = product.unit || "Unit"; 
     });
-
-    // Render the updated product list
     res.render("user/shopproduct", {
       user,
       username,
       products,
       currentPage,
       totalPages,
-      searchQuery, // Pass the search query to keep the input field populated
-      sortOption,  // Pass the sort option to retain selected filter
+      searchQuery, 
+      sortOption, 
     });
 
   } catch (err) {
@@ -366,9 +344,8 @@ exports.viewProduct = async (req, res) => {
     if (product.offerPrice !== product.price.toFixed(2)) {
       product.offerPercentageDisplay = product.offerPercentage + "% OFF";
     }
-    product.quantity = product.stock; // Assuming stock represents quantity
-    product.unit = product.unit || 'Unit'; // Replace 'Unit' with the actual unit if available
-
+    product.quantity = product.stock; 
+    product.unit = product.unit || 'Unit'; 
     const relatedProducts = await Product.find({
       category: product.category,
       _id: { $ne: productId }
@@ -383,13 +360,11 @@ exports.viewProduct = async (req, res) => {
         relatedProduct.offerPercentage = 0;
         relatedProduct.offerPrice = relatedProduct.price.toFixed(2);
       }
-      
-      // Add quantity and unit to related product
-      relatedProduct.quantity = relatedProduct.stock; // Assuming stock represents quantity
-      relatedProduct.unit = relatedProduct.unit || 'Unit'; // Replace 'Unit' with the actual unit if available
+      relatedProduct.quantity = relatedProduct.stock;
+      relatedProduct.unit = relatedProduct.unit || 'Unit';
     });
     let errorMessage = req.session.errorMessage;
-    req.session.errorMessage = null;  // Clear after reading
+    req.session.errorMessage = null; 
 
     res.render('user/product-detail', { user, product, username, relatedProducts , errorMessage});
   } catch (err) {

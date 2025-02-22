@@ -62,27 +62,38 @@
             padding: 5px;
             border-radius: 5px;
         }
+        .product-img {
+            width: 80px; /* Adjust width as needed */
+            height: 80px; /* Adjust height as needed */
+            object-fit: cover; /* Ensures image fills the box without distortion */
+            border-radius: 8px; /* Adds smooth rounded corners */
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1); /* Optional shadow for better appearance */
+            display: block; /* Ensures proper alignment */
+            margin: auto; /* Centers the image inside the table cell */
+        }
+        
     </style>
 </head>
 <body>
+
     <div class="container">
         <h2>Order Details</h2>
         
         <div class="order-info">
             <p><strong>Order Number:</strong> <%= order._id %></p>
-            <p><strong>Status:</strong> <%= order.status %></p>
+            <p><strong>Status:</strong> <%= order.orderStatus %></p>
             <p><strong>Payment Method:</strong> <%= order.paymentMethod %></p>
             <% if(order.paymentMethod === 'Online Payment') { %>
                 <p><strong>Transaction ID:</strong> <%= order.transactionId %></p>
             <% } %>
-            <p><strong>Order Date:</strong> <%= order.orderDate %></p>
+            <p><strong>Order Date:</strong> <%= order.orderedAt %></p>
         </div>
         
         <div class="shipping-info">
             <h3>Shipping Address</h3>
             <p><strong>Name:</strong> <%= order.shippingAddress.name %></p>
             <p><strong>Phone:</strong> <%= order.shippingAddress.phone %></p>
-            <p><strong>Address:</strong> <%= order.shippingAddress.address %>, <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> - <%= order.shippingAddress.pincode %></p>
+            <p><strong>Address:</strong><%= order.shippingAddress.houseNo %>,<%= order.shippingAddress.area %>,<%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> - <%= order.shippingAddress.pincode %></p>
         </div>
         
         <div class="product-details">
@@ -100,27 +111,29 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <% order.products.forEach(product => { %>
+                    <% products.forEach(product => { %>
                         <tr>
-                            <td><img src="<%= product.image %>" alt="Product Image" class="product-image"></td>
+                            <td><img src="/uploads/products/<%= product.image %>" class="product-img" alt="<%= product.name %>"></td>
                             <td><%= product.name %></td>
                             <td><%= product.quantity %></td>
-                            <td>₹<%= product.price %></td>
+                            <td>₹<%= product.offerPrice %></td>
                             <td><%= product.status %></td>
                             <td>
                                 <select class="status-dropdown">
-                                    <option value="Processing" <%= product.status === 'Processing' ? 'selected' : '' %>>Processing</option>
+                                    <option value="Ordered" <%= product.status === 'Ordered' ? 'selected' : '' %>>Ordered</option>
                                     <option value="Shipped" <%= product.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
                                     <option value="Delivered" <%= product.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
                                     <option value="Cancelled" <%= product.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
-                                    <option value="Returning" <%= product.status === 'Returning' ? 'selected' : '' %>>Returning</option>
-                                </select>
-                            </td>
+                                    <option value="Returned" <%= product.status === 'Returned' ? 'selected' : '' %>>Returned</option>
+                                </select>                                
+                            </td>                            
                             <td>
                                 <% if (product.status === 'Cancelled') { %>
-                                    <p><strong>Cancel Reason:</strong> <%= product.cancelReason %></p>
-                                <% } else if (product.status === 'Returning') { %>
-                                    <p><strong>Returning Status:</strong> <%= product.returningStatus %></p>
+                                    <p><%= product.cancellationReason %></p>
+                                <% } else if (product.status === 'Returned') { %>
+                                    <p><%= product.returnReason %></p>
+                                <% } else { %>
+                                    <p>-</p> <!-- Default if no reason is applicable -->
                                 <% } %>
                             </td>
                         </tr>

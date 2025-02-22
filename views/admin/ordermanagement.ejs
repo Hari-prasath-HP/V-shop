@@ -72,6 +72,7 @@
             background: #333;
         }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 <body>
     <div class="container">
@@ -123,7 +124,7 @@
             <% } %>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
         document.querySelectorAll('.status-dropdown').forEach(select => {
     select.addEventListener('change', function() {
@@ -131,7 +132,7 @@
         const newStatus = this.value;
 
         if (!orderId || !newStatus) {
-            alert("Invalid order ID or status.");
+            showToast("Invalid order ID or status.", "error");
             return;
         }
 
@@ -143,14 +144,49 @@
         .then(response => response.json())
         .then(data => {
             if (data.message) {
-                alert(data.message);
+                showToast(data.message, "success");
             } else {
-                alert("Error updating status.");
+                showToast("Error updating status.", "error");
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            showToast("Network error. Try again!", "error");
+        });
     });
 });
+
+function showToast(message, type) {
+    const toast = Toastify({
+        text: message,
+        duration: 3000, // Toast disappears after 3 seconds
+        close: true,
+        gravity: "top",
+        position: "right",
+        backgroundColor: type === "success" ? "green" : "red",
+        onClick: function() {}, // Required to keep the toast open on hover
+    }).showToast();
+
+    // Create a progress bar
+    const toastElement = document.querySelector(".toastify"); // Get the toast element
+    if (toastElement) {
+        const progressBar = document.createElement("div");
+        progressBar.style.position = "absolute";
+        progressBar.style.bottom = "0";
+        progressBar.style.left = "0";
+        progressBar.style.height = "4px";
+        progressBar.style.background = "#90EE90";
+        progressBar.style.width = "100%";
+        progressBar.style.transition = "width 3s linear"; // Animation for the progress bar
+        
+        toastElement.appendChild(progressBar);
+
+        // Reduce the width over time
+        setTimeout(() => {
+            progressBar.style.width = "0%";
+        }, 50);
+    }
+}
     </script>
 </body>
 </html>
