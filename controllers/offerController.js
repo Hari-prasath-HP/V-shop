@@ -1,4 +1,3 @@
-const ProductOffer = require('../models/productoffer');
 const CategoryOffer = require('../models/categoryoffer');
 const Product = require('../models/product');
 const Category = require('../models/category')
@@ -9,12 +8,6 @@ cron.schedule('0 0 * * *', async () => {
     try {
         const currentDate = new Date();
 
-        await ProductOffer.updateMany(
-            { endDate: { $lt: currentDate }, status: { $ne: "Inactive" } },
-            { $set: { status: "Inactive" } }
-        );
-        console.log("✅ Expired product offers updated to Inactive.");
-
         await CategoryOffer.updateMany(
             { endDate: { $lt: currentDate }, status: { $ne: "Inactive" } },
             { $set: { status: "Inactive" } }
@@ -24,58 +17,6 @@ cron.schedule('0 0 * * *', async () => {
         console.error("❌ Error updating expired offers:", error);
     }
 });
-
-exports.getProductOffers = async (req, res) => {
-    try {
-        // Fetch all product offers
-        const offers = await ProductOffer.find().populate('product', 'name');
-
-        // Fetch all products to display in the dropdown for adding a new offer
-        const products = await Product.find({ isListed: true });
-
-        // Update status if the offer is expired
-        const currentDate = new Date();
-        for (const offer of offers) {
-            if (new Date(offer.endDate) < currentDate && offer.status !== "Inactive") {
-                await ProductOffer.findByIdAndUpdate(offer._id, { status: "Inactive" });
-            }
-        }
-
-        res.render('admin/productOffers', { offers, products });
-    } catch (error) {
-        console.error("Error fetching product offers:", error);
-        res.status(500).send("Server Error");
-    }
-};
-exports.postAddProductOffer = async (req, res) => {
-    try {
-        console.log("Received Data:", req.body); // Debugging
-
-        const { product, percentage, startDate, endDate } = req.body;
-        if (!product) {
-            return res.status(400).json({ error: "Product is required" });
-        }
-
-        const status = req.body.status || "Active"; // Default status
-        const newOffer = new ProductOffer({ product, percentage, startDate, endDate, status });
-        await newOffer.save();
-
-        res.redirect('/admin/productoffers');
-    } catch (error) {
-        console.error("Error adding product offer:", error);
-        res.status(500).send("Server Error");
-    }
-};
-exports.postEditProductOffer = async (req, res) => {
-    try {
-        const { product, percentage, startDate, endDate, status } = req.body;
-        await ProductOffer.findByIdAndUpdate(req.params.id, { product, percentage, startDate, endDate, status });
-        res.status(200).json({ message: "Offer updated successfully" });
-    } catch (error) {
-        console.error("Error updating product offer:", error);
-        res.status(500).json({ error: "Server Error" });
-    }
-};
 // Get all category offers
 exports.getCategoryOffers = async (req, res) => {
     try {

@@ -162,17 +162,17 @@ button.btn-primary {
             border-collapse: collapse;
             margin-top: 10px;
         }
+        table th {
+        color: white;
+        background-color: #333 !important;
+      }
         th, td {
             padding: 10px;
             text-align: center;
             border-bottom: 1px solid #ddd;
-        }
-        th {
-            background: #007bff;
-            color: white;
-        }
-        tr:hover {
-            background: #f1f1f1;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
         }
         .total-amount h3 {
             color: #007bff;
@@ -207,22 +207,10 @@ button.btn-primary {
             text-align: center;
             color: #333;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            color: black;
-        }
         th, td {
             padding: 12px;
             text-align: center;
             border-bottom: 1px solid #ddd;
-        }
-        thead th {
-            background-color: #444;
-            color: white;
         }
         .status-dropdown {
             padding: 5px;
@@ -256,16 +244,6 @@ button.btn-primary {
         .pagination a:hover {
             background: #333;
         }
-        .btn-custom {
-            background-color: #28a745;
-            color: white;
-            border-radius: 8px;
-            padding: 10px 15px;
-            transition: 0.3s;
-        }
-        .btn-custom:hover {
-            background-color: #218838;
-        }
         .table th, .table td {
             text-align: center;
             vertical-align: middle;
@@ -279,19 +257,17 @@ button.btn-primary {
             font-weight: bold;
         }
         .table{
-            width: 90vw;
+            width: 100%;
+            table-layout: fixed;
             margin: auto;
         }
         thead th {
             width: auto;
         }
-        thead th:nth-child(1) { width: 5%; }  /* S. No. */
-        thead th:nth-child(2) { width: 20%; } /* Product Name */
-        thead th:nth-child(3) { width: 10%; } /* Percentage */
-        thead th:nth-child(4) { width: 15%; } /* Start Date */
-        thead th:nth-child(5) { width: 15%; } /* End Date */
-        thead th:nth-child(6) { width: 10%; } /* Status */
-        thead th:nth-child(7) { width: 10%; } /* Edit */
+        .table-responsive {
+        overflow-x: auto; 
+        max-width: 100%;
+      }
   </style>
     <!-- Toastify CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">  

@@ -43,15 +43,6 @@ adminrouter.get('/unlistProduct/:id', adminController.unlistProduct);
 adminrouter.get('/orders', adminController.getOrders);
 adminrouter.post('/orders/update-status/:orderId', adminController.updateOrderStatus);
 adminrouter.get('/orders/view/:orderId', adminController.viewOrder);
-
-// Route to get all product offers
-adminrouter.get('/productoffers', offerController.getProductOffers);
-
-// Route to handle adding a new product offer
-adminrouter.post('/add-product-offer', offerController.postAddProductOffer);
-
-// Route to handle editing a product offer
-adminrouter.post('/edit-product-offer/:id', offerController.postEditProductOffer);
 // Route to get all product offers
 adminrouter.get('/categoryOffers', offerController.getCategoryOffers);
 

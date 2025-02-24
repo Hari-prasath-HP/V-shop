@@ -13,7 +13,6 @@
         <li class="nav-item"><a href="/admin/product" class="nav-link">Products</a></li>
         <li class="nav-item"><a href="/admin/orders" class="nav-link">Orders</a></li>
         <li class="nav-item"><a href="/admin/coupons" class="nav-link">Coupons</a></li>
-        <li class="nav-item"><a href="/admin/productoffers" class="nav-link">Product Offer</a></li>
         <li class="nav-item"><a href="/admin/categoryoffers" class="nav-link">Category Offer</a></li>
       </ul>
       <a href="/admin/logout" class="btn btn-outline-danger fw-bold">Logout</a>
@@ -27,20 +26,19 @@
     <table class="table table-striped table-hover">
         <thead>
             <tr>
-                <th>#</th>
-                <th>Code</th>
-                <th>Type</th>
-                <th>Discount</th>
-                <th>Min Purchase</th>
-                <th>Max Discount</th>
-                <th>Usage Limit</th>
-                <th>Used</th>
-                <th>Start Date</th>
-                <th>Expiry Date</th>
-                <th>Status</th>
-                <th>Edit</th>
-                <th>Delete</th>
-            </tr>
+                <th style="width: 3%;">#</th>
+                <th style="width: 10%;">Code</th>
+                <th style="width: 8%;">Type</th>
+                <th style="width: 8%;">Discount</th>
+                <th style="width: 10%;">Min Purchase</th>
+                <th style="width: 10%;">Usage Limit</th>
+                <th style="width: 7%;">Used</th>
+                <th style="width: 12%;">Start Date</th>
+                <th style="width: 12%;">Expiry Date</th>
+                <th style="width: 7%;">Status</th>
+                <th style="width: 7%;">Edit</th>
+                <th style="width: 7%;">Delete</th>
+            </tr>            
         </thead>
         <tbody>
             <% coupons.forEach((coupon, index) => { %>
@@ -50,7 +48,6 @@
                     <td><%= coupon.discountType %></td>
                     <td><%= coupon.discountType === 'percentage' ? coupon.discountValue + '%' : '₹' + coupon.discountValue %></td>
                     <td>₹<%= coupon.minPurchaseAmount %></td>
-                    <td><%= coupon.maxDiscount ? '₹' + coupon.maxDiscount : '-' %></td>
                     <td><%= coupon.usageLimit %></td>
                     <td><%= coupon.usedCount %></td>
                     <td><%= coupon.startDate ? new Date(coupon.startDate).toISOString().split('T')[0] : 'N/A' %></td>
@@ -92,10 +89,6 @@
                     <div class="mb-3">
                         <label for="discountValue" class="form-label">Discount Value</label>
                         <input type="number" class="form-control" id="discountValue" name="discountValue" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="maxDiscount" class="form-label">Max Discount (if percentage)</label>
-                        <input type="number" class="form-control" id="maxDiscount" name="maxDiscount">
                     </div>
                     <div class="mb-3">
                         <label for="minPurchaseAmount" class="form-label">Min Purchase Amount</label>
