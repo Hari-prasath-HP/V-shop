@@ -102,6 +102,19 @@
             align-items: center;
             height: 100%; /* Ensures it takes the full height of the navbar */
         }
+        .wishlist-icon {
+            font-size: 24px;
+            color: transparent;
+            -webkit-text-stroke: 1px rgb(160, 160, 160);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .wishlist-icon.active {
+            color: red;
+            -webkit-text-stroke: 0px;
+        }
+
         </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
@@ -137,7 +150,7 @@
             <ul class="navbar-nav">
                 <% if (user) { %> 
                     <li class="nav-item">
-                        <a href="/account" class="nav-link text-white" style="font-size: 18px;font-weight: bold;">
+                        <a href="/userdetails" class="nav-link text-white" style="font-size: 18px;font-weight: bold;">
                           <i class="icofont-user"></i>My Account
                         </a>
                     </li>
@@ -206,7 +219,11 @@
                             <% } else { %>
                                 <p class="product-price">₹<%= product.price.toFixed(2) %></p>
                             <% } %>
-                            <p><span class="quantity"><%= product.quantity.value %> <%= product.quantity.unit %></span></p>
+                            <p>
+                                <span class="quantity"><%= product.quantity.value %> <%= product.quantity.unit %></span>
+                                <!-- Wishlist heart icon -->
+                                <i class="fa fa-heart wishlist-icon" data-product-id="<%= product._id %>" style="cursor: pointer; margin-left: 10px;"></i>
+                            </p>                                                       
                             <% if (product.imagePaths && product.imagePaths.length > 0) { %>
                                 <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="carousel">
                                     <div class="carousel-inner">
@@ -275,6 +292,7 @@
         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
           const urlParams = new URLSearchParams(window.location.search);
@@ -293,7 +311,70 @@
           const sortOption = document.getElementById("sort-options").value;
           window.location.href = `?sort=${sortOption}&search=${document.getElementById("search-input").value}`;
         }
-      </script>      
+      </script>    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetchWishlist(); // Fetch wishlist items on page load
+        
+            document.querySelectorAll(".wishlist-icon").forEach(icon => {
+                icon.addEventListener("click", function () {
+                    const productId = this.getAttribute("data-product-id");
+                    toggleWishlist(productId, this);
+                });
+            });
+        });
+        
+        // Fetch wishlist from backend and update UI
+        function fetchWishlist() {
+            fetch("/wishlist/get")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const wishlistItems = data.wishlist.map(item => item.productId);
+                        document.querySelectorAll(".wishlist-icon").forEach(icon => {
+                            const productId = icon.getAttribute("data-product-id");
+                            if (wishlistItems.includes(productId)) {
+                                icon.classList.add("active");
+                                icon.style.color = "red";
+                            } else {
+                                icon.classList.remove("active");
+                                icon.style.color = "transparent";
+                            }
+                        });
+                    }
+                })
+                .catch(error => console.error("Error fetching wishlist:", error));
+        }
+        
+        // Call backend to add/remove product from wishlist
+        function toggleWishlist(productId, element) {
+            fetch("/wishlist/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.action === "added") {
+                        element.classList.add("active");
+                        element.style.color = "red";
+                        Swal.fire("Added!", "Product added to wishlist", "success");
+                    } else if (data.action === "removed") {
+                        element.classList.remove("active");
+                        element.style.color = "transparent";
+                        Swal.fire("Removed!", "Product removed from wishlist", "info");
+                    }
+                } else {
+                    Swal.fire("Error!", data.message, "error");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                Swal.fire("Error!", "Something went wrong!", "error");
+            });
+        }
+        </script>                
     <script>
         function searchProducts() {
             var input, filter, products, productItems, productName, i, txtValue;

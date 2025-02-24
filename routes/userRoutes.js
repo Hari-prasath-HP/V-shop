@@ -5,6 +5,7 @@ const cartController = require('../controllers/cartController')
 const checkUserStatus = require('../middlewares/checkUserStatus');
 const passport = require("passport");
 const accountController = require("../controllers/accountController")
+const wishlistController = require("../controllers/wishlistController")
 //signup
 router.get("/signup", UserController.renderSignup);
 router.post('/signup', UserController.handleSignup);
@@ -54,6 +55,15 @@ router.get('/delete-address/:id', accountController.deleteAddress);
 router.get('/set-default-address/:id', accountController.setDefaultAddress);
 router.get('/orders/', accountController.getAllOrdersForUser);
 router.get('/order/view/:id',accountController.getOrderDetails)
+
+// Add to wishlist
+router.post("/wishlist/add", wishlistController.addToWishlist);
+// Remove from wishlist
+router.post("/wishlist/remove", wishlistController.removeFromWishlist);
+// Get wishlist items
+router.get("/wishlist/get", wishlistController.getWishlist);
+router.get("/wishlist", wishlistController.renderWishlistPage);
+
 // logout
 router.post('/logout', UserController.logout);
 

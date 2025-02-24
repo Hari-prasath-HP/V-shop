@@ -127,23 +127,28 @@ exports.updateQuantity = async (req, res) => {
     }
 };
 exports.removeFromCart = async (req, res) => {
-    try {
-      if (!req.session.user) {
-        return res.redirect('/login')
-      }
-      const userId = req.session.user.id;
-      const productId = req.params.productId;
-      const result = await Cart.findOneAndDelete({ userId, productId });
-      if (!result) {
-        return res.status(404).json({ error: 'Product not found in cart' });
-      }
-      return res.redirect('/cart'); 
-    } catch (error) {
-      console.error('Error removing product from cart:', error);
-      return res.status(500).json({ error: 'Server error' });
+  try {
+    if (!req.session.user) {
+      return res.redirect('/login');
     }
-  };
-  exports.getCheckoutPage = async (req, res) => {
+
+    const userId = req.session.user.id;
+    const productId = req.params.productId;
+
+    // Find and delete the cart document matching the user and product
+    const result = await Cart.findOneAndDelete({ userId, productId });
+
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Product not found in cart' });
+    }
+
+    return res.json({ success: true, message: 'Product removed from cart' });
+  } catch (error) {
+    console.error('Error removing product from cart:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+exports.getCheckoutPage = async (req, res) => {
     try {
         if (!req.session.user) {
             return res.redirect('/login');

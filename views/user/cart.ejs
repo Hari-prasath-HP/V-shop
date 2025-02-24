@@ -249,8 +249,12 @@
                           </td>                        
                           <td class="subTotal">₹<%= subTotal.toFixed(2) %></td>
                           <td>
-                              <a href="/remove/<%= item.productId %>" class="btn btn-sm btn-danger">Remove</a>
-                          </td>
+                            <button class="btn btn-danger btn-sm" onclick="confirmRemove('<%= item.productId %>')">Remove</button>
+                            <!-- Hidden Form for Removal -->
+                            <form id="remove-form-<%= item.productId %>" action="/remove" method="POST">
+                                <input type="hidden" name="productId" value="<%= item.productId %>">
+                            </form>
+                        </td>                        
                       </tr>
                     <% }); %>
                   
@@ -353,6 +357,48 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
     </script>
+    <script>
+        function confirmRemove(productId) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "This product will be removed from your cart!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, remove it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/remove/${productId}`, {  // 🔹 Use correct endpoint
+                        method: "GET",  // 🔹 Use DELETE method
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: "Removed!",
+                                text: "Product removed from cart successfully.",
+                                icon: "success",
+                                confirmButtonText: "OK"
+                            }).then(() => {
+                                location.reload(); // Refresh the page to update the cart
+                            });
+                        } else {
+                            Swal.fire("Oops...", data.message || "Failed to remove item", "error");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error removing item:", error);
+                        Swal.fire("Error", "Something went wrong!", "error");
+                    });
+                }
+            });
+        }
+    </script>
+        
 </body>
 
 </html>
