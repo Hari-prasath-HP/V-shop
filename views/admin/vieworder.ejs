@@ -1,81 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Details</title>
-    <link rel="stylesheet" href="/css/style.css"> <!-- Add your CSS file here -->
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 900px;
-            background: #fff;
-            padding: 20px;
-            margin: auto;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        }
-        h2, h3 {
-            text-align: center;
-            color: #333;
-        }
-        .order-info, .shipping-info, .product-details, .total-amount {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            background: #fafafa;
-            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            padding: 10px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background: #007bff;
-            color: white;
-        }
-        tr:hover {
-            background: #f1f1f1;
-        }
-        .total-amount h3 {
-            color: #007bff;
-            text-align: center;
-        }
-        .product-image {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 5px;
-        }
-        .status-dropdown {
-            padding: 5px;
-            border-radius: 5px;
-        }
-        .product-img {
-            width: 80px; /* Adjust width as needed */
-            height: 80px; /* Adjust height as needed */
-            object-fit: cover; /* Ensures image fills the box without distortion */
-            border-radius: 8px; /* Adds smooth rounded corners */
-            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1); /* Optional shadow for better appearance */
-            display: block; /* Ensures proper alignment */
-            margin: auto; /* Centers the image inside the table cell */
-        }
-        
-    </style>
-</head>
-<body>
-
+<%- include('header') %>
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+        <div class="container">
+          <a href="#" class="navbar-brand">Admin Dashboard</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item"><a href="/admin/dashboard" class="nav-link">Dashboard</a></li>
+              <li class="nav-item"><a href="/admin/users" class="nav-link">Users</a></li>
+              <li class="nav-item"><a href="/admin/categories" class="nav-link">Categories</a></li>
+              <li class="nav-item"><a href="/admin/product" class="nav-link">Products</a></li>
+              <li class="nav-item"><a href="/admin/orders" class="nav-link">Orders</a></li>
+              <li class="nav-item"><a href="/admin/coupons" class="nav-link">Coupons</a></li>
+              <li class="nav-item"><a href="/admin/productoffers" class="nav-link">Product Offer</a></li>
+              <li class="nav-item"><a href="/admin/categoryoffers" class="nav-link">Category Offer</a></li>
+            </ul>
+            <a href="/admin/logout" class="btn btn-outline-danger fw-bold">Logout</a>
+          </div>
+        </div>
+      </nav>
     <div class="container">
         <h2>Order Details</h2>
         

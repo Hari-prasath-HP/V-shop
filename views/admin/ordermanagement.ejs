@@ -1,80 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Management</title>
-    <link rel="stylesheet" href="/css/admin.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: white;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            color: black;
-        }
-        th, td {
-            padding: 12px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
-        }
-        thead th {
-            background-color: #444;
-            color: white;
-        }
-        .status-dropdown {
-            padding: 5px;
-            border: 1px solid #777;
-            background: #222;
-            color: white;
-        }
-        .view-btn {
-            background: #28a745;
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            cursor: pointer;
-        }
-        .view-btn:hover {
-            background: #218838;
-        }
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 20px;
-        }
-        .pagination a {
-            margin: 0 5px;
-            padding: 8px 12px;
-            text-decoration: none;
-            background: #444;
-            color: white;
-        }
-        .pagination a:hover {
-            background: #333;
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-</head>
-<body>
+<%- include('header') %>
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+    <div class="container">
+      <a href="#" class="navbar-brand">Admin Dashboard</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mx-auto">
+          <li class="nav-item"><a href="/admin/dashboard" class="nav-link">Dashboard</a></li>
+          <li class="nav-item"><a href="/admin/users" class="nav-link">Users</a></li>
+          <li class="nav-item"><a href="/admin/categories" class="nav-link">Categories</a></li>
+          <li class="nav-item"><a href="/admin/product" class="nav-link">Products</a></li>
+          <li class="nav-item"><a href="/admin/orders" class="nav-link">Orders</a></li>
+          <li class="nav-item"><a href="/admin/coupons" class="nav-link">Coupons</a></li>
+          <li class="nav-item"><a href="/admin/productoffers" class="nav-link">Product Offer</a></li>
+          <li class="nav-item"><a href="/admin/categoryoffers" class="nav-link">Category Offer</a></li>
+        </ul>
+        <a href="/admin/logout" class="btn btn-outline-danger fw-bold">Logout</a>
+      </div>
+    </div>
+  </nav>
     <div class="container">
         <h2>Order Management</h2>
         <table>

@@ -58,11 +58,10 @@ router.get('/order/view/:id',accountController.getOrderDetails)
 
 // Add to wishlist
 router.post("/wishlist/add", wishlistController.addToWishlist);
-// Remove from wishlist
 router.post("/wishlist/remove", wishlistController.removeFromWishlist);
-// Get wishlist items
 router.get("/wishlist/get", wishlistController.getWishlist);
 router.get("/wishlist", wishlistController.renderWishlistPage);
+
 
 // logout
 router.post('/logout', UserController.logout);
