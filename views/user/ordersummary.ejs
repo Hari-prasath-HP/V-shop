@@ -303,10 +303,6 @@
                             <div class="order-item">
                               <p><strong><%= item.productId.name %></strong> ₹<%= item.productId.offerPrice %></p>
                             </div>
-                            <!-- <% let subTotal = item.productId.offerPrice * item.quantity; %>
-                        <div class="mb-3">
-                            <p><strong>Sub Total: </strong>₹<%= subTotal.toFixed(2) %></p>
-                        </div> -->
                         <% }); %>
                         
                         <% let shippingCharge = (grandTotal < 700) ? orderSummaryData.shippingCost : 0; %>
@@ -319,9 +315,8 @@
                         </div>
                     </div>
                     <input type="hidden" name="grandTotal" value="<%= grandTotal.toFixed(2) %>">
-                    <!-- Hidden input for COD -->
-                    <input type="hidden" name="paymentMethod" value="COD">
-        
+                    <!-- Hidden input for Payment Method -->
+                    <input type="hidden" name="paymentMethod" value="<%= orderSummaryData.paymentMethod %>">
                     <div class="mt-3 text-center">
                         <button type="submit" class="btn btn-success">Continue</button>
                     </div>

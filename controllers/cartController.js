@@ -253,6 +253,7 @@ exports.selectAddress = async (req, res) => {
 exports.proceedToPayment = async (req, res) => {
   try {
       const userId = req.session.user.id;
+      const paymentMethod = req.body.paymentMethod || 'COD';
       if (!userId) {
           return res.redirect('/login'); // Redirect if user is not logged in
       }
@@ -260,8 +261,7 @@ exports.proceedToPayment = async (req, res) => {
       if (!user) {
           return res.redirect('/checkoutaddress'); // Redirect if user is not found
       }
-      const totalAmount = req.body.totalAmount || 0;
-    const paymentMethod = req.body.paymentMethod || 'COD';
+      const totalAmount = req.body.totalAmount || 0;;
       // Check if an existing order is present
       let existingOrder = await Order.findOne({ user: userId, orderStatus: 'Pending' })
 

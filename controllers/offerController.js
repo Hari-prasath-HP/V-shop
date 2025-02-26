@@ -43,26 +43,19 @@ exports.getCategoryOffers = async (req, res) => {
 
 exports.postAddCategoryOffer = async (req, res) => {
     try {
-        console.log("Received Data:", req.body);
-
         const { category, percentage, startDate, endDate } = req.body;
         if (!category) {
             return res.status(400).json({ error: "Category is required" });
         }
-
-        // Validate if category exists
         const categoryExists = await Category.findById(category);
         if (!categoryExists) {
             return res.status(400).json({ error: "Invalid Category ID" });
         }
-
         const status = req.body.status || "Active"; // Default status
         const newOffer = new CategoryOffer({ category, percentage, startDate, endDate, status });
-
         await newOffer.save()
             .then(() => console.log("✅ Category offer added successfully!"))
             .catch(err => console.error("❌ Save error:", err));
-
         res.redirect('/admin/categoryoffer');
     } catch (error) {
         console.error("Error adding category offer:", error);
@@ -71,15 +64,11 @@ exports.postAddCategoryOffer = async (req, res) => {
 };
 exports.postEditCategoryOffer = async (req, res) => {
     try {
-        console.log("Received edit request:", req.body, req.params); // Debugging
-
         const { category, percentage, startDate, endDate, status } = req.body;
-        const offerId = req.params.id; // Get offer ID from URL
-
+        const offerId = req.params.id;
         if (!offerId) {
             return res.status(400).json({ error: "Offer ID is required" });
         }
-
         await CategoryOffer.findByIdAndUpdate(offerId, {
             category,
             percentage,
@@ -88,13 +77,12 @@ exports.postEditCategoryOffer = async (req, res) => {
             status
         });
 
-        res.redirect('/admin/categoryOffers'); // Correcting the redirect
+        res.redirect('/admin/categoryOffers');
     } catch (error) {
         console.error("Error updating category offer:", error);
         res.status(500).send("Server Error");
     }
 };
-// Render coupon management page
 exports.getCoupons = async (req, res) => {
     try {
         const coupons = await Coupon.find({ isDeleted: false }).sort({ createdAt: -1 });
@@ -104,8 +92,6 @@ exports.getCoupons = async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 };
-
-// Add a new coupon
 exports.addCoupon = async (req, res) => {
     try {
         const { code, discountType, discountValue, minPurchaseAmount, maxDiscount, usageLimit, expiryDate } = req.body;
@@ -125,8 +111,6 @@ exports.addCoupon = async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 };
-
-// Edit coupon details
 exports.editCoupon = async (req, res) => {
     try {
         const { id } = req.params;
@@ -147,8 +131,6 @@ exports.editCoupon = async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 };
-
-// Soft delete a coupon
 exports.deleteCoupon = async (req, res) => {
     try {
         const { id } = req.params;
@@ -159,8 +141,6 @@ exports.deleteCoupon = async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 };
-
-// Toggle coupon activation
 exports.toggleCouponStatus = async (req, res) => {
     try {
         const { id } = req.params;
