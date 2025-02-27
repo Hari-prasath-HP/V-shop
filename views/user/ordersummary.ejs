@@ -224,11 +224,10 @@
             <li class="breadcrumb-item active" aria-current="page">Payment</li>
         </ol>
     </nav>
-
 <!-- Address Details (Modified with table header and dynamic address details in the next row) -->
 <div class="address-details">
     <h1>Order Summary</h1>
-    
+
     <div class="progress-container pt-5 pb-5">
         <div class="step active">1</div>
         <div class="line"></div>
@@ -236,7 +235,9 @@
         <div class="line"></div>
         <div class="step active">3</div>
     </div>
-    <form action="/placeorder" method="POST">
+
+    <!-- Main Order Form -->
+    <form id="payment-form" action="/placeorder" method="POST">
         <div class="cart-container">
             <table class="cart-table table table-bordered">
                 <thead class="table-light">
@@ -252,17 +253,17 @@
                     <% orderSummaryData.cartItems.forEach(function(item) { %>
                         <% let subTotal = item.productId.offerPrice * item.quantity; %>
                         <% grandTotal += subTotal; %>
-                        <tr data-id="<%= item.productId %>" data-price="<%= item.productId.offerPrice %>" data-stock="<%= item.productId.stock %>">
+                        <tr data-id="<%= item.productId._id %>" data-price="<%= item.productId.offerPrice %>" data-stock="<%= item.productId.stock %>">
                             <td>
                                 <img src="/uploads/products/<%= item.productId.images[0] %>" class="cart-image" alt="<%= item.productId.name %>">
                             </td>
                             <td><%= item.productId.name %></td>
                             <td class="quantity-control">
                                 <input type="text" class="product-quantity form-control" value="<%= item.quantity %>" readonly>
-                            </td>                        
+                            </td>
                             <td class="subTotal">₹<%= subTotal.toFixed(2) %></td>
-    
-                            <!-- Hidden inputs for each product details -->
+
+                            <!-- Hidden inputs for each product -->
                             <input type="hidden" name="products[<%= item.productId._id %>][productId]" value="<%= item.productId._id %>">
                             <input type="hidden" name="products[<%= item.productId._id %>][name]" value="<%= item.productId.name %>">
                             <input type="hidden" name="products[<%= item.productId._id %>][quantity]" value="<%= item.quantity %>">
@@ -273,8 +274,8 @@
                     <% }); %>
                 </tbody>
             </table>
-        </div>    
-    
+        </div>
+
         <div class="container d-flex justify-content-center" style="width: 90%;">
             <div class="card shadow p-3 mb-4 bg-white rounded w-100">
                 <div class="card-body">
@@ -294,53 +295,253 @@
                     <% } %>
                     <hr>
                     <div>
-                        <p><h3>Payment Method:</h3> <%= orderSummaryData.paymentMethod %></p>
+                        <h3>Payment Method:</h3>
+                        <p><%= orderSummaryData.paymentMethod %></p>
                     </div>
-                    <hr> 
+                    <hr>
+
+                    <h3>Available Coupons</h3>
+                    <ul>
+                        <% if (orderSummaryData.coupons.length > 0) { %>
+                            <% orderSummaryData.coupons.forEach(coupon => { %>
+                                <li>
+                                    <strong>Code:</strong> <%= coupon.code %> -
+                                    <strong>Discount:</strong> 
+                                    <% if (coupon.discountType === 'percentage') { %>
+                                        <%= coupon.discountValue %>%
+                                    <% } else { %>
+                                        ₹<%= coupon.discountValue %>
+                                    <% } %>
+                                </li>
+                            <% }) %>
+                        <% } else { %>
+                            <p>No available coupons.</p>
+                        <% } %>
+                    </ul>
+
+                    <% if (orderSummaryData.appliedCoupon) { %>
+                        <p>Applied Coupon: <strong><%= orderSummaryData.appliedCoupon.code %></strong></p>
+                        <p>Discount: ₹<%= orderSummaryData.appliedCoupon.discount %></p>
+                        <a href="/remove-coupon">Remove Coupon</a>
+                    <% } %>
+
                     <div class="mb-3">
                         <h5>Order Summary</h5>
                         <% orderSummaryData.cartItems.forEach(item => { %>
                             <div class="order-item">
-                              <p><strong><%= item.productId.name %></strong> ₹<%= item.productId.offerPrice %></p>
+                                <p><strong><%= item.productId.name %></strong> ₹<%= item.productId.offerPrice %></p>
                             </div>
                         <% }); %>
-                        
-                        <% let shippingCharge = (grandTotal < 700) ? orderSummaryData.shippingCost : 0; %>
-                        <div class="shipping-cost">
-                            <p><strong>Shipping Cost:</strong> ₹<%= shippingCharge.toFixed(2) %></p>
-                        </div>
-                        <% grandTotal += shippingCharge; %>
-                        <div class="mb-3">
-                            <h5><strong>Grand Total: </strong>₹<%= grandTotal.toFixed(2) %></h5>
-                        </div>
+                        <h5><strong>Grand Total: </strong>
+                            <span id="grandTotalDisplay" class="text-success">₹<%= grandTotal.toFixed(2) %></span>
+                        </h5>
                     </div>
-                    <input type="hidden" name="grandTotal" value="<%= grandTotal.toFixed(2) %>">
-                    <!-- Hidden input for Payment Method -->
-                    <input type="hidden" name="paymentMethod" value="<%= orderSummaryData.paymentMethod %>">
+
+                    <!-- Grand total hidden input -->
+                    <input type="hidden" id="grandTotalInput" name="grandTotal" value="<%= grandTotal.toFixed(2) %>">
+                    <input type="hidden" id="paymentMethod" name="paymentMethod" value="<%= orderSummaryData.paymentMethod %>">
+
                     <div class="mt-3 text-center">
-                        <button type="submit" class="btn btn-success">Continue</button>
+                        <button type="submit" id="continue-button" class="btn btn-success">Continue</button>
                     </div>
-                </div>
-            </div>
-        </div>  
-    </form>
-       <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <p>&copy; 2025 Vegishop. All rights reserved.</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <a href="privacy.html" class="text-white mx-2">Privacy Policy</a>
-                    <a href="terms.html" class="text-white mx-2">Terms of Service</a>
                 </div>
             </div>
         </div>
-    </footer>
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    </form>
+
+    <!-- Coupon Form (Separate, Uses AJAX) -->
+    <h3>Apply Coupon</h3>
+    <form id="coupon-form">
+        <input type="hidden" id="coupon-grandTotal" name="grandTotal" value="<%= grandTotal.toFixed(2) %>">
+        <input type="text" id="couponCode" name="couponCode" placeholder="Enter coupon code" required />
+        <button type="submit">Apply</button>
+    </form>
+</div>
+        <!-- Toast message for success or failure -->
+        <div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+            <div id="toastMessage" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body" id="toastText"></div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>&copy; 2025 Vegishop. All rights reserved.</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <a href="privacy.html" class="text-white mx-2">Privacy Policy</a>
+                        <a href="terms.html" class="text-white mx-2">Terms of Service</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<!-- Razorpay SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const couponForm = document.getElementById("coupon-form");
+    const paymentForm = document.getElementById("payment-form");
+    const grandTotalDisplay = document.getElementById("grandTotalDisplay");
+    const grandTotalInput = document.getElementById("grandTotalInput");
+    const appliedCouponSection = document.getElementById("appliedCouponSection");
+
+    // Apply Coupon
+    couponForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        console.log("Coupon form submitted");
+
+        const formData = new FormData(this);
+        try {
+            const response = await fetch("/apply-coupon", {
+                method: "POST",
+                body: new URLSearchParams(formData),
+                headers: { "Content-Type": "application/x-www-form-urlencoded" }
+            });
+
+            const result = await response.json();
+            console.log("Coupon Response:", result);
+
+            if (result.success) {
+                // Update grand total in both display and hidden input field
+                grandTotalDisplay.innerText = `₹${result.finalAmount.toFixed(2)}`;
+                grandTotalInput.value = result.finalAmount.toFixed(2);
+
+                // Show applied coupon details
+                appliedCouponSection.innerHTML = `
+                    <p>Applied Coupon: <strong>${formData.get("couponCode")}</strong></p>
+                    <p>Discount: ₹${result.discount.toFixed(2)}</p>
+                    <a href="#" id="removeCoupon">Remove Coupon</a>
+                `;
+
+                console.log("Updated grandTotal value:", grandTotalInput.value);
+
+                // Attach event listener to the remove coupon button
+                document.getElementById("removeCoupon").addEventListener("click", removeCoupon);
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error("Error applying coupon:", error);
+        }
+    });
+
+    // Remove Coupon
+    async function removeCoupon(event) {
+        event.preventDefault();
+        console.log("Removing coupon...");
+
+        try {
+            const response = await fetch("/remove-coupon", { method: "POST" });
+            const result = await response.json();
+
+            if (result.success) {
+                // Restore original grand total
+                grandTotalDisplay.innerText = `₹${result.originalAmount.toFixed(2)}`;
+                grandTotalInput.value = result.originalAmount.toFixed(2);
+
+                // Clear applied coupon section
+                appliedCouponSection.innerHTML = "";
+                console.log("Coupon removed, grandTotal reset to:", grandTotalInput.value);
+            } else {
+                alert("Failed to remove coupon");
+            }
+        } catch (error) {
+            console.error("Error removing coupon:", error);
+        }
+    }
+
+    // Ensure the correct grand total is submitted
+    paymentForm.addEventListener("submit", function (event) {
+        console.log("Final amount being submitted:", grandTotalInput.value);
+    });
+});
+</script>
+
+<script>
+    document.getElementById("continue-button").addEventListener("click", async function (event) {
+    event.preventDefault();
+
+    // Get stored payment method and grand total
+    const paymentMethod = document.getElementById("paymentMethod").value;
+    const grandTotal = document.getElementById("grandTotalInput").value; // Get grand total
+    // Retrieve all cart items dynamically from the table
+    const cartItems = [];
+    document.querySelectorAll("tr[data-id]").forEach(row => {
+        const productId = row.getAttribute("data-id");
+        const price = parseFloat(row.getAttribute("data-price"));
+        const stock = parseInt(row.getAttribute("data-stock"));
+        const quantity = parseInt(row.querySelector(".product-quantity").value);
+        const subTotal = price * quantity;
+
+        cartItems.push({ productId, price, quantity, subTotal });
+    });
+
+    // Send request to backend to create order
+    const response = await fetch("/placeorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            paymentMethod: paymentMethod,
+            grandTotal: grandTotal,  // Include grand total
+            products: cartItems // Send cart items
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.paymentMethod === "Online Payment") {
+        // Initialize Razorpay if online payment is selected
+        const options = {
+            key: data.key, // Razorpay Key ID
+            amount: data.amount * 100, // Convert amount to paise
+            currency: "INR",
+            name: "V-Shop",
+            description: "Milk-based products",
+            order_id: data.razorpayOrderId,
+            handler: async function (response) {
+            // Verify payment with backend
+            const verifyResponse = await fetch("/verify-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    orderId: data.orderId,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                })
+            });
+
+            const verifyData = await verifyResponse.json();
+            
+            if (verifyData.success) {
+                // Instead of redirecting, dynamically update the page
+                document.body.innerHTML = verifyData.html;
+            } else {
+                alert("Payment verification failed. Please try again.");
+            }
+        },
+            theme: { color: "#3399cc" }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+    } else {
+        // If COD is selected, redirect to order confirmation page
+        window.location.href = "/success";
+    }
+});
+
+</script> 
 </body>
 </html>
