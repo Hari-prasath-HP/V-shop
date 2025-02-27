@@ -404,24 +404,50 @@ exports.getOrderSummary = async (req, res) => {
 exports.applyCoupon = async (req, res) => {
   try {
       const { couponCode, grandTotal } = req.body;
+
       if (!couponCode) {
           return res.status(400).json({ success: false, message: "Coupon code is required." });
       }
 
-      const coupon = await Coupon.findOne({ code: couponCode });
+      const coupon = await Coupon.findOne({ code: couponCode, isActive: true, isDeleted: false });
 
       if (!coupon) {
-          return res.status(400).json({ success: false, message: "Invalid coupon code." });
+          return res.status(400).json({ success: false, message: "Invalid or expired coupon." });
       }
 
+      // Check if the coupon has expired
+      if (new Date() > coupon.expiryDate) {
+          return res.status(400).json({ success: false, message: "Coupon has expired." });
+      }
+
+      // Check if the coupon has reached its usage limit
+      if (coupon.usedCount >= coupon.usageLimit) {
+          return res.status(400).json({ success: false, message: "Coupon usage limit reached." });
+      }
+
+      // Check minimum purchase amount
+      if (grandTotal < coupon.minPurchaseAmount) {
+          return res.status(400).json({ 
+              success: false, 
+              message: `Minimum purchase amount of ₹${coupon.minPurchaseAmount} required to use this coupon.` 
+          });
+      }
+
+      // Calculate discount
       let discount = 0;
       if (coupon.discountType === "percentage") {
           discount = (grandTotal * coupon.discountValue) / 100;
+          
+          // Apply max discount cap if applicable
+          if (coupon.maxDiscount && discount > coupon.maxDiscount) {
+              discount = coupon.maxDiscount;
+          }
       } else {
-          discount = coupon.discountValue;
+          discount = coupon.discountValue; // Fixed discount
       }
 
       const finalAmount = grandTotal - discount;
+
       return res.status(200).json({
           success: true,
           message: "Coupon applied successfully!",
@@ -524,10 +550,8 @@ exports.placeOrder = async (req, res) => {
         );
       }
 
-      // Clear Cart
-      await Cart.deleteMany({ userId });
-      req.session.cart = {};
-      await req.session.save();
+      // Clear user's cart in the database
+      await Cart.deleteMany({ userId: userId });
 
       return res.render('user/success', {
         orderId: newOrder._id,
@@ -570,7 +594,7 @@ try {
 exports.verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
-
+    const userId = req.session.user.id
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ message: "Order not found." });
 
@@ -587,6 +611,8 @@ exports.verifyPayment = async (req, res) => {
     // Update Order Status
     order.paymentStatus = "Completed";
     order.orderStatus = "Ordered";
+    order.razorpayOrderId = razorpay_order_id;
+    order.razorpayPaymentId = razorpay_payment_id;
     await order.save();
 
     // Reduce Stock
@@ -598,10 +624,8 @@ exports.verifyPayment = async (req, res) => {
       );
     }
 
-    // Clear Cart
-    await Cart.deleteMany({ user: order.user });
-    req.session.cart = {};
-    await req.session.save();
+    // Clear user's cart in the database
+    await Cart.deleteMany({ userId: userId });
 
     // Render the success page and send the HTML as response
     res.render('user/success', { 

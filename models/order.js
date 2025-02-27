@@ -23,6 +23,8 @@ const orderSchema = new mongoose.Schema(
     totalAmount: {type: Number,required: true,},
     paymentMethod: {type: String,enum: ['COD', 'Online Payment', 'Wallet'],required: true,},
     paymentStatus: {type: String,enum: ['Pending', 'Completed', 'Failed', 'Refunded'],default: 'Pending',},
+    razorpayOrderId: { type: String },  // Razorpay Order ID
+    razorpayPaymentId: { type: String },
     orderStatus: {type: String,enum: ['Pending', 'Ordered', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],default: 'Pending',},
     shippingAddress: {
         userId: {type: mongoose.Schema.Types.ObjectId,ref: 'User',required: true,},
