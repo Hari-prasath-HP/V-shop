@@ -537,8 +537,11 @@
         const rzp = new Razorpay(options);
         rzp.open();
     } else {
-        // If COD is selected, redirect to order confirmation page
-        window.location.href = "/success";
+        if (data.success) {
+    window.location.href = data.redirectUrl;
+} else {
+    alert("Order placement failed. Please try again.");
+}
     }
 });
 

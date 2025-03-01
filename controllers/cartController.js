@@ -157,85 +157,77 @@ exports.removeFromCart = async (req, res) => {
   }
 };
 exports.getCheckoutPage = async (req, res) => {
-    try {
-        if (!req.session.user) {
-            return res.redirect('/login');
-        }
-
-        const userId = req.session.user.id;
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).send('User not found');
-        }
-
-        // Check if the user's cart has items
-        const cartItems = await Cart.find({ userId });
-        if (!cartItems || cartItems.length === 0) {
-            return res.redirect('/cart'); // Redirect to cart page if empty
-        }
-
-        // Fetch default address or use order's shipping address
-        const defaultAddress = await Address.findOne({ userId: userId, isDefault: true }) || null;
-        const order = await Order.findOne({ user: userId, orderStatus: 'Pending' });
-        const checkoutAddress = order?.shippingAddress || defaultAddress;
-
-        res.render('user/checkout1', { user, userId, checkoutAddress });
-    } catch (error) {
-        console.error('Error fetching checkout page:', error);
-        res.status(500).send('Internal Server Error');
-    }
-};
-exports.changeaddress = async (req, res) => {
   try {
       if (!req.session.user) {
           return res.redirect('/login');
       }
+
       const userId = req.session.user.id;
       const user = await User.findById(userId);
       if (!user) {
           return res.status(404).send('User not found');
       }
-      const addresses = await Address.find({ userId: userId });
-      res.render('user/changeaddress', { user, addresses });
+
+      // Check if the user's cart has items
+      const cartItems = await Cart.find({ userId });
+      if (!cartItems || cartItems.length === 0) {
+          return res.redirect('/cart'); // Redirect to cart page if empty
+      }
+
+      // Fetch an existing pending order or fallback to default address
+      let order = await Order.findOne({ user: userId, orderStatus: 'Pending' }).sort({ createdAt: -1 });
+      let checkoutAddress = order?.shippingAddress || (await Address.findOne({ userId: userId, isDefault: true }));
+
+      res.render('user/checkout1', { user, userId, checkoutAddress });
   } catch (error) {
       console.error('Error fetching checkout page:', error);
       res.status(500).send('Internal Server Error');
   }
 };
+
+exports.changeaddress = async (req, res) => {
+  try {
+      if (!req.session.user) {
+          return res.redirect('/login');
+      }
+
+      const userId = req.session.user.id;
+      const user = await User.findById(userId);
+      if (!user) {
+          return res.status(404).send('User not found');
+      }
+
+      const addresses = await Address.find({ userId });
+      res.render('user/changeaddress', { user, addresses });
+  } catch (error) {
+      console.error('Error fetching change address page:', error);
+      res.status(500).send('Internal Server Error');
+  }
+};
+
 exports.selectAddress = async (req, res) => {
   try {
-    const { selectedAddress } = req.body;
-    const userId = req.session.user.id;
-    if (!selectedAddress) {
-      return res.redirect('/address');
-    }
-    const address = await Address.findById(selectedAddress);
-    if (!address) {
-      return res.redirect('/address');
-    }
-    const totalAmount = req.body.totalAmount || 0;
-    const paymentMethod = req.body.paymentMethod || 'COD';
-    let existingOrder = await Order.findOne({ user: userId, orderStatus: 'Pending' })
-  .sort({ createdAt: -1 });
-    if (existingOrder) {
-      existingOrder.shippingAddress = {
-        userId: userId, 
-        name: address.name,
-        phone: address.phone,
-        houseNo: address.houseNo,
-        area: address.area,
-        city: address.city,
-        state: address.state,
-        pincode: address.pincode,
-        title: address.title,
-      };
-      existingOrder.paymentMethod = paymentMethod;
-      existingOrder.totalAmount = totalAmount;
-      await existingOrder.save();
-    } else {
-      const newOrder = new Order({
-        user: userId,
-        shippingAddress: {
+      if (!req.session.user) {
+          return res.redirect('/login');
+      }
+
+      const { selectedAddress, totalAmount = 0, paymentMethod = 'COD' } = req.body;
+      const userId = req.session.user.id;
+
+      if (!selectedAddress) {
+          req.flash('error', 'Please select an address.');
+          return res.redirect('/changeaddress');
+      }
+
+      const address = await Address.findById(selectedAddress);
+      if (!address) {
+          req.flash('error', 'Selected address not found.');
+          return res.redirect('/changeaddress');
+      }
+
+      let existingOrder = await Order.findOne({ user: userId, orderStatus: 'Pending' }).sort({ createdAt: -1 });
+
+      const shippingAddress = {
           userId: userId,
           name: address.name,
           phone: address.phone,
@@ -245,17 +237,28 @@ exports.selectAddress = async (req, res) => {
           state: address.state,
           pincode: address.pincode,
           title: address.title,
-        },
-        paymentMethod: paymentMethod,
-        totalAmount: totalAmount,
-        status: 'Pending',
-      });
-      await newOrder.save();
-    }
-    res.redirect('/checkout-1');
+      };
+
+      if (existingOrder) {
+          existingOrder.shippingAddress = shippingAddress;
+          existingOrder.paymentMethod = paymentMethod;
+          existingOrder.totalAmount = totalAmount;
+          await existingOrder.save();
+      } else {
+            existingOrder = new Order({
+              user: userId,
+              shippingAddress,
+              paymentMethod,
+              totalAmount,
+              orderStatus: 'Pending',
+          });
+          await existingOrder.save();
+      }
+
+      res.redirect('/checkout-1');
   } catch (error) {
-    console.error('Error updating selected address:', error);
-    res.redirect('/address');
+      console.error('Error updating selected address:', error);
+      res.status(500).send('Internal Server Error');
   }
 };
 exports.proceedToPayment = async (req, res) => {
@@ -468,9 +471,6 @@ exports.cancelcoupon = (req,res) =>{
 exports.placeOrder = async (req, res) => {
   try {
     const { products, paymentMethod, grandTotal } = req.body;
-    console.log(grandTotal)
-    console.log(req.body)
-    console.log(products)
     const userId = req.session.user?.id;
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized. Please log in." });
@@ -515,31 +515,31 @@ exports.placeOrder = async (req, res) => {
     if (!checkoutAddress) {
       return res.status(400).json({ message: "Shipping address is required." });
     }
-
-    // Create a new Order
-    const newOrder = new Order({
-      user: userId,
-      products: productEntries.map(product => ({
-        product: product.productId,
-        quantity: product.quantity,
-        price: product.price,
-        offerPrice: product.offerPrice || 0,
-        status: 'Ordered'
-      })),
-      totalAmount,
-      paymentMethod,
-      shippingAddress: checkoutAddress,
-      paymentStatus: paymentMethod === 'COD' ? 'Pending' : 'Completed',
-      orderStatus: "Pending"
-    });
-
-    await newOrder.save();
-
+    let existingOrder = await Order.findOne({ user: userId, orderStatus: 'Pending' }).sort({ createdAt: -1 });
+    if (existingOrder) {
+      // If order exists, update it
+      productEntries.forEach(product => {
+        existingOrder.products.push({
+          product: product.productId,
+          quantity: product.quantity,
+          price: product.price,
+          offerPrice: product.offerPrice || 0,
+          status: 'Ordered'
+        });
+      });
+    
+      existingOrder.totalAmount += totalAmount;
+      existingOrder.paymentMethod = paymentMethod;
+      existingOrder.shippingAddress = checkoutAddress;
+      existingOrder.paymentStatus = paymentMethod === 'COD' ? 'Pending' : 'Completed';
+    
+      await existingOrder.save();
+    }
     // **COD: Directly confirm order**
     if (paymentMethod === "COD") {
-      newOrder.paymentStatus = "Pending";
-      newOrder.orderStatus = "Ordered";
-      await newOrder.save();
+      existingOrder.paymentStatus = "Pending";
+      existingOrder.orderStatus = "Ordered";
+      await existingOrder.save();
 
       // Reduce stock safely
       for (const item of productEntries) {
@@ -553,29 +553,29 @@ exports.placeOrder = async (req, res) => {
       // Clear user's cart in the database
       await Cart.deleteMany({ userId: userId });
 
-      return res.render('user/success', {
-        orderId: newOrder._id,
-        user: user || null
-      });
+      return res.json({
+        success: true,
+        redirectUrl: "/success"
+    });    
     }
     // Create Razorpay Order
 try {
   const razorpayOrder = await razorpay.orders.create({
       amount: Math.round(totalAmount * 100), // Convert to paise
       currency: "INR",
-      receipt: newOrder._id.toString()
+      receipt: existingOrder._id.toString()
   });
 
   // Store Razorpay Order ID in the database
-  newOrder.razorpayOrderId = razorpayOrder.id;
-  newOrder.paymentStatus = "Pending"; // Payment is not completed yet
-  newOrder.orderStatus = "Ordered"; 
-  await newOrder.save();
+  existingOrder.razorpayOrderId = razorpayOrder.id;
+  existingOrder.paymentStatus = "Pending"; // Payment is not completed yet
+  existingOrder.orderStatus = "Ordered"; 
+  await existingOrder.save();
 
   return res.json({
       success: true,
       razorpayOrderId: razorpayOrder.id,
-      orderId: newOrder._id,
+      orderId: existingOrder._id,
       amount: totalAmount,
       key: process.env.RAZORPAY_KEY_ID,
       paymentMethod
@@ -644,6 +644,31 @@ exports.verifyPayment = async (req, res) => {
     return res.status(500).json({ message: "Payment verification failed." });
   }
 };
+exports.getSuccessPage = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login'); // Redirect if the user is not logged in
+  }
+
+  try {
+    // Find the latest order for the logged-in user
+    const latestOrder = await Order.findOne({ user: req.session.user.id })
+      .sort({ createdAt: -1 }) // Sort to get the most recent order
+      .select('_id'); // Select only the order ID
+
+    if (!latestOrder) {
+      return res.status(404).send("No recent orders found.");
+    }
+
+    res.render('user/success', { 
+      user: req.session.user.id, 
+      orderId: latestOrder._id 
+    });
+  } catch (error) {
+    console.error("Error fetching order:", error);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
 exports.cancelProduct = async (req, res) => {
   try {
       const { orderId, productId, reason } = req.body;

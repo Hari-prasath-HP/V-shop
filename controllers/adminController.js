@@ -5,6 +5,10 @@ const Product = require('../models/product')
 const path = require('path');
 const fs = require('fs');
 const Order = require('../models/order');
+const moment = require('moment');
+const ExcelJS = require('exceljs');
+const PDFDocument = require('pdfkit');
+const PdfPrinter = require('pdfmake');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -624,6 +628,266 @@ exports.viewOrder = async (req, res) => {
   } catch (error) {
       console.error("Error fetching order details:", error);
       res.status(500).send("Internal Server Error");
+  }
+};
+exports.getSalesReport = async (req, res) => {
+  try {
+      // Fetch all orders and populate the user and product details
+      const orders = await Order.find()
+        .populate('user', 'name') // Populate user name only
+        .populate('products.product') // Populate product details
+        .sort({ createdAt: -1 });
+
+      // Fetch full product details using the product IDs
+      const formattedOrders = await Promise.all(
+        orders.map(async (order) => {
+          const items = await Promise.all(
+            order.products.map(async (item) => {
+              const product = await Product.findById(item.product).select('name');
+              return {
+                productName: product ? product.name : 'Unknown Product',
+                quantity: item.quantity
+              };
+            })
+          );
+
+          return {
+            userName: order.shippingAddress.name, 
+            orderDate: order.createdAt.toISOString().split('T')[0], // Format date
+            items,
+            price: order.totalAmount,
+            offerPrice: order.products.reduce((sum, item) => sum + (item.offerPrice * item.quantity), 0), 
+            paymentMethod: order.paymentMethod,
+            status: order.orderStatus
+          };
+        })
+      );
+
+      res.render('admin/salesReport', { orders: formattedOrders });
+
+  } catch (error) {
+      console.error('Error fetching sales report:', error);
+      res.status(500).send('Internal Server Error');
+  }
+};
+exports.filterOrders = async (req, res) => {
+    try {
+        const { from, to } = req.query;
+
+        if (!from || !to) {
+            return res.json({ success: false, message: "Invalid date range" });
+        }
+
+        const startDate = new Date(from);
+        startDate.setHours(0, 0, 0, 0); // Normalize time to start of day
+
+        const endDate = new Date(to);
+        endDate.setHours(23, 59, 59, 999); // Normalize time to end of day
+
+        console.log("Filtering orders from:", startDate, "to:", endDate);
+
+        const orders = await Order.find({
+          orderedAt: { $gte: startDate, $lte: endDate }
+        }).populate('products.product', 'name') // Populate product names
+        .lean().sort({ createdAt: -1 });
+
+        res.json({ success: true, orders });
+    } catch (error) {
+        console.error("Error fetching filtered orders:", error);
+        res.json({ success: false, message: "Server error" });
+    }
+};
+// ✅ API to get all orders (Clear Filter)
+exports.getAllOrders = async (req, res) => {
+  try {
+      const orders = await Order.find().populate('products.product', 'name') // Populate product names
+      .lean().sort({ createdAt: -1 });
+      res.json({ success: true, orders });
+  } catch (error) {
+      console.error("Error fetching all orders:", error);
+      res.json({ success: false, message: "Server error" });
+  }
+};
+exports.filterOrdersByTime = async (req, res) => {
+  try {
+      const { filterType } = req.query;
+      let startDate, endDate;
+
+      const now = new Date();
+
+      if (filterType === "day") {
+          startDate = new Date(now);
+          startDate.setHours(0, 0, 0, 0); // Start of the day
+          endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999); // End of the day
+      } else if (filterType === "month") {
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1); // First day of the month
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); // Last day of the month
+      } else if (filterType === "year") {
+          startDate = new Date(now.getFullYear(), 0, 1); // First day of the year
+          endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999); // Last day of the year
+      } else {
+          return res.json({ success: false, message: "Invalid filter type" });
+      }
+
+      console.log(`Filtering orders from: ${startDate} to ${endDate}`);
+
+      const orders = await Order.find({
+          orderedAt: { $gte: startDate, $lte: endDate }
+      }).populate('products.product', 'name') // Populate product names
+      .lean().sort({ createdAt: -1 });
+
+      res.json({ success: true, orders });
+  } catch (error) {
+      console.error("Error fetching filtered orders:", error);
+      res.json({ success: false, message: "Server error" });
+  }
+};
+exports.downloadSalesXlsx = async (req, res) => {
+  try {
+      let { from, to } = req.query;
+
+      let query = {};
+      if (from && to) {
+          query.orderDate = {
+              $gte: moment(from).startOf('day').toDate(),
+              $lte: moment(to).endOf('day').toDate()
+          };
+      }
+
+      // Fetch orders (if no filter is applied, fetch all orders)
+      const orders = await Order.find(query).populate('user');
+
+      // Create an Excel file
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Sales Report');
+
+      // Add headers
+      worksheet.columns = [
+          { header: 'Order ID', key: '_id', width: 20 },
+          { header: 'User', key: 'user', width: 20 },
+          { header: 'Total Amount', key: 'totalAmount', width: 15 },
+          { header: 'Order Date', key: 'orderDate', width: 20 }
+      ];
+
+      // Add order data
+      orders.forEach(order => {
+          worksheet.addRow({
+              _id: order._id,
+              user: order.shippingAddress.name,
+              totalAmount: order.totalAmount,
+              orderDate: moment(order.orderDate).format('YYYY-MM-DD HH:mm:ss')
+          });
+      });
+
+      // Write to file and send response
+      const filePath = './sales_report.xlsx';
+      await workbook.xlsx.writeFile(filePath);
+      res.download(filePath, 'Sales_Report.xlsx', () => {
+          fs.unlinkSync(filePath); // Delete after download
+      });
+
+  } catch (error) {
+      console.error("Error generating XLSX:", error);
+      res.status(500).send("Internal Server Error");
+  }
+};
+exports.downloadSalesPdf = async (req, res) => {
+  try {
+    let { from, to } = req.query;
+
+    let query = {};
+    if (from && to) {
+      query.orderDate = {
+        $gte: moment(from).startOf('day').toDate(),
+        $lte: moment(to).endOf('day').toDate()
+      };
+    }
+
+    // Fetch orders and populate products
+    const orders = await Order.find(query).populate('products.product').lean();
+
+    // Create pdfmake printer without external fonts
+    const printer = new PdfPrinter({
+      Roboto: { normal: 'Helvetica', bold: 'Helvetica-Bold' } // Using built-in fonts
+    });
+
+    // Define table headers with styling
+    const tableBody = [
+      [
+        { text: 'Order ID', style: 'tableHeader' }, 
+        { text: 'Customer Name', style: 'tableHeader' }, 
+        { text: 'Total Amount', style: 'tableHeader' }, 
+        { text: 'Order Date', style: 'tableHeader' }, 
+        { text: 'Products', style: 'tableHeader' }
+      ]
+    ];
+
+    // Populate table rows
+    orders.forEach((order, index) => {
+      tableBody.push([
+        { text: order._id.toString(), style: 'tableCell', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' },
+        { text: order.shippingAddress.name || 'N/A', style: 'tableCell', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' },
+        { text: `₹${order.totalAmount}`, style: 'tableCell', alignment: 'right', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' },
+        { text: moment(order.orderDate).format('YYYY-MM-DD'), style: 'tableCell', alignment: 'center', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' },
+        { text: order.products.map(p => p.product.name).join(', ') || 'N/A', style: 'tableCell', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' }
+      ]);
+    });
+
+    // Define document structure with styles
+    const docDefinition = {
+      content: [
+        { text: 'Sales Report', style: 'header', alignment: 'center', margin: [0, 10, 0, 20] },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['30%', '20%', '10%', '20%', '20%'],
+            body: tableBody
+          },
+          layout: {
+            fillColor: function (rowIndex) {
+              return rowIndex === 0 ? '#dddddd' : null; // Header row background
+            },
+            hLineWidth: function (i, node) {
+              return i === 0 || i === node.table.body.length ? 1 : 0.5; // Table border thickness
+            },
+            vLineWidth: function () {
+              return 0.5; // Vertical line thickness
+            },
+            hLineColor: function () {
+              return '#aaaaaa'; // Horizontal line color
+            },
+            vLineColor: function () {
+              return '#aaaaaa'; // Vertical line color
+            }
+          }
+        }
+      ],
+      styles: {
+        header: { fontSize: 18, bold: true },
+        tableHeader: { bold: true, fontSize: 12, fillColor: '#eeeeee', margin: [5, 5, 5, 5], alignment: 'center' },
+        tableCell: { fontSize: 10, margin: [5, 5, 5, 5] }
+      }
+    };
+
+    // Generate PDF
+    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    const filePath = './sales_report.pdf';
+    const stream = fs.createWriteStream(filePath);
+
+    pdfDoc.pipe(stream);
+    pdfDoc.end();
+
+    // Send the file as a download response
+    stream.on('finish', () => {
+      res.download(filePath, 'Sales_Report.pdf', () => {
+        fs.unlinkSync(filePath); // Delete after download
+      });
+    });
+
+  } catch (error) {
+    console.error('Error generating sales report:', error);
+    res.status(500).send('Internal Server Error');
   }
 };
 

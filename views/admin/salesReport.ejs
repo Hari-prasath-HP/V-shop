@@ -1,0 +1,237 @@
+<%- include('header') %>
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+    <div class="container">
+      <a href="#" class="navbar-brand">Admin Dashboard</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mx-auto">
+            <li class="nav-item"><a href="/admin/dashboard" class="nav-link">Dashboard</a></li>
+          <li class="nav-item"><a href="/admin/users" class="nav-link">Users</a></li>
+          <li class="nav-item"><a href="/admin/categories" class="nav-link">Categories</a></li>
+          <li class="nav-item"><a href="/admin/product" class="nav-link">Products</a></li>
+          <li class="nav-item"><a href="/admin/orders" class="nav-link">Orders</a></li>
+          <li class="nav-item"><a href="/admin/coupons" class="nav-link">Coupons</a></li>
+          <li class="nav-item"><a href="/admin/categoryoffers" class="nav-link">Category Offer</a></li>
+          <li class="nav-item"><a href="/admin/salesReport" class="nav-link">Sales Report</a></li>
+        </ul>
+        <a href="/admin/logout" class="btn btn-outline-danger fw-bold">Logout</a>
+      </div>
+    </div>
+  </nav>
+        <h1 class="title">Sales Report</h1>
+        
+        <div class="report-actions">
+            <button class="btn download-xlsx"><i class="fas fa-file-excel"></i> Download XLSX</button>
+            <button class="btn download-pdf"><i class="fas fa-file-pdf"></i> Download PDF</button>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-row">
+                <label>From</label>
+                <input type="date" id="fromDate">
+                <label>To</label>
+                <input type="date" id="toDate">
+                <button class="btn apply-filter" style="background: #007bff;">Apply Filter</button>
+                <button class="btn clear-filter" style="background: #6c757d;">Clear Filter</button>
+            </div>
+            <div class="filter-row">
+                <select id="timeFilter">
+                    <option value="day">Day</option>
+                    <option value="month">Month</option>
+                    <option value="year">Year</option>
+                </select>
+                <button class="btn filter-time" style="background: #17a2b8;">Filter</button>
+            </div>
+        </div>
+        
+        <div class="table-container ">
+            <table class="sales-table">
+                <thead>
+                    <tr>
+                        <th>User Name</th>
+                        <th>Order Date</th>
+                        <th>Items</th>
+                        <th>Price</th>
+                        <th>Payment Method</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orders.forEach(order => { %>
+                        <tr>
+                            <td><%= order.userName %></td>
+                            <td><%= new Date(order.orderDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                                %></td>
+                            <td>
+                                <ul>
+                                    <% order.items.forEach(item => { %>
+                                        <li><%= item.productName %> (x<%= item.quantity %>)</li>
+                                    <% }) %>
+                                </ul>
+                            </td>
+                            <td>₹<%= order.price.toFixed(2) %></td>
+                            <td><%= order.paymentMethod %></td>
+                            <td class="status <%= order.status.toLowerCase() %>"><%= order.status %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+    <script>
+        document.querySelector(".download-xlsx").addEventListener("click", () => {
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate = document.getElementById("toDate").value;
+
+    let url = "/admin/download-sales-xlsx";
+    
+    if (fromDate && toDate) {
+        url += `?from=${fromDate}&to=${toDate}`;
+    }
+
+    window.location.href = url;
+});
+
+document.querySelector(".download-pdf").addEventListener("click", () => {
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate = document.getElementById("toDate").value;
+
+    let url = "/admin/download-sales-pdf";
+
+    if (fromDate && toDate) {
+        url += `?from=${fromDate}&to=${toDate}`;
+    }
+
+    window.location.href = url;
+});
+    </script>
+<script>
+    document.querySelector(".apply-filter").addEventListener("click", async () => {
+        const fromDate = document.getElementById("fromDate").value;
+        const toDate = document.getElementById("toDate").value;
+    
+        if (!fromDate || !toDate) {
+            alert("Please select both From and To dates.");
+            return;
+        }
+    
+        try {
+            const response = await fetch(`/admin/filter-orders?from=${fromDate}&to=${toDate}`);
+            const data = await response.json();
+    
+            if (data.success) {
+                updateOrderTable(data.orders);
+            } else {
+                alert("Error fetching data: " + data.message);
+            }
+        } catch (error) {
+            console.error("Error fetching orders:", error);
+        }
+    });
+    
+    document.querySelector(".clear-filter").addEventListener("click", async () => {
+    document.getElementById("fromDate").value = "";
+    document.getElementById("toDate").value = "";
+
+    try {
+        const response = await fetch(`/admin/all-orders`);
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload(); // ✅ Reloads the page to show the default view
+        } else {
+            alert("Error fetching data: " + data.message);
+        }
+    } catch (error) {
+        console.error("Error fetching orders:", error);
+    }
+});
+
+    
+    // Function to update the orders table
+    function updateOrderTable(orders) {
+        const tbody = document.querySelector(".sales-table tbody");
+        tbody.innerHTML = ""; // Clear existing table rows
+    
+        if (orders.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No orders found</td></tr>`;
+            return;
+        }
+    
+        orders.forEach(order => {
+            const orderDate = new Date(order.orderedAt).toLocaleDateString('en-IN', {
+                day: '2-digit', month: 'short', year: 'numeric'
+            });
+    
+            const row = `
+                <tr>
+                    <td>${order.shippingAddress.name}</td>
+                    <td>${orderDate}</td>
+                    <td>
+                        ${order.products.map(item => item.product.name).join(', ')}
+                    </td>
+                    <td>₹${order.totalAmount}</td>
+                    <td>${order.paymentMethod}</td>
+                    <td>${order.orderStatus}</td>
+                </tr>
+            `;
+    
+            tbody.innerHTML += row;
+        });
+    }
+    </script>
+    <script>
+        document.querySelector(".filter-time").addEventListener("click", async () => {
+            const filterType = document.getElementById("timeFilter").value;
+        
+            try {
+                const response = await fetch(`/admin/filter-orders-time?filterType=${filterType}`);
+                const data = await response.json();
+        
+                if (data.success) {
+                    updateOrderTable(data.orders);
+                } else {
+                    alert("Error fetching data: " + data.message);
+                }
+            } catch (error) {
+                console.error("Error fetching orders:", error);
+            }
+        });
+        
+        // Function to update the orders table dynamically
+        function updateOrderTable(orders) {
+            const tbody = document.querySelector(".sales-table tbody");
+            tbody.innerHTML = ""; // Clear existing table rows
+        
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No orders found</td></tr>`;
+                return;
+            }
+        
+            orders.forEach(order => {
+                const orderDate = new Date(order.orderedAt).toLocaleDateString('en-IN', {
+                    day: '2-digit', month: 'short', year: 'numeric'
+                });
+        
+                const row = `
+                    <tr>
+                        <td>${order.shippingAddress.name}</td>
+                        <td>${orderDate}</td>
+                        <td>
+                            ${order.products.map(item => item.product.name).join(', ')}
+                        </td>
+                        <td>₹${order.totalAmount}</td>
+                        <td>${order.paymentMethod}</td>
+                        <td>${order.orderStatus}</td>
+                    </tr>
+                `;
+        
+                tbody.innerHTML += row;
+            });
+        }
+        </script>
+        
+</body>
+</html>

@@ -40,6 +40,7 @@ router.get('/ordersummary', cartController.getOrderSummary)
 router.post('/apply-coupon', cartController.applyCoupon);
 router.get('/remove-coupon',cartController.cancelcoupon);
 router.post('/placeorder', cartController.placeOrder)
+router.get('/success', cartController.getSuccessPage);
 router.post('/product/cancel', cartController.cancelProduct);
 router.post('/verify-payment',cartController.verifyPayment)
 router.post('/product/return', cartController.returnProduct);

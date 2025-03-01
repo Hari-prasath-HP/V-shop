@@ -1,5 +1,193 @@
-<!-- <% let shippingCharge = (grandTotal < 500) ? orderSummaryData.shippingCost : 0; %>
-                        <div class="shipping-cost">
-                            <p><strong>Shipping Cost:</strong> ₹<%= shippingCharge.toFixed(2) %></p>
-                        </div> -->
-                        <!-- <% grandTotal += shippingCharge; %> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Report</title>
+    <link rel="stylesheet" href="/styles/admin.css"> <!-- Link your admin CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- For future enhancements like graphs -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .title {
+            text-align: center;
+            color: #333;
+        }
+        .report-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+        }
+        .download-xlsx { background: #28a745; }
+        .download-pdf { background: #dc3545; }
+        .filters {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .filters label {
+            font-weight: bold;
+        }
+        .filters input, select {
+            padding: 10px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .sales-table {
+            width: 100%;
+            table-layout: fixed; /* Ensures the table fits within its container */
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .sales-table th, .sales-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+            word-wrap: break-word; /* Ensures long text wraps within the cell */
+            white-space: normal; /* Allows text to wrap instead of overflowing */
+        }
+
+        .sales-table th {
+            background-color: #333;
+            color: white;
+        }
+
+        .sales-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        /* Responsive Table Adjustments */
+        @media screen and (max-width: 1024px) {
+            .sales-table th, .sales-table td {
+                font-size: 14px; /* Reduce font size on smaller screens */
+                padding: 8px;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .sales-table th, .sales-table td {
+                font-size: 12px; /* Further reduce font size */
+                padding: 6px;
+            }
+            .sales-table {
+                display: block;
+                width: 100%;
+            }
+        }
+
+        .status {
+            font-weight: bold;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .status.completed { background-color: #28a745; color: white; }
+        .status.pending { background-color: #ffc107; color: black; }
+        .status.cancelled { background-color: #dc3545; color: white; }
+
+        /* Responsive Table */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+        <h1 class="title">Sales Report</h1>
+        
+        <div class="report-actions">
+            <button class="btn download-xlsx">Download XLSX</button>
+            <button class="btn download-pdf">Download PDF</button>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-row">
+                <label>From</label>
+                <input type="date" id="fromDate">
+                <label>To</label>
+                <input type="date" id="toDate">
+                <button class="btn apply-filter" style="background: #007bff;">Apply Filter</button>
+                <button class="btn clear-filter" style="background: #6c757d;">Clear Filter</button>
+            </div>
+            <div class="filter-row">
+                <select id="timeFilter">
+                    <option value="day">Day</option>
+                    <option value="month">Month</option>
+                    <option value="year">Year</option>
+                </select>
+                <button class="btn filter-time" style="background: #17a2b8;">Filter</button>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table class="sales-table">
+                <thead>
+                    <tr>
+                        <th>User Name</th>
+                        <th>Order Date</th>
+                        <th>Items</th>
+                        <th>Price</th>
+                        <th>Offer Price</th>
+                        <th>Payment Method</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orders.forEach(order => { %>
+                        <tr>
+                            <td><%= order.userName %></td>
+                            <td><%= order.orderDate %></td>
+                            <td>
+                                <ul>
+                                    <% order.items.forEach(item => { %>
+                                        <li><%= item.productName %> (x<%= item.quantity %>)</li>
+                                    <% }) %>
+                                </ul>
+                            </td>
+                            <td>₹<%= order.price.toFixed(2) %></td>
+                            <td>₹<%= order.offerPrice.toFixed(2) %></td>
+                            <td><%= order.paymentMethod %></td>
+                            <td class="status <%= order.status.toLowerCase() %>"><%= order.status %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+    <script>
+        document.querySelector(".download-xlsx").addEventListener("click", () => {
+            window.location.href = "/admin/download-sales-xlsx";
+        });
+        
+        document.querySelector(".download-pdf").addEventListener("click", () => {
+            window.location.href = "/admin/download-sales-pdf";
+        });
+    </script>
+</body>
+</html>

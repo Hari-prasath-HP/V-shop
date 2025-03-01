@@ -65,6 +65,13 @@ adminrouter.get('/coupons/delete/:id', offerController.deleteCoupon);
 // GET: Toggle coupon activation status
 adminrouter.get('/coupons/toggle/:id', offerController.toggleCouponStatus);
 
+adminrouter.get('/salesReport', adminController.getSalesReport);
+adminrouter.get("/filter-orders", adminController.filterOrders);
+adminrouter.get("/all-orders", adminController.getAllOrders);
+adminrouter.get('/filter-orders-time', adminController.filterOrdersByTime);
+
+adminrouter.get('/download-sales-xlsx', adminController.downloadSalesXlsx);
+adminrouter.get('/download-sales-pdf', adminController.downloadSalesPdf);
 adminrouter.get('/logout', adminController.logout);
 
 module.exports = adminrouter;
