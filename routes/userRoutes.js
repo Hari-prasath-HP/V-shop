@@ -38,7 +38,7 @@ router.get('/checkout-2',  cartController.getCheckoutPage2);
 router.post('/paymentMethod', cartController.savePaymentMethod)
 router.get('/ordersummary', cartController.getOrderSummary)
 router.post('/apply-coupon', cartController.applyCoupon);
-router.get('/remove-coupon',cartController.cancelcoupon);
+router.post('/remove-coupon',cartController.cancelCoupon);
 router.post('/placeorder', cartController.placeOrder)
 router.get('/success', cartController.getSuccessPage);
 router.post('/product/cancel', cartController.cancelProduct);

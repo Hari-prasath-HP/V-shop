@@ -632,8 +632,8 @@ exports.viewOrder = async (req, res) => {
 };
 exports.getSalesReport = async (req, res) => {
   try {
-      // Fetch all orders and populate the user and product details
-      const orders = await Order.find()
+      // Fetch only orders with status "Delivered"
+      const orders = await Order.find({ orderStatus: "Delivered" })
         .populate('user', 'name') // Populate user name only
         .populate('products.product') // Populate product details
         .sort({ createdAt: -1 });
@@ -662,6 +662,7 @@ exports.getSalesReport = async (req, res) => {
           };
         })
       );
+
       const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
       res.render('admin/salesReport', { orders: formattedOrders, totalSales });
 
@@ -685,7 +686,7 @@ exports.filterOrders = async (req, res) => {
         endDate.setHours(23, 59, 59, 999); // Normalize time to end of day
 
         const orders = await Order.find({
-          orderedAt: { $gte: startDate, $lte: endDate }
+          orderStatus: "Delivered",orderedAt: { $gte: startDate, $lte: endDate }
         }).populate('products.product', 'name') // Populate product names
         .lean().sort({ createdAt: -1 });
         const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
@@ -698,7 +699,7 @@ exports.filterOrders = async (req, res) => {
 // ✅ API to get all orders (Clear Filter)
 exports.getAllOrders = async (req, res) => {
   try {
-      const orders = await Order.find().populate('products.product', 'name') // Populate product names
+      const orders = await Order.find({ orderStatus: "Delivered" }).populate('products.product', 'name') // Populate product names
       .lean().sort({ createdAt: -1 });
       const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
       res.json({ success: true, orders , totalSales});
@@ -734,7 +735,7 @@ exports.filterOrdersByTime = async (req, res) => {
 
       console.log(`Filtering orders from: ${startDate} to ${endDate}`);
 
-      const orders = await Order.find({
+      const orders = await Order.find({orderStatus: "Delivered",
           orderedAt: { $gte: startDate, $lte: endDate }
       }).populate('products.product', 'name')
       .lean().sort({ createdAt: -1 });
@@ -751,7 +752,7 @@ exports.downloadSalesXlsx = async (req, res) => {
       console.log(req.query)
       let totalSales = req.query.totalSales;
       const today = moment().startOf('day');  
-      let query = {};
+      let query = {orderStatus: "Delivered"};
       if (timeFilter) {
         if (timeFilter === 'week') {
           from = today.startOf('week').toDate(); // Start of the week (Sunday by default)
@@ -807,7 +808,7 @@ exports.downloadSalesPdf = async (req, res) => {
     console.log(req.query)
     let totalSales = req.query.totalSales;
     const today = moment().startOf('day');  
-    let query = {};
+    let query = {orderStatus: "Delivered"};
     if (timeFilter) {
       if (timeFilter === 'week') {
         from = today.startOf('week').toDate(); // Start of the week (Sunday by default)

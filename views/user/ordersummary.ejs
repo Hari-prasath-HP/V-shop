@@ -158,7 +158,23 @@
     background-color: #878584; /* Change to your preferred color */
     border: none;
 }
+.remove-coupon-btn {
+      display: inline-block;
+      background-color: #dc3545; /* Red color */
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease-in-out;
+  }
 
+  .remove-coupon-btn:hover {
+      background-color: #c82333; /* Darker red on hover */
+  }
     </style>
 </head>
 <body>
@@ -332,16 +348,17 @@
                                 <p><strong><%= item.productId.name %></strong> ₹<%= item.productId.offerPrice %></p>
                             </div>
                         <% }); %>
-                        
+                        <div id="appliedCouponSection" style="display: none;"></div>
                         <h5><strong>Grand Total: </strong>
                             <span id="grandTotalDisplay" class="text-success">₹<%= grandTotal.toFixed(2) %></span>
                         </h5>
                     </div>
-
+                    
                     <!-- Grand total hidden input -->
                     <input type="hidden" id="grandTotalInput" name="grandTotal" value="<%= grandTotal.toFixed(2) %>">
                     <input type="hidden" id="paymentMethod" name="paymentMethod" value="<%= orderSummaryData.paymentMethod %>">
-
+                    <!-- Coupon Code Hidden Input -->
+                    <input type="hidden" id="couponCodeInput" name="couponCode" value="<%= appliedCoupon ? appliedCoupon.code : '' %>">
                     <div class="mt-3 text-center">
                         <button type="submit" id="continue-button" class="btn btn-success">Continue</button>
                     </div>
@@ -415,10 +432,14 @@
     const grandTotalInput = document.getElementById("grandTotalInput");
     const appliedCouponSection = document.getElementById("appliedCouponSection");
 
+    if (!appliedCouponSection) {
+        console.error("Error: appliedCouponSection not found in DOM!");
+        return;
+    }
+
     // Apply Coupon
     couponForm.addEventListener("submit", async function (event) {
         event.preventDefault();
-        console.log("Coupon form submitted");
 
         const formData = new FormData(this);
         try {
@@ -429,27 +450,28 @@
             });
 
             const result = await response.json();
-            console.log("Coupon Response:", result);
 
             if (result.success) {
-                // Update grand total in both display and hidden input field
                 grandTotalDisplay.innerText = `₹${result.finalAmount.toFixed(2)}`;
                 grandTotalInput.value = result.finalAmount.toFixed(2);
 
-                // Show applied coupon details
                 appliedCouponSection.innerHTML = `
-                    <p>Applied Coupon: <strong>${formData.get("couponCode")}</strong></p>
-                    <p><strong>Discount Applied: </strong>₹${result.discount.toFixed(2)}</p>
-                    <p><strong>You Saved: </strong><span class="text-success">₹${result.discount.toFixed(2)}</span></p>
-                    <p><strong>New Grand Total: </strong><span class="text-danger">₹${result.finalAmount.toFixed(2)}</span></p>
-                    <a href="#" id="removeCoupon" class="text-danger">Remove Coupon</a>
+                    <p>✅ <strong>Coupon Applied:</strong> <span class="text-success">${result.appliedCoupon}</span></p>
+                    <hr>
+                    <p><strong>Original Price:</strong> ₹${(result.finalAmount + result.discountAmount).toFixed(2)}</p>
+                    <p><strong>Discount Applied:</strong> <span class="text-warning">- ₹${result.discountAmount.toFixed(2)}</span></p>
+                    <hr>
+                    <a href="#" id="removeCoupon" class="remove-coupon-btn">Remove Coupon</a>
                 `;
-
-
-                console.log("Updated grandTotal value:", grandTotalInput.value);
-
-                // Attach event listener to the remove coupon button
+                // Attach the event listener immediately
                 document.getElementById("removeCoupon").addEventListener("click", removeCoupon);
+                setTimeout(() => {
+                    appliedCouponSection.style.display = "block";
+                    const removeCouponBtn = document.getElementById("removeCoupon");
+                    if (removeCouponBtn) {
+                        removeCouponBtn.addEventListener("click", removeCoupon);
+                    }
+                }, 50);
             } else {
                 alert(result.message);
             }
@@ -457,46 +479,66 @@
             console.error("Error applying coupon:", error);
         }
     });
-
-    // Remove Coupon
     async function removeCoupon(event) {
-        event.preventDefault();
-        console.log("Removing coupon...");
-
-        try {
-            const response = await fetch("/remove-coupon", { method: "POST" });
-            const result = await response.json();
-
-            if (result.success) {
-                // Restore original grand total
-                grandTotalDisplay.innerText = `₹${result.originalAmount.toFixed(2)}`;
-                grandTotalInput.value = result.originalAmount.toFixed(2);
-
-                // Clear applied coupon section
-                appliedCouponSection.innerHTML = "";
-                console.log("Coupon removed, grandTotal reset to:", grandTotalInput.value);
-            } else {
-                alert("Failed to remove coupon");
-            }
-        } catch (error) {
-            console.error("Error removing coupon:", error);
-        }
+    event.preventDefault();
+    const appliedCouponElement = document.querySelector("span.text-success"); 
+    const appliedCoupon = appliedCouponElement ? appliedCouponElement.innerText.trim() : "";
+    const discountElement = document.querySelector("span.text-warning"); 
+    const discountText = discountElement ? discountElement.innerText.trim() : "0"; 
+    // Remove non-numeric characters (₹ and extra spaces) before parsing
+    const discountAmount = discountText ? parseFloat(discountText.replace(/[^\d.]/g, "")) : 0; 
+    const grandTotalInput = document.getElementById("grandTotalInput");
+    const originalAmount = grandTotalInput ? parseFloat(grandTotalInput.value) : 0;
+    if (!appliedCoupon) {
+        console.error("No coupon found in the UI.");
+        alert("No coupon applied.");
+        return;
     }
 
-    // Ensure the correct grand total is submitted
-    paymentForm.addEventListener("submit", function (event) {
+    if (originalAmount <= 0) {
+        console.error("Original amount is invalid.");
+        alert("Error: Invalid original amount.");
+        return;
+    }
+
+    try {
+        const response = await fetch("/remove-coupon", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ appliedCoupon, originalAmount, discountAmount }) 
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            grandTotalDisplay.innerText = `₹${result.originalAmount1.toFixed(2)}`;
+            grandTotalInput.value = result.originalAmount1.toFixed(2);
+            appliedCouponSection.innerHTML = ""; 
+        } else {
+            alert(result.message);
+        }
+    } catch (error) {
+        console.error("Error removing coupon:", error);
+    }
+}
+
+    // Ensure correct grand total is submitted
+    paymentForm.addEventListener("submit", function () {
         console.log("Final amount being submitted:", grandTotalInput.value);
     });
 });
-</script>
 
+</script>
 <script>
     document.getElementById("continue-button").addEventListener("click", async function (event) {
     event.preventDefault();
 
     // Get stored payment method and grand total
     const paymentMethod = document.getElementById("paymentMethod").value;
-    const grandTotal = document.getElementById("grandTotalInput").value; // Get grand total
+    const grandTotal = document.getElementById("grandTotalInput").value;
+    const couponCode = document.getElementById("couponCodeInput") ? document.getElementById("couponCodeInput").value : "";
+
     // Retrieve all cart items dynamically from the table
     const cartItems = [];
     document.querySelectorAll("tr[data-id]").forEach(row => {
@@ -515,44 +557,42 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             paymentMethod: paymentMethod,
-            grandTotal: grandTotal,  // Include grand total
-            products: cartItems // Send cart items
+            grandTotal: grandTotal,  
+            products: cartItems, 
+            couponCode: couponCode // 🔹 Added Coupon Code Here!
         })
     });
 
     const data = await response.json();
 
     if (data.paymentMethod === "Online Payment") {
-        // Initialize Razorpay if online payment is selected
         const options = {
-            key: data.key, // Razorpay Key ID
-            amount: data.amount * 100, // Convert amount to paise
+            key: data.key, 
+            amount: data.amount * 100, 
             currency: "INR",
             name: "V-Shop",
             description: "Milk-based products",
             order_id: data.razorpayOrderId,
             handler: async function (response) {
-            // Verify payment with backend
-            const verifyResponse = await fetch("/verify-payment", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    orderId: data.orderId,
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                })
-            });
+                const verifyResponse = await fetch("/verify-payment", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        orderId: data.orderId,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                    })
+                });
 
-            const verifyData = await verifyResponse.json();
-            
-            if (verifyData.success) {
-                // Instead of redirecting, dynamically update the page
-                document.body.innerHTML = verifyData.html;
-            } else {
-                alert("Payment verification failed. Please try again.");
-            }
-        },
+                const verifyData = await verifyResponse.json();
+                
+                if (verifyData.success) {
+                    document.body.innerHTML = verifyData.html;
+                } else {
+                    alert("Payment verification failed. Please try again.");
+                }
+            },
             theme: { color: "#3399cc" }
         };
 
@@ -560,13 +600,12 @@
         rzp.open();
     } else {
         if (data.success) {
-    window.location.href = data.redirectUrl;
-} else {
-    alert("Order placement failed. Please try again.");
-}
+            window.location.href = data.redirectUrl;
+        } else {
+            alert("Order placement failed. Please try again.");
+        }
     }
 });
-
 </script> 
 </body>
 </html>
