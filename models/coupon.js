@@ -21,10 +21,6 @@ const couponSchema = new mongoose.Schema({
     type: Number,
     default: 0 // Minimum cart value required to apply the coupon
   },
-  maxDiscount: {
-    type: Number, // Maximum discount cap for percentage-based coupons
-    default: null
-  },
   usageLimit: {
     type: Number,
     default: 1 // Number of times a coupon can be used
@@ -33,6 +29,7 @@ const couponSchema = new mongoose.Schema({
     type: Number,
     default: 0 // Tracks how many times the coupon has been used
   },
+  startDate: { type: Date, required: true },
   expiryDate: {
     type: Date,
     required: true

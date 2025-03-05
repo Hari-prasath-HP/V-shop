@@ -13,7 +13,7 @@ const orderSchema = new mongoose.Schema(
         offerPrice: { type: Number, required: true },
         status: { 
           type: String, 
-          enum: ['Ordered', 'Shipped', 'Delivered', 'Cancelled', 'Returned'], 
+          enum: ['Ordered', 'Shipped', 'Delivered', 'Cancelled','Return Pending', 'Returned'], 
           default: 'Ordered' 
         },
         cancellationReason: { type: String, default: null },
@@ -25,7 +25,7 @@ const orderSchema = new mongoose.Schema(
     paymentStatus: {type: String,enum: ['Pending', 'Completed', 'Failed', 'Refunded'],default: 'Pending',},
     razorpayOrderId: { type: String },  // Razorpay Order ID
     razorpayPaymentId: { type: String },
-    orderStatus: {type: String,enum: ['Pending', 'Ordered', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],default: 'Pending',},
+    orderStatus: {type: String,enum: ['Pending', 'Ordered', 'Shipped', 'Delivered', 'Cancelled','Return Pending', 'Returned'],default: 'Pending',},
     shippingAddress: {
         userId: {type: mongoose.Schema.Types.ObjectId,ref: 'User',required: true,},
         name: {type: String,required: true,},

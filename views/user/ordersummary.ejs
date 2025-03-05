@@ -332,6 +332,7 @@
                                 <p><strong><%= item.productId.name %></strong> ₹<%= item.productId.offerPrice %></p>
                             </div>
                         <% }); %>
+                        
                         <h5><strong>Grand Total: </strong>
                             <span id="grandTotalDisplay" class="text-success">₹<%= grandTotal.toFixed(2) %></span>
                         </h5>
@@ -349,13 +350,31 @@
         </div>
     </form>
 
-    <!-- Coupon Form (Separate, Uses AJAX) -->
-    <h3>Apply Coupon</h3>
-    <form id="coupon-form">
-        <input type="hidden" id="coupon-grandTotal" name="grandTotal" value="<%= grandTotal.toFixed(2) %>">
-        <input type="text" id="couponCode" name="couponCode" placeholder="Enter coupon code" required />
-        <button type="submit">Apply</button>
+    <!-- Apply Coupon Section (Styled) -->
+<div class="coupon-section text-center mt-4 p-4 rounded shadow-sm" style="background: #fff; border: 1px solid #ddd; max-width: 500px; margin: 20px auto;">
+    <h3 class="mb-3 text-primary">Apply Coupon</h3>
+    <form id="coupon-form" class="d-flex justify-content-center">
+        <input 
+            type="hidden" 
+            id="coupon-grandTotal" 
+            name="grandTotal" 
+            value="<%= grandTotal.toFixed(2) %>"
+        >
+        <div class="input-group">
+            <input 
+                type="text" 
+                id="couponCode" 
+                name="couponCode" 
+                class="form-control border-primary" 
+                placeholder="Enter coupon code" 
+                required 
+                style="max-width: 250px;"
+            >
+            <button type="submit" class="btn btn-primary px-3">Apply</button>
+        </div>
     </form>
+</div>
+  
 </div>
         <!-- Toast message for success or failure -->
         <div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
@@ -420,9 +439,12 @@
                 // Show applied coupon details
                 appliedCouponSection.innerHTML = `
                     <p>Applied Coupon: <strong>${formData.get("couponCode")}</strong></p>
-                    <p>Discount: ₹${result.discount.toFixed(2)}</p>
-                    <a href="#" id="removeCoupon">Remove Coupon</a>
+                    <p><strong>Discount Applied: </strong>₹${result.discount.toFixed(2)}</p>
+                    <p><strong>You Saved: </strong><span class="text-success">₹${result.discount.toFixed(2)}</span></p>
+                    <p><strong>New Grand Total: </strong><span class="text-danger">₹${result.finalAmount.toFixed(2)}</span></p>
+                    <a href="#" id="removeCoupon" class="text-danger">Remove Coupon</a>
                 `;
+
 
                 console.log("Updated grandTotal value:", grandTotalInput.value);
 

@@ -5,6 +5,7 @@ const Address = require('../models/address');
 const Order = require('../models/order');
 const product = require('../models/product');
 const Coupon = require('../models/coupon');
+const Wallet = require('../models/wallet'); 
 require('dotenv').config();
 const Razorpay = require('razorpay');
 const crypto = require("crypto");
@@ -440,11 +441,6 @@ exports.applyCoupon = async (req, res) => {
       let discount = 0;
       if (coupon.discountType === "percentage") {
           discount = (grandTotal * coupon.discountValue) / 100;
-          
-          // Apply max discount cap if applicable
-          if (coupon.maxDiscount && discount > coupon.maxDiscount) {
-              discount = coupon.maxDiscount;
-          }
       } else {
           discount = coupon.discountValue; // Fixed discount
       }
@@ -687,11 +683,23 @@ exports.cancelProduct = async (req, res) => {
           return res.status(400).json({ message: "Product cannot be cancelled" });
       }
 
+      // Update product status to 'Cancelled'
       order.products[productIndex].status = 'Cancelled';
       order.products[productIndex].cancellationReason = reason;
+
+      // Get the canceled product quantity
+      const canceledQuantity = order.products[productIndex].quantity;
+
+      // Update the product stock
+      const product = await Product.findById(productId);
+      if (product) {
+          product.stock += canceledQuantity;  // Increase stock
+          await product.save();
+      }
+
       await order.save();
 
-      res.json({ message: "Product cancelled successfully." });
+      res.json({ message: "Product cancelled successfully, stock updated." });
   } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Server error" });
@@ -701,26 +709,65 @@ exports.cancelProduct = async (req, res) => {
 exports.returnProduct = async (req, res) => {
   try {
       const { orderId, productId, reason } = req.body;
-      const order = await Order.findById(orderId);
-
+      // Find the order and populate the user
+      const order = await Order.findById(orderId).populate('user');
       if (!order) {
           return res.status(404).json({ message: "Order not found" });
       }
 
+      // Find the product in the order
       const productIndex = order.products.findIndex(p => p.product.toString() === productId);
       if (productIndex === -1) {
           return res.status(404).json({ message: "Product not found in order" });
       }
 
-      if (order.products[productIndex].status !== 'Delivered') {
+      const productDetails = order.products[productIndex];
+      console.log(productDetails)
+      // Check if the product is eligible for return
+      if (productDetails.status !== 'Delivered') {
           return res.status(400).json({ message: "Product cannot be returned" });
       }
 
-      order.products[productIndex].status = 'Returned';
-      order.products[productIndex].returnReason = reason;
+      // Update order product status to 'Returned'
+      productDetails.status = 'Returned';
+      productDetails.returnReason = reason;
+      order.isReturned = true;
       await order.save();
 
-      res.json({ message: "Product returned successfully." });
+      // Increase the stock of the returned product
+      const product = await Product.findById(productId);
+      if (product) {
+          product.stock += productDetails.quantity;
+          await product.save();
+      }
+
+      // Process wallet refund if payment was COD
+      if (order.paymentMethod === 'COD') {
+          let wallet = await Wallet.findOne({ userId: order.user._id });
+
+          // If wallet does not exist, create one
+          if (!wallet) {
+              wallet = new Wallet({ userId: order.user._id, balance: 0, transactions: [] });
+          }
+
+          // Calculate the refund amount (offer price * quantity)
+          const refundAmount = productDetails.price * productDetails.quantity;
+          console.log(refundAmount)
+          // Add the refund amount to the wallet balance
+          wallet.balance += refundAmount;
+
+          // Add a transaction record
+          wallet.transactions.push({
+              transactionType: 'credit',
+              amount: refundAmount,
+              description: `Refund for returned product: ${productDetails.product}`,
+          });
+
+          await wallet.save();
+      }
+
+      res.json({ message: "Product returned successfully and amount credited to wallet if applicable." });
+
   } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Server error" });
@@ -781,7 +828,20 @@ exports.returnOrder = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error returning order' });
   }
 };
+exports.getWallet = async (req, res) => {
+  try {
+      const wallet = await Wallet.findOne({ userId: req.session.user.id });
 
+      if (!wallet) {
+          return res.render('user/wallet', { wallet: { balance: 0, transactions: [] } });
+      }
+
+      res.render('user/wallet', { wallet });
+  } catch (error) {
+      console.error(error);
+      res.status(500).send("Error loading wallet");
+  }
+};
 // exports.orderCreate = async (req, res) => {
 //   try {
 //       const options = {

@@ -662,8 +662,8 @@ exports.getSalesReport = async (req, res) => {
           };
         })
       );
-
-      res.render('admin/salesReport', { orders: formattedOrders });
+      const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      res.render('admin/salesReport', { orders: formattedOrders, totalSales });
 
   } catch (error) {
       console.error('Error fetching sales report:', error);
@@ -684,14 +684,12 @@ exports.filterOrders = async (req, res) => {
         const endDate = new Date(to);
         endDate.setHours(23, 59, 59, 999); // Normalize time to end of day
 
-        console.log("Filtering orders from:", startDate, "to:", endDate);
-
         const orders = await Order.find({
           orderedAt: { $gte: startDate, $lte: endDate }
         }).populate('products.product', 'name') // Populate product names
         .lean().sort({ createdAt: -1 });
-
-        res.json({ success: true, orders });
+        const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+        res.json({ success: true, orders , totalSales});
     } catch (error) {
         console.error("Error fetching filtered orders:", error);
         res.json({ success: false, message: "Server error" });
@@ -702,7 +700,8 @@ exports.getAllOrders = async (req, res) => {
   try {
       const orders = await Order.find().populate('products.product', 'name') // Populate product names
       .lean().sort({ createdAt: -1 });
-      res.json({ success: true, orders });
+      const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      res.json({ success: true, orders , totalSales});
   } catch (error) {
       console.error("Error fetching all orders:", error);
       res.json({ success: false, message: "Server error" });
@@ -715,17 +714,20 @@ exports.filterOrdersByTime = async (req, res) => {
 
       const now = new Date();
 
-      if (filterType === "day") {
-          startDate = new Date(now);
-          startDate.setHours(0, 0, 0, 0); // Start of the day
-          endDate = new Date(now);
-          endDate.setHours(23, 59, 59, 999); // End of the day
-      } else if (filterType === "month") {
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1); // First day of the month
-          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); // Last day of the month
+      if (filterType === "week") {
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - startDate.getDay()); // Move to the start of the week (Sunday)
+        startDate.setHours(0, 0, 0, 0); // Start of the week
+    
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 6); // Move to the end of the week (Saturday)
+        endDate.setHours(23, 59, 59, 999); // End of the week
+    } else if (filterType === "month") {
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); 
       } else if (filterType === "year") {
-          startDate = new Date(now.getFullYear(), 0, 1); // First day of the year
-          endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999); // Last day of the year
+          startDate = new Date(now.getFullYear(), 0, 1);
+          endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
       } else {
           return res.json({ success: false, message: "Invalid filter type" });
       }
@@ -734,10 +736,10 @@ exports.filterOrdersByTime = async (req, res) => {
 
       const orders = await Order.find({
           orderedAt: { $gte: startDate, $lte: endDate }
-      }).populate('products.product', 'name') // Populate product names
+      }).populate('products.product', 'name')
       .lean().sort({ createdAt: -1 });
-
-      res.json({ success: true, orders });
+      const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      res.json({ success: true, orders,totalSales });
   } catch (error) {
       console.error("Error fetching filtered orders:", error);
       res.json({ success: false, message: "Server error" });
@@ -745,46 +747,53 @@ exports.filterOrdersByTime = async (req, res) => {
 };
 exports.downloadSalesXlsx = async (req, res) => {
   try {
-      let { from, to } = req.query;
-
+      let { from, to, timeFilter } = req.query;
+      console.log(req.query)
+      let totalSales = req.query.totalSales;
+      const today = moment().startOf('day');  
       let query = {};
+      if (timeFilter) {
+        if (timeFilter === 'week') {
+          from = today.startOf('week').toDate(); // Start of the week (Sunday by default)
+          to = today.endOf('week').toDate(); // End of the week (Saturday by default)
+      } else if (timeFilter === 'month') {
+            from = today.startOf('month').toDate();
+            to = today.endOf('month').toDate();
+        } else if (timeFilter === 'year') {
+            from = today.startOf('year').toDate();
+            to = today.endOf('year').toDate();
+        }
+    }
       if (from && to) {
-          query.orderDate = {
+          query.orderedAt  = {
               $gte: moment(from).startOf('day').toDate(),
               $lte: moment(to).endOf('day').toDate()
           };
       }
-
-      // Fetch orders (if no filter is applied, fetch all orders)
       const orders = await Order.find(query).populate('user');
-
-      // Create an Excel file
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Sales Report');
-
-      // Add headers
       worksheet.columns = [
           { header: 'Order ID', key: '_id', width: 20 },
           { header: 'User', key: 'user', width: 20 },
           { header: 'Total Amount', key: 'totalAmount', width: 15 },
           { header: 'Order Date', key: 'orderDate', width: 20 }
       ];
-
-      // Add order data
       orders.forEach(order => {
           worksheet.addRow({
               _id: order._id,
               user: order.shippingAddress.name,
               totalAmount: order.totalAmount,
-              orderDate: moment(order.orderDate).format('YYYY-MM-DD HH:mm:ss')
+              orderDate: moment(order.orderedAt).format('YYYY-MM-DD ')
           });
       });
-
-      // Write to file and send response
+      // Add Total Sales row at the end
+      worksheet.addRow([]);
+      worksheet.addRow({ _id: 'Total Sales', totalAmount: totalSales });
       const filePath = './sales_report.xlsx';
       await workbook.xlsx.writeFile(filePath);
       res.download(filePath, 'Sales_Report.xlsx', () => {
-          fs.unlinkSync(filePath); // Delete after download
+          fs.unlinkSync(filePath);
       });
 
   } catch (error) {
@@ -794,25 +803,33 @@ exports.downloadSalesXlsx = async (req, res) => {
 };
 exports.downloadSalesPdf = async (req, res) => {
   try {
-    let { from, to } = req.query;
-
+    let { from, to, timeFilter } = req.query;
+    console.log(req.query)
+    let totalSales = req.query.totalSales;
+    const today = moment().startOf('day');  
     let query = {};
+    if (timeFilter) {
+      if (timeFilter === 'week') {
+        from = today.startOf('week').toDate(); // Start of the week (Sunday by default)
+        to = today.endOf('week').toDate(); // End of the week (Saturday by default)
+    } else if (timeFilter === 'month') {
+          from = today.startOf('month').toDate();
+          to = today.endOf('month').toDate();
+      } else if (timeFilter === 'year') {
+          from = today.startOf('year').toDate();
+          to = today.endOf('year').toDate();
+      }
+  }
     if (from && to) {
-      query.orderDate = {
+      query.orderedAt  = {
         $gte: moment(from).startOf('day').toDate(),
         $lte: moment(to).endOf('day').toDate()
       };
     }
-
-    // Fetch orders and populate products
     const orders = await Order.find(query).populate('products.product').lean();
-
-    // Create pdfmake printer without external fonts
     const printer = new PdfPrinter({
-      Roboto: { normal: 'Helvetica', bold: 'Helvetica-Bold' } // Using built-in fonts
+      Roboto: { normal: 'Helvetica', bold: 'Helvetica-Bold' } 
     });
-
-    // Define table headers with styling
     const tableBody = [
       [
         { text: 'Order ID', style: 'tableHeader' }, 
@@ -822,19 +839,23 @@ exports.downloadSalesPdf = async (req, res) => {
         { text: 'Products', style: 'tableHeader' }
       ]
     ];
-
-    // Populate table rows
     orders.forEach((order, index) => {
       tableBody.push([
         { text: order._id.toString(), style: 'tableCell', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' },
         { text: order.shippingAddress.name || 'N/A', style: 'tableCell', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' },
         { text: `₹${order.totalAmount}`, style: 'tableCell', alignment: 'right', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' },
-        { text: moment(order.orderDate).format('YYYY-MM-DD'), style: 'tableCell', alignment: 'center', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' },
+        { text: moment(order.orderedAt).format('YYYY-MM-DD'), style: 'tableCell', alignment: 'center', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' },
         { text: order.products.map(p => p.product.name).join(', ') || 'N/A', style: 'tableCell', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' }
       ]);
     });
-
-    // Define document structure with styles
+    // Add Total Sales row at the end
+    tableBody.push([
+      { text: '', colSpan: 2, border: [false, false, false, false] },
+      {},
+      { text: `Total Sales: ₹${totalSales}`, style: 'tableHeader', colSpan: 3, alignment: 'right' },
+      {},
+      {}
+  ]);
     const docDefinition = {
       content: [
         { text: 'Sales Report', style: 'header', alignment: 'center', margin: [0, 10, 0, 20] },
@@ -846,21 +867,21 @@ exports.downloadSalesPdf = async (req, res) => {
           },
           layout: {
             fillColor: function (rowIndex) {
-              return rowIndex === 0 ? '#dddddd' : null; // Header row background
+              return rowIndex === 0 ? '#dddddd' : null; 
             },
             hLineWidth: function (i, node) {
-              return i === 0 || i === node.table.body.length ? 1 : 0.5; // Table border thickness
+              return i === 0 || i === node.table.body.length ? 1 : 0.5;
             },
             vLineWidth: function () {
-              return 0.5; // Vertical line thickness
+              return 0.5;
             },
             hLineColor: function () {
-              return '#aaaaaa'; // Horizontal line color
+              return '#aaaaaa';
             },
             vLineColor: function () {
-              return '#aaaaaa'; // Vertical line color
+              return '#aaaaaa';
             }
-          }
+          } 
         }
       ],
       styles: {
@@ -869,19 +890,15 @@ exports.downloadSalesPdf = async (req, res) => {
         tableCell: { fontSize: 10, margin: [5, 5, 5, 5] }
       }
     };
-
-    // Generate PDF
     const pdfDoc = printer.createPdfKitDocument(docDefinition);
     const filePath = './sales_report.pdf';
     const stream = fs.createWriteStream(filePath);
 
     pdfDoc.pipe(stream);
     pdfDoc.end();
-
-    // Send the file as a download response
     stream.on('finish', () => {
       res.download(filePath, 'Sales_Report.pdf', () => {
-        fs.unlinkSync(filePath); // Delete after download
+        fs.unlinkSync(filePath);
       });
     });
 

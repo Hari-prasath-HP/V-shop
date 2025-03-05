@@ -57,10 +57,10 @@ adminrouter.get('/coupons', offerController.getCoupons);
 adminrouter.post('/coupons/add', offerController.addCoupon);
 
 // POST: Edit coupon details
-adminrouter.post('/coupons/edit/:id', offerController.editCoupon);
+// adminrouter.put('/coupons/edit/:id', offerController.editCoupon);
 
 // GET: Delete (soft delete) coupon
-adminrouter.get('/coupons/delete/:id', offerController.deleteCoupon);
+adminrouter.delete('/coupons/:id', offerController.deleteCoupon);
 
 // GET: Toggle coupon activation status
 adminrouter.get('/coupons/toggle/:id', offerController.toggleCouponStatus);

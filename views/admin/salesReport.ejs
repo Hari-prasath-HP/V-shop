@@ -26,6 +26,9 @@
             <button class="btn download-xlsx"><i class="fas fa-file-excel"></i> Download XLSX</button>
             <button class="btn download-pdf"><i class="fas fa-file-pdf"></i> Download PDF</button>
         </div>
+        <div class="sales-summary">
+            <h3>Total Sales: <span id="totalSales">0.00</span></h3>
+        </div>
         
         <div class="filters">
             <div class="filter-row">
@@ -38,7 +41,8 @@
             </div>
             <div class="filter-row">
                 <select id="timeFilter">
-                    <option value="day">Day</option>
+                    <option >select Filter</option>
+                    <option value="week">week</option>
                     <option value="month">Month</option>
                     <option value="year">Year</option>
                 </select>
@@ -84,154 +88,119 @@
         document.querySelector(".download-xlsx").addEventListener("click", () => {
     const fromDate = document.getElementById("fromDate").value;
     const toDate = document.getElementById("toDate").value;
-
-    let url = "/admin/download-sales-xlsx";
+    const timeFilter = document.getElementById("timeFilter").value; // Get selected filter
+    const totalSales = document.getElementById("totalSales").textContent.trim().replace("₹", ""); // Extract Total Sales
+    let url = `/admin/download-sales-xlsx?totalSales=${encodeURIComponent(totalSales)}`;
     
     if (fromDate && toDate) {
-        url += `?from=${fromDate}&to=${toDate}`;
+        url += `&from=${fromDate}&to=${toDate}`;
     }
-
+    if (timeFilter) {
+        url += `&timeFilter=${timeFilter}`;
+    }
     window.location.href = url;
 });
 
 document.querySelector(".download-pdf").addEventListener("click", () => {
     const fromDate = document.getElementById("fromDate").value;
     const toDate = document.getElementById("toDate").value;
+    const timeFilter = document.getElementById("timeFilter").value; // Get selected filter
+    const totalSales = document.getElementById("totalSales").textContent.trim().replace("₹", ""); // Extract Total Sales
+    let url = `/admin/download-sales-pdf?totalSales=${encodeURIComponent(totalSales)}`;
 
-    let url = "/admin/download-sales-pdf";
-
-    if (fromDate && toDate) {
-        url += `?from=${fromDate}&to=${toDate}`;
+if (fromDate && toDate) {
+    url += `&from=${fromDate}&to=${toDate}`;  // ✅ Use "&" instead of "?"
+}
+if (timeFilter) {
+        url += `&timeFilter=${timeFilter}`;
     }
-
     window.location.href = url;
 });
     </script>
 <script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const fromDateInput = document.getElementById("fromDate");
+    const toDateInput = document.getElementById("toDate");
+    const timeFilterInput = document.getElementById("timeFilter");
+    const totalSalesElement = document.getElementById("totalSales");
+    const tbody = document.querySelector(".sales-table tbody");
+
+    // Fetch all orders on page load
+    fetchOrders(`/admin/all-orders`);
+
     document.querySelector(".apply-filter").addEventListener("click", async () => {
-        const fromDate = document.getElementById("fromDate").value;
-        const toDate = document.getElementById("toDate").value;
-    
+        const fromDate = fromDateInput.value;
+        const toDate = toDateInput.value;
+
         if (!fromDate || !toDate) {
             alert("Please select both From and To dates.");
             return;
         }
-    
+
+        fetchOrders(`/admin/filter-orders?from=${fromDate}&to=${toDate}`);
+    });
+
+    document.querySelector(".clear-filter").addEventListener("click", async () => {
+        fromDateInput.value = "";
+        toDateInput.value = "";
+        fetchOrders(`/admin/all-orders`);
+    });
+
+    document.querySelector(".filter-time").addEventListener("click", async () => {
+        const filterType = timeFilterInput.value;
+        fetchOrders(`/admin/filter-orders-time?filterType=${filterType}`);
+    });
+
+    async function fetchOrders(url) {
         try {
-            const response = await fetch(`/admin/filter-orders?from=${fromDate}&to=${toDate}`);
+            const response = await fetch(url);
             const data = await response.json();
-    
+
             if (data.success) {
-                updateOrderTable(data.orders);
+                const totalSales = data.totalSales !== undefined ? data.totalSales : calculateTotalSales(data.orders);
+                updateOrderTable(data.orders, totalSales);
             } else {
                 alert("Error fetching data: " + data.message);
             }
         } catch (error) {
             console.error("Error fetching orders:", error);
         }
-    });
-    
-    document.querySelector(".clear-filter").addEventListener("click", async () => {
-    document.getElementById("fromDate").value = "";
-    document.getElementById("toDate").value = "";
-
-    try {
-        const response = await fetch(`/admin/all-orders`);
-        const data = await response.json();
-
-        if (data.success) {
-            window.location.reload(); // ✅ Reloads the page to show the default view
-        } else {
-            alert("Error fetching data: " + data.message);
-        }
-    } catch (error) {
-        console.error("Error fetching orders:", error);
     }
-});
 
-    
-    // Function to update the orders table
-    function updateOrderTable(orders) {
-        const tbody = document.querySelector(".sales-table tbody");
+    function calculateTotalSales(orders) {
+        return orders.reduce((sum, order) => sum + order.totalAmount, 0);
+    }
+
+    function updateOrderTable(orders, totalSales = 0) {
         tbody.innerHTML = ""; // Clear existing table rows
-    
+        totalSalesElement.textContent = `₹${totalSales.toFixed(2)}`;
+
         if (orders.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No orders found</td></tr>`;
             return;
         }
-    
+
         orders.forEach(order => {
             const orderDate = new Date(order.orderedAt).toLocaleDateString('en-IN', {
                 day: '2-digit', month: 'short', year: 'numeric'
             });
-    
+
             const row = `
                 <tr>
                     <td>${order.shippingAddress.name}</td>
                     <td>${orderDate}</td>
-                    <td>
-                        ${order.products.map(item => item.product.name).join(', ')}
-                    </td>
-                    <td>₹${order.totalAmount}</td>
+                    <td>${order.products.map(item => item.product.name).join(', ')}</td>
+                    <td>₹${order.totalAmount.toFixed(2)}</td>
                     <td>${order.paymentMethod}</td>
                     <td>${order.orderStatus}</td>
                 </tr>
             `;
-    
             tbody.innerHTML += row;
         });
     }
-    </script>
-    <script>
-        document.querySelector(".filter-time").addEventListener("click", async () => {
-            const filterType = document.getElementById("timeFilter").value;
-        
-            try {
-                const response = await fetch(`/admin/filter-orders-time?filterType=${filterType}`);
-                const data = await response.json();
-        
-                if (data.success) {
-                    updateOrderTable(data.orders);
-                } else {
-                    alert("Error fetching data: " + data.message);
-                }
-            } catch (error) {
-                console.error("Error fetching orders:", error);
-            }
-        });
-        
-        // Function to update the orders table dynamically
-        function updateOrderTable(orders) {
-            const tbody = document.querySelector(".sales-table tbody");
-            tbody.innerHTML = ""; // Clear existing table rows
-        
-            if (orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No orders found</td></tr>`;
-                return;
-            }
-        
-            orders.forEach(order => {
-                const orderDate = new Date(order.orderedAt).toLocaleDateString('en-IN', {
-                    day: '2-digit', month: 'short', year: 'numeric'
-                });
-        
-                const row = `
-                    <tr>
-                        <td>${order.shippingAddress.name}</td>
-                        <td>${orderDate}</td>
-                        <td>
-                            ${order.products.map(item => item.product.name).join(', ')}
-                        </td>
-                        <td>₹${order.totalAmount}</td>
-                        <td>${order.paymentMethod}</td>
-                        <td>${order.orderStatus}</td>
-                    </tr>
-                `;
-        
-                tbody.innerHTML += row;
-            });
-        }
-        </script>
+});
+
+</script>
         
 </body>
 </html>

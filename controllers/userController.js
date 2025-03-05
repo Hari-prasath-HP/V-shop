@@ -5,6 +5,7 @@ const otpService = require('../services/otpService');
 const Category = require('../models/category');
 const Product = require('../models/product');
 const Otp = require('../models/renderotp');
+const mongoose = require('mongoose');
 const passport = require("passport");
 const Cart = require('../models/Cart'); 
 //handle signup
@@ -261,54 +262,84 @@ exports.getShopProducts = async (req, res) => {
         username = userData.username;
       }
     }
+
     const currentPage = parseInt(req.query.page) || 1;
     const itemsPerPage = 8;
     const searchQuery = req.query.search || "";
     const sortOption = req.query.sort || "";
-    let sortCriteria = {};
-    if (sortOption === "low-high") {
-      sortCriteria = { offerPrice: 1 };
-    } else if (sortOption === "high-low") {
-      sortCriteria = { offerPrice: -1 };
-    } else if (sortOption === "a-z") {
-      sortCriteria = { name: 1 };
-    } else if (sortOption === "z-a") {
-      sortCriteria = { name: -1 };
-    } else if (sortOption === "new-arrivals") {
-      sortCriteria = { createdAt: -1 };
-    }
+    const categoryFilter = req.query.category || "";
+    const minPrice = Number.isNaN(parseInt(req.query.minPrice)) ? 0 : parseInt(req.query.minPrice);
+    const maxPrice = Number.isNaN(parseInt(req.query.maxPrice)) ? 5000 : parseInt(req.query.maxPrice);
+
+    // Sorting options
+    const sortOptions = {
+      "low-high": { offerPrice: 1 },
+      "high-low": { offerPrice: -1 },
+      "a-z": { name: 1 },
+      "z-a": { name: -1 },
+      "new-arrivals": { createdAt: -1 },
+    };
+    const sortCriteria = sortOptions[sortOption] || {};
+
+    // Search filter
     let searchFilter = { isDeleted: { $ne: true } };
+
     if (searchQuery) {
-      searchFilter.name = { $regex: searchQuery, $options: "i" }; 
+      searchFilter.name = { $regex: searchQuery, $options: "i" };
     }
+
+    // Category filter
+    if (categoryFilter && categoryFilter !== "all") {
+      searchFilter.category = new mongoose.Types.ObjectId(categoryFilter);
+    }
+
+    // Price range filter
+    searchFilter.offerPrice = { $gte: minPrice, $lte: maxPrice };
+
+    // Fetch total product count
     const totalProducts = await Product.countDocuments(searchFilter);
     const totalPages = Math.ceil(totalProducts / itemsPerPage);
+
+    // Fetch products with applied filters
     const products = await Product.find(searchFilter)
       .sort(sortCriteria)
       .skip((currentPage - 1) * itemsPerPage)
       .limit(itemsPerPage)
       .populate("category");
+
+    // Process product details
     products.forEach((product) => {
       product.imagePaths = product.images.map((image) => `/uploads/products/${image}`);
+      
       if (product.offerPrice > 0) {
         const discountPercentage = ((product.price - product.offerPrice) / product.price) * 100;
-        product.offerPercentage = discountPercentage.toFixed(2);
-        product.offerPrice = product.offerPrice.toFixed(2);
+        product.offerPercentage = parseFloat(discountPercentage.toFixed(2));
+        product.offerPrice = parseFloat(product.offerPrice.toFixed(2));
       } else {
         product.offerPercentage = 0;
-        product.offerPrice = product.price.toFixed(2);
+        product.offerPrice = parseFloat(product.price.toFixed(2));
       }
+
       product.quantity = product.stock;
-      product.unit = product.unit || "Unit"; 
+      product.unit = product.unit || "Unit";
     });
+
+    // Fetch categories for filtering
+    const categories = await Category.find({});
+
+    // Render shop products page
     res.render("user/shopproduct", {
       user,
       username,
       products,
+      categories,
       currentPage,
       totalPages,
-      searchQuery, 
-      sortOption, 
+      searchQuery,
+      sortOption,
+      categoryFilter,
+      minPrice,
+      maxPrice,
     });
 
   } catch (err) {

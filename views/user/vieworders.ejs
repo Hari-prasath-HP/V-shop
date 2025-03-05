@@ -366,12 +366,14 @@
                 </a>
             </div>
             <div class="col-md-2">
-                <div class="card user-option">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Wallet</h5>
+                <a href="/wallet" class="card-link">
+                    <div class="card user-option">
+                        <div class="card-body text-center">
+                            <p class="card-title">Wallet</p>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </a>
+            </div> 
             <div class="col-md-2">
                 <a href="/wishlist" class="card-link">
                     <div class="card user-option">
@@ -432,7 +434,7 @@
                             <img src="/uploads/products/<%= product.image %>" class="product-img" alt="<%= product.name %>">
                           </td>                          
                         <td><%= product.name %></td>
-                        <td>₹<%= product.offerPrice %></td>
+                        <td>₹<%= product.price %></td>
                         <td><%= product.quantity %></td>
                         <td>₹<%= product.subtotal %></td>
                         <td><%= product.status %></td>

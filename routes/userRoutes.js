@@ -46,6 +46,7 @@ router.post('/verify-payment',cartController.verifyPayment)
 router.post('/product/return', cartController.returnProduct);
 router.post('/order/cancel/:orderId', cartController.cancelOrder);
 router.post('/order/return/:orderId', cartController.returnOrder);
+router.get('/wallet', cartController.getWallet);
 // router.post('/create-order', cartController.orderCreate)
 
 router.get('/userdetails', accountController.viewUserDetails);
