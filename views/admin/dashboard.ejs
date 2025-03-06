@@ -21,6 +21,196 @@
     </div>
   </nav>
   <h2>Dashboard</h2>
+  <div class="container">
+    <h1>Hello Admin</h1>
+    <h2>Welcome to V-Shop</h2>
+
+    <div class="dashboard-cards">
+        <div class="card">
+            <h3>Completed Orders</h3>
+            <p><%= completedOrders %></p>
+        </div>
+        <div class="card">
+            <h3>Orders to Ship</h3>
+            <p><%= ordersToShip %></p>
+        </div>
+        <div class="card">
+            <h3>Today's Income</h3>
+            <p>₹<%= todaysIncome %></p>
+        </div>
+        <div class="card">
+            <h3>Products in Categories</h3>
+            <p><%= totalProducts %></p>
+        </div>
+    </div>
+
+    <div class="charts-container mb-5">
+        <!-- Doughnut Chart for Category Revenue -->
+        <div class="chart-box">
+            <h3>Category Revenue</h3>
+            <canvas id="categoryRevenueChart"></canvas>
+        </div>
+
+        <!-- Line Chart for Sales Report -->
+        <div class="chart-box">
+            <h3>Sales Report</h3>
+            <select id="salesFilter">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+            </select>
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Revenue Summary Section -->
+    <div class="revenue-summary mb-5">
+        <div class="revenue-card total-revenue">
+            <h3>Total Revenue</h3>
+            <p>₹<%= totalRevenue %></p>
+        </div>
+        <div class="revenue-card monthly-revenue">
+            <h3>Monthly Revenue</h3>
+            <p>₹<%= monthlyRevenue %></p>
+        </div>
+    </div>
+</div>
   <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+    // Ensure Chart.js is loaded
+    if (typeof Chart === "undefined") {
+        console.error("Chart.js is not loaded.");
+        return;
+    } else {
+        console.log("Chart.js is loaded successfully.");
+    }
+
+    // ----------------- CATEGORY REVENUE DOUGHNUT CHART -----------------
+    const categoryData = <%- JSON.stringify(categoryRevenue) %>;
+
+    if (categoryData && Array.isArray(categoryData) && categoryData.length > 0) {
+        const categoryLabels = categoryData.map(item => item.categoryName);
+        const categoryValues = categoryData.map(item => item.totalRevenue);
+        const categoryColors = ["green", "yellow", "orange", "red", "blue", "purple"];
+
+        const categoryCtx = document.getElementById("categoryRevenueChart");
+        if (categoryCtx) {
+            new Chart(categoryCtx.getContext("2d"), {
+                type: "doughnut",
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        data: categoryValues,
+                        backgroundColor: categoryColors.slice(0, categoryValues.length)
+                    }]
+                }
+            });
+        } else {
+            console.warn("Canvas element with ID 'categoryRevenueChart' not found.");
+        }
+    } else {
+        console.warn("Category revenue data is empty or invalid.");
+    }
+
+    // ----------------- UPDATE TOTAL & MONTHLY REVENUE -----------------
+    const totalRevenueElement = document.getElementById("totalRevenue");
+    if (totalRevenueElement) {
+        totalRevenueElement.innerText = "₹" + <%- JSON.stringify(totalRevenue) %>;
+    }
+
+    const monthlyRevenueElement = document.getElementById("monthlyRevenue");
+    if (monthlyRevenueElement) {
+        monthlyRevenueElement.innerText = "₹" + <%= monthlyRevenue %>;
+        console.log("Monthly Revenue updated successfully.");
+    } else {
+        console.warn("Element with ID 'monthlyRevenue' not found.");
+    }
+});
+  </script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const salesCtx = document.getElementById("salesChart");
+    let salesChart = null; // Global variable to hold the chart instance
+
+    function fetchSalesData(filterType) {
+      const url = `/admin/sales-Report?filter=${filterType}`;
+    console.log("Fetching data from:", url); // Debugging log
+
+    fetch(url)
+        .then(response => response.json())
+        .then(newSalesData => {
+            console.log("Received Sales Data:", newSalesData); // Debugging log
+        })
+        .catch(error => console.error("Error fetching sales data:", error));
+      fetch(`/admin/sales-Report?filter=${filterType}`)
+            .then(response => {
+                if (!response.ok) throw new Error("Network response was not ok");
+                return response.json();
+            })
+            .then(newSalesData => {
+                if (!newSalesData.labels || !newSalesData.values) {
+                    throw new Error("Invalid sales data format");
+                }
+
+                console.log(`New Sales Data for ${filterType}:`, newSalesData);
+
+                if (!salesCtx) {
+                    console.error("Error: salesCtx not found");
+                    return;
+                }
+
+                if (!salesChart) {
+                    salesChart = new Chart(salesCtx.getContext("2d"), {
+                        type: "line",
+                        data: {
+                            labels: newSalesData.labels,
+                            datasets: [{
+                                label: "Sales",
+                                data: newSalesData.values,
+                                borderColor: "blue",
+                                backgroundColor: "rgba(0, 0, 255, 0.1)",
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: { title: { display: true, text: "Date" } },
+                                y: { title: { display: true, text: "Sales Amount" } }
+                            }
+                        }
+                    });
+                } else {
+                    salesChart.data.labels = newSalesData.labels;
+                    salesChart.data.datasets[0].data = newSalesData.values;
+                    salesChart.update();
+                }
+            })
+            .catch(error => console.error("Error fetching sales data:", error));
+    }
+
+    if (salesCtx) {
+        fetchSalesData("daily"); // Load initial data
+
+        const salesFilter = document.getElementById("salesFilter");
+        if (salesFilter) {
+            salesFilter.addEventListener("change", function () {
+                const selectedValue = this.value;
+                console.log("Selected Filter:", selectedValue); // Debugging output
+                fetchSalesData(selectedValue);
+            });
+        } else {
+            console.warn("Sales filter element not found.");
+        }
+    } else {
+        console.warn("Canvas element with ID 'salesChart' not found.");
+    }
+});
+
+</script>
   <%- include('footer') %>

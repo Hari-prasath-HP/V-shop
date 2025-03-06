@@ -592,24 +592,31 @@ exports.placeOrder = async (req, res) => {
 
     // Handle COD Orders
     if (paymentMethod === "COD") {
+      if (totalAmount > 500) {
+        return res.json({ 
+          success: false, 
+          message: "COD is only available for orders below ₹500. Please choose another payment method."
+      });
+      }
+  
       existingOrder.paymentStatus = "Pending";
       existingOrder.orderStatus = "Ordered";
       await existingOrder.save();
-
+  
       // Reduce stock safely
       for (const item of productEntries) {
-        await Product.findByIdAndUpdate(
-          item.productId,
-          { $inc: { stock: -item.quantity } },
-          { new: true }
-        );
+          await Product.findByIdAndUpdate(
+              item.productId,
+              { $inc: { stock: -item.quantity } },
+              { new: true }
+          );
       }
-
+  
       // Clear user's cart
       await Cart.deleteMany({ userId: userId });
-
+  
       return res.json({ success: true, redirectUrl: "/success" });
-    }
+  }  
 
     // Create Razorpay Order
     try {

@@ -7,6 +7,10 @@
     <!-- Link to Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css"> <!-- Your custom styles -->
+    <!-- Toastify CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<!-- Toastify JS -->
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <style>
         .progress-container {
     display: flex;
@@ -551,60 +555,84 @@
         cartItems.push({ productId, price, quantity, subTotal });
     });
 
-    // Send request to backend to create order
     const response = await fetch("/placeorder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            paymentMethod: paymentMethod,
-            grandTotal: grandTotal,  
-            products: cartItems, 
-            couponCode: couponCode // 🔹 Added Coupon Code Here!
-        })
-    });
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        paymentMethod: paymentMethod,
+        grandTotal: grandTotal,  
+        products: cartItems, 
+        couponCode: couponCode // 🔹 Added Coupon Code Here!
+    })
+});
 
-    const data = await response.json();
+const data = await response.json();
 
-    if (data.paymentMethod === "Online Payment") {
-        const options = {
-            key: data.key, 
-            amount: data.amount * 100, 
-            currency: "INR",
-            name: "V-Shop",
-            description: "Milk-based products",
-            order_id: data.razorpayOrderId,
-            handler: async function (response) {
-                const verifyResponse = await fetch("/verify-payment", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        orderId: data.orderId,
-                        razorpay_order_id: response.razorpay_order_id,
-                        razorpay_payment_id: response.razorpay_payment_id,
-                        razorpay_signature: response.razorpay_signature,
-                    })
-                });
+// 🔹 Show a Toast Notification if the order amount is greater than ₹500 for COD
+if (data.success === false && data.message) {
+    Toastify({
+        text: data.message,
+        duration: 3000,
+        gravity: "top", // Top position
+        position: "center", // Center alignment
+        backgroundColor: "#FF3B30", // Red color for error
+        stopOnFocus: true, // Stop on hover
+    }).showToast();
+    return; // Stop further execution
+}
 
-                const verifyData = await verifyResponse.json();
-                
-                if (verifyData.success) {
-                    document.body.innerHTML = verifyData.html;
-                } else {
-                    alert("Payment verification failed. Please try again.");
-                }
-            },
-            theme: { color: "#3399cc" }
-        };
+if (data.paymentMethod === "Online Payment") {
+    const options = {
+        key: data.key, 
+        amount: data.amount * 100, 
+        currency: "INR",
+        name: "V-Shop",
+        description: "Milk-based products",
+        order_id: data.razorpayOrderId,
+        handler: async function (response) {
+            const verifyResponse = await fetch("/verify-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    orderId: data.orderId,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                })
+            });
 
-        const rzp = new Razorpay(options);
-        rzp.open();
+            const verifyData = await verifyResponse.json();
+            
+            if (verifyData.success) {
+                document.body.innerHTML = verifyData.html;
+            } else {
+                Toastify({
+                    text: "Payment verification failed. Please try again.",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "center",
+                    backgroundColor: "#FF3B30",
+                }).showToast();
+            }
+        },
+        theme: { color: "#3399cc" }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+} else {
+    if (data.success) {
+        window.location.href = data.redirectUrl;
     } else {
-        if (data.success) {
-            window.location.href = data.redirectUrl;
-        } else {
-            alert("Order placement failed. Please try again.");
-        }
+        Toastify({
+            text: "Order placement failed. Please try again.",
+            duration: 3000,
+            gravity: "top",
+            position: "center",
+            backgroundColor: "#FF3B30",
+        }).showToast();
     }
+}
 });
 </script> 
 </body>

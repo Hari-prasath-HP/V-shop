@@ -183,20 +183,22 @@
         </ol>
       </nav>
           <!-- Filter Section -->
-<!-- Search and Filter Section -->
-<div class="container my-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-center px-3 py-3 border rounded-3 shadow-sm">
-        
-        <!-- Search Bar with Icon -->
-<div class="search-bar d-flex align-items-center position-relative">
-    <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-    <input type="text" id="search-input" class="form-control border-0 px-5 py-2 rounded-3 shadow-sm" 
-        placeholder="Search for products..." onkeyup="searchProducts()">
-</div>
+<div class="container my-1">
+    <div class="d-flex flex-wrap justify-content-between align-items-center px-1 py-1 border rounded shadow-sm">
+
+        <!-- Search Bar -->
+        <div class="search-bar d-flex align-items-center position-relative">
+            <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"
+               style="top: 50%; transform: translateY(-50%); left: 10px;"></i>
+            <input type="text" id="search-input" class="form-control form-control-sm border-0 ps-4 py-1 rounded shadow-sm"
+                placeholder="Search..." onkeyup="searchProducts()" style="padding-left: 30px;">
+        </div>        
+
         <!-- Sort Filter -->
         <div class="sort-filter d-flex align-items-center">
-            <label for="sort-options" class="form-label fw-semibold me-2 mb-0">Sort By:</label>
-            <select id="sort-options" class="form-select border-0 shadow-sm px-3 py-2 rounded-3" onchange="sortProducts()">
+            <label for="sort-options" class="form-label fw-semibold me-1 mb-0 small">Sort:</label>
+            <select id="sort-options" class="form-select form-select-sm border-0 shadow-sm px-2 py-1 rounded"
+                onchange="sortProducts()">
                 <option value="popularity">Popularity</option>
                 <option value="low-high">Price: Low to High</option>
                 <option value="high-low">Price: High to Low</option>
@@ -210,8 +212,9 @@
 
         <!-- Category Filter -->
         <div class="category-filter d-flex align-items-center">
-            <label for="category-filter" class="form-label fw-semibold me-2 mb-0">Category:</label>
-            <select id="category-filter" class="form-select border-0 shadow-sm px-3 py-2 rounded-3" onchange="filterProducts()">
+            <label for="category-filter" class="form-label fw-semibold me-1 mb-0 small">Category:</label>
+            <select id="category-filter" class="form-select form-select-sm border-0 shadow-sm px-2 py-1 rounded"
+                onchange="filterProducts()">
                 <option value="all">All Categories</option>
                 <% categories.forEach(function(category) { %>
                     <option value="<%= category._id %>"><%= category.name %></option>
@@ -220,15 +223,15 @@
         </div>
     </div>
 
-    <hr class="my-4">
+    <hr class="my-2">
 
     <!-- Price Range Filter -->
-    <div class="d-flex align-items-center px-3 py-3 border rounded-3 shadow-sm">
-        <label for="price-filter" class="form-label fw-semibold me-3 mb-0">Price Range:</label>
-        <span class="fw-bold text-muted">₹0</span>
-        <input type="range" id="price-filter" class="form-range flex-grow-1 mx-3" min="0" max="1000" step="50"
+    <div class="d-flex align-items-center px-1 py-1 border rounded shadow-sm">
+        <label for="price-filter" class="form-label fw-semibold me-3 mb-0 small">Price:</label>
+        <span class="fw-bold text-muted small">₹0</span>
+        <input type="range" id="price-filter" class="form-range flex-grow-1 mx-2" min="0" max="1000" step="50"
             value="<%= maxPrice %>" oninput="updatePriceValue(this.value)" onchange="filterProducts()">
-        <span id="price-value" class="fw-bold text-primary">₹<%= maxPrice %></span>
+        <span id="price-value" class="fw-bold text-primary small">₹<%= maxPrice %></span>
     </div>
 </div>
     <div class="container">

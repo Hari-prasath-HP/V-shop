@@ -1,8 +1,31 @@
-<div id="Hello"></div>
+app.get("/admin/salesReport", async (req, res) => {
+    const filter = req.query.filter || "daily"; // Get the selected filter from the frontend
+    let salesData;
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const bye = document.getElementById("Hello");
-        bye.innerHTML = `<p>poda</p>`;
-    });
-</script>
+    try {
+        switch (filter) {
+            case "daily":
+                salesData = await getDailySales(); // Fetch daily sales from DB
+                break;
+            case "weekly":
+                salesData = await getWeeklySales(); // Fetch weekly sales
+                break;
+            case "monthly":
+                salesData = await getMonthlySales(); // Fetch monthly sales
+                break;
+            case "yearly":
+                salesData = await getYearlySales(); // Fetch yearly sales
+                break;
+            default:
+                salesData = [];
+        }
+
+        res.json({
+            labels: salesData.map(entry => entry.date),
+            values: salesData.map(entry => entry.totalSales),
+        });
+    } catch (error) {
+        console.error("Error fetching sales data:", error);
+        res.status(500).json({ error: "Failed to fetch sales data" });
+    }
+});

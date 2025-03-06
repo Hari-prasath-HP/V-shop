@@ -1,13 +1,16 @@
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
 const User = require('../models/User');
 const otpService = require('../services/otpService');
 const Category = require('../models/category');
 const Product = require('../models/product');
 const Otp = require('../models/renderotp');
 const mongoose = require('mongoose');
-const passport = require("passport");
-const Cart = require('../models/Cart'); 
+const express = require('express');
+const router = express.Router();
+const PdfPrinter = require('pdfmake');
+const fs = require('fs');
+const path = require('path');
+const Order = require('../models/order');
 //handle signup
 exports.renderSignup = (req, res) => {
   if (req.session.logstate) {
@@ -269,7 +272,7 @@ exports.getShopProducts = async (req, res) => {
     const sortOption = req.query.sort || "";
     const categoryFilter = req.query.category || "";
     const minPrice = Number.isNaN(parseInt(req.query.minPrice)) ? 0 : parseInt(req.query.minPrice);
-    const maxPrice = Number.isNaN(parseInt(req.query.maxPrice)) ? 5000 : parseInt(req.query.maxPrice);
+    const maxPrice = Number.isNaN(parseInt(req.query.maxPrice)) ? 1000 : parseInt(req.query.maxPrice);
 
     // Sorting options
     const sortOptions = {
@@ -403,7 +406,130 @@ exports.viewProduct = async (req, res) => {
     res.status(500).send(`Server Error: ${err.message}`);
   }
 };
+// Ensure 'invoices' directory exists
+const invoicesDir = path.join(__dirname, '../invoices');
+if (!fs.existsSync(invoicesDir)) {
+    fs.mkdirSync(invoicesDir, { recursive: true });
+}
+// Define font paths
+const fonts = {
+  Helvetica: {
+      normal: 'Helvetica',
+      bold: 'Helvetica-Bold',
+      italics: 'Helvetica-Oblique',
+      bolditalics: 'Helvetica-BoldOblique'
+  }
+};
 
+// Instantiate PdfPrinter with fonts
+const printer = new PdfPrinter(fonts);
+exports.getInvoice = async (req, res) => {
+  try {
+      const orderId = req.params.orderId;
+      const order = await Order.findById(orderId).populate('products.product');
+
+      if (!order) {
+          return res.status(404).send('Order not found');
+      }
+
+      const totalProductPrice = order.products.reduce((total, item) => total + item.quantity * item.product.offerPrice, 0);
+      const discountAmount = totalProductPrice - order.totalAmount;
+
+      const tableHeaders = [
+          { text: 'Product Name', style: 'tableHeader' },
+          { text: 'Quantity', style: 'tableHeader' },
+          { text: 'Price', style: 'tableHeader' }
+      ];
+
+      const tableRows = order.products.map((item) => [
+          { text: item.product.name, style: 'tableBody' },
+          { text: item.quantity.toString(), style: 'tableBody' },
+          { text: `${(item.quantity * item.product.offerPrice).toFixed(2)}`, style: 'tableBody' }
+      ]);
+
+      const docDefinition = {
+          content: [
+              { text: 'V-Shop', style: 'header', alignment: 'center' },
+              { text: '--------------------------------------', alignment: 'center' },
+
+              {
+                  columns: [
+                      [
+                          { text: `Order ID: ${order._id}`, style: 'subHeader' },
+                          { text: `Order Date: ${new Date(order.orderedAt).toLocaleDateString()}`, style: 'subHeader' },
+                          { text: `Order Status: ${order.orderStatus}`, style: 'subHeader' },
+                          { text: `Payment Status: ${order.paymentStatus}`, style: 'subHeader' },
+                          { text: `Payment Method: ${order.paymentMethod}`, style: 'subHeader' }
+                      ],
+                      [
+                          { text: 'Shipping Address:', style: 'subHeader', alignment: 'right' },
+                          { text: `${order.shippingAddress.name}`, style: 'boldText', alignment: 'right' },
+                          { text: `${order.shippingAddress.houseNo}, ${order.shippingAddress.area}`, style: 'addressText', alignment: 'right' },
+                          { text: `${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}`, style: 'addressText', alignment: 'right' },
+                          { text: `Phone: ${order.shippingAddress.phone}`, style: 'addressText', alignment: 'right' }
+                      ]
+                  ]
+              },
+
+              { text: '\nInvoice Details\n', style: 'invoiceTitle', alignment: 'center' },
+
+              {
+                  table: {
+                      widths: ['50%', '25%', '25%'],
+                      body: [tableHeaders, ...tableRows]
+                  },
+                  layout: 'lightHorizontalLines'
+              },
+
+              { text: '\n' },
+              {
+                  table: {
+                      widths: ['50%', '50%'],
+                      body: [
+                          [{ text: 'Total Product Price', style: 'summaryHeader' }, { text: `${totalProductPrice.toFixed(2)}`, style: 'summaryBody', alignment: 'right' }],
+                          [{ text: 'Discount Amount', style: 'summaryHeader' }, { text: `${discountAmount.toFixed(2)}`, style: 'summaryBody', alignment: 'right', color: 'red' }],
+                          [{ text: 'Grand Total', style: 'summaryHeader' }, { text: `${order.totalAmount.toFixed(2)}`, style: 'summaryBody', alignment: 'right', bold: true }]
+                      ]
+                  },
+                  layout: 'headerLineOnly'
+              }
+          ],
+
+          defaultStyle: { font: 'Helvetica' },
+
+          styles: {
+              header: { fontSize: 20, bold: true },
+              subHeader: { fontSize: 12, margin: [0, 5, 0, 2] },
+              invoiceTitle: { fontSize: 16, bold: true, margin: [0, 10, 0, 10] },
+              boldText: { fontSize: 12, bold: true, margin: [0, 2, 0, 2] },
+              addressText: { fontSize: 11, margin: [0, 2, 0, 2] },
+              tableHeader: { bold: true, fillColor: '#eeeeee', margin: [5, 5, 5, 5] },
+              tableBody: { margin: [5, 5, 5, 5] },
+              summaryHeader: { fontSize: 12, bold: true, margin: [5, 5, 5, 5] },
+              summaryBody: { fontSize: 12, margin: [5, 5, 5, 5] }
+          }
+      };
+
+      // Generate PDF
+      const pdfDoc = printer.createPdfKitDocument(docDefinition);
+      const filePath = path.join(invoicesDir, `invoice_${orderId}.pdf`);
+      const writeStream = fs.createWriteStream(filePath);
+
+      pdfDoc.pipe(writeStream);
+      pdfDoc.end();
+
+      writeStream.on('finish', () => {
+          res.download(filePath, `invoice_${orderId}.pdf`, (err) => {
+              if (err) console.log(err);
+              fs.unlinkSync(filePath); // Delete after download
+          });
+      });
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Error generating invoice');
+  }
+};
 exports.logout = (req, res) => {
   try {
     req.session.destroy((err) => {

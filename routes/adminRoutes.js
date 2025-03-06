@@ -12,7 +12,7 @@ adminrouter.post('/login', adminController.login);
 adminrouter.use(adminAuth);
 // Admin Dashboard
 adminrouter.get('/dashboard', adminController.dashboardPage);
-
+adminrouter.get('/sales-Report',adminController.getfilter)
 // User management
 adminrouter.get('/users', adminController.manageUsersPage);
 adminrouter.post("/admin/adduser",adminController.addUser)

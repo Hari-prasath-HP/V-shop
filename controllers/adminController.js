@@ -36,12 +36,215 @@ exports.login = async (req, res) => {
     return res.redirect('/admin/login');
   }
 };
-exports.dashboardPage = (req, res) => {
+// Dashboard Page
+exports.dashboardPage = async (req, res) => {
   if (!req.session.isAdmin) {
-    return res.redirect('/admin/login');
+    return res.redirect("/admin/login");
   }
-  res.render('admin/dashboard', { adminEmail: req.session.adminEmail });
+
+  try {
+    const completedOrders = await Order.countDocuments({ orderStatus: "Delivered" });
+    const ordersToShip = await Order.countDocuments({ orderStatus: { $in: ["Ordered", "Shipped"] } });
+
+    const todaysIncome = await Order.aggregate([
+      {
+        $match: {
+          orderStatus: "Delivered",
+          createdAt: {
+            $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+    ]);
+
+    const totalRevenueData = await Order.aggregate([
+      { $match: { orderStatus: "Delivered" } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+    ]);
+
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+const startOfNextMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
+
+const monthlyRevenueData = await Order.aggregate([
+  {
+    $match: {
+      orderStatus: "Delivered",
+      deliveredAt: { $exists: true, $gte: startOfMonth, $lt: startOfNextMonth }, // Ensure deliveredAt exists
+    },
+  },
+  {
+    $group: {
+      _id: null,
+      total: { $sum: "$totalAmount" }, // Sum up totalAmount
+    },
+  },
+]);
+
+console.log("Monthly Revenue Data:", monthlyRevenueData); // Debugging
+    const totalRevenue = totalRevenueData[0]?.total || 0;
+    const monthlyRevenue = monthlyRevenueData[0]?.total || 0;
+    const totalProducts = await Product.countDocuments();
+
+    const categoryRevenue = await Order.aggregate([
+      { $unwind: "$products" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.product",
+          foreignField: "_id",
+          as: "productDetails",
+        },
+      },
+      { $unwind: "$productDetails" },
+      {
+        $group: {
+          _id: "$productDetails.category",
+          totalRevenue: { $sum: "$products.price" },
+        },
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      { $unwind: "$categoryInfo" },
+      {
+        $project: {
+          _id: 0,
+          categoryName: "$categoryInfo.name",
+          totalRevenue: 1,
+        },
+      },
+    ]);
+
+    // Default: Fetch daily sales
+    const salesReport = await getDailySales();
+    console.log(salesReport)
+    res.render("admin/dashboard", {
+      adminEmail: req.session.adminEmail,
+      completedOrders,
+      ordersToShip,
+      todaysIncome: todaysIncome[0]?.total || 0,
+      totalRevenue,
+      totalProducts,
+      categoryRevenue,
+      monthlyRevenue,
+      salesReport,
+    });
+  } catch (error) {
+    console.error("Error loading dashboard data:", error);
+    res.status(500).send("Server Error");
+  }
 };
+exports.getfilter = async (req, res) => {
+  const filter = req.query.filter || "daily";
+  console.log("Received filter:", filter); // Debugging log
+
+  try {
+    let salesData = [];
+    
+    switch (filter) {
+      case "daily":
+        salesData = await getDailySales();
+        break;
+      case "weekly":
+        salesData = await getWeeklySales();
+        break;
+      case "monthly":
+        salesData = await getMonthlySales();
+        break;
+      case "yearly":
+        salesData = await getYearlySales();
+        break;
+      default:
+        salesData = [];
+    }
+
+    console.log("Sending Sales Data:", salesData); // Debugging log
+
+    res.json({
+      labels: salesData.map(entry => entry.date),
+      values: salesData.map(entry => entry.totalSales),
+    });
+
+  } catch (error) {
+    console.error("Error fetching sales data:", error);
+    res.status(500).json({ error: "Failed to fetch sales data" });
+  }
+};
+
+// Helper Functions for Sales Data
+const getDailySales = async () => {
+  return await Order.aggregate([
+    { $match: { orderStatus: "Delivered" } },
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+        },
+        totalSales: { $sum: "$totalAmount" },
+      },
+    },
+    { $sort: { _id: 1 } },
+    { $project: { _id: 0, date: "$_id", totalSales: 1 } },
+  ]);
+};
+
+const getWeeklySales = async () => {
+  return await Order.aggregate([
+    { $match: { orderStatus: "Delivered" } },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$createdAt" },
+          week: { $week: "$createdAt" },
+        },
+        totalSales: { $sum: "$totalAmount" },
+      },
+    },
+    { $sort: { "_id.year": 1, "_id.week": 1 } },
+    {
+      $project: {
+        _id: 0,
+        date: { $concat: ["Year ", { $toString: "$_id.year" }, " - Week ", { $toString: "$_id.week" }] },
+        totalSales: 1,
+      },
+    },
+  ]);
+};
+
+const getMonthlySales = async () => {
+  return await Order.aggregate([
+    { $match: { orderStatus: "Delivered" } },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+        totalSales: { $sum: "$totalAmount" },
+      },
+    },
+    { $sort: { _id: 1 } },
+    { $project: { _id: 0, date: "$_id", totalSales: 1 } },
+  ]);
+};
+
+const getYearlySales = async () => {
+  return await Order.aggregate([
+    { $match: { orderStatus: "Delivered" } },
+    {
+      $group: {
+        _id: { $year: "$createdAt" },
+        totalSales: { $sum: "$totalAmount" },
+      },
+    },
+    { $sort: { _id: 1 } },
+    { $project: { _id: 0, date: { $toString: "$_id" }, totalSales: 1 } },
+  ]);
+};
+
 exports.manageUsersPage = async (req, res) => {
   try {
     const searchQuery = req.query.search || "";

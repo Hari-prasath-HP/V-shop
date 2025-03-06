@@ -68,7 +68,7 @@ router.post("/wishlist/remove", wishlistController.removeFromWishlist);
 router.get("/wishlist/get", wishlistController.getWishlist);
 router.get("/wishlist", wishlistController.renderWishlistPage);
 
-
+router.get("/download-invoice/:orderId",UserController.getInvoice)
 // logout
 router.post('/logout', UserController.logout);
 
