@@ -123,7 +123,6 @@ console.log("Monthly Revenue Data:", monthlyRevenueData); // Debugging
 
     // Default: Fetch daily sales
     const salesReport = await getDailySales();
-    console.log(salesReport)
     res.render("admin/dashboard", {
       adminEmail: req.session.adminEmail,
       completedOrders,
@@ -142,7 +141,6 @@ console.log("Monthly Revenue Data:", monthlyRevenueData); // Debugging
 };
 exports.getfilter = async (req, res) => {
   const filter = req.query.filter || "daily";
-  console.log("Received filter:", filter); // Debugging log
 
   try {
     let salesData = [];
@@ -163,9 +161,6 @@ exports.getfilter = async (req, res) => {
       default:
         salesData = [];
     }
-
-    console.log("Sending Sales Data:", salesData); // Debugging log
-
     res.json({
       labels: salesData.map(entry => entry.date),
       values: salesData.map(entry => entry.totalSales),
@@ -244,7 +239,88 @@ const getYearlySales = async () => {
     { $project: { _id: 0, date: { $toString: "$_id" }, totalSales: 1 } },
   ]);
 };
+exports.getTopSellingProducts = async (req, res) => {
+  try {
+      const topProducts = await Order.aggregate([
+          { $unwind: '$products' },
+          {
+              $group: {
+                  _id: '$products.productId',
+                  totalQuantity: { $sum: '$products.quantity' }
+              }
+          },
+          { $sort: { totalQuantity: -1 } },
+          { $limit: 10 },
+          {
+              $lookup: {
+                  from: 'products',
+                  localField: '_id',
+                  foreignField: '_id',
+                  as: 'productDetails'
+              }
+          },
+          { $unwind: '$productDetails' },
+          {
+              $project: {
+                  _id: 1,
+                  name: '$productDetails.name',
+                  totalQuantity: 1
+              }
+          }
+      ]);
 
+      res.json(topProducts);
+  } catch (error) {
+      console.error('Error fetching top-selling products:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.getTopSellingCategories = async (req, res) => {
+  try {
+      const topCategories = await Order.aggregate([
+          { $unwind: '$products' },
+          {
+              $lookup: {
+                  from: 'products',
+                  localField: 'products.productId',
+                  foreignField: '_id',
+                  as: 'productDetails'
+              }
+          },
+          { $unwind: '$productDetails' },
+          {
+              $group: {
+                  _id: '$productDetails.category',
+                  totalSales: { $sum: '$products.quantity' }
+              }
+          },
+          { $sort: { totalSales: -1 } },
+          { $limit: 10 },
+          {
+              $lookup: {
+                  from: 'categories',
+                  localField: '_id',
+                  foreignField: '_id',
+                  as: 'categoryDetails'
+              }
+          },
+          { $unwind: '$categoryDetails' },
+          {
+              $project: {
+                  _id: 1,
+                  categoryName: '$categoryDetails.name',
+                  totalSales: 1
+              }
+          }
+      ]);
+
+      res.json(topCategories);
+  } catch (error) {
+      console.error('Error fetching top-selling categories:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 exports.manageUsersPage = async (req, res) => {
   try {
     const searchQuery = req.query.search || "";

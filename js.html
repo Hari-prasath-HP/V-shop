@@ -1,31 +1,17 @@
-app.get("/admin/salesReport", async (req, res) => {
-    const filter = req.query.filter || "daily"; // Get the selected filter from the frontend
-    let salesData;
-
-    try {
-        switch (filter) {
-            case "daily":
-                salesData = await getDailySales(); // Fetch daily sales from DB
-                break;
-            case "weekly":
-                salesData = await getWeeklySales(); // Fetch weekly sales
-                break;
-            case "monthly":
-                salesData = await getMonthlySales(); // Fetch monthly sales
-                break;
-            case "yearly":
-                salesData = await getYearlySales(); // Fetch yearly sales
-                break;
-            default:
-                salesData = [];
-        }
-
-        res.json({
-            labels: salesData.map(entry => entry.date),
-            values: salesData.map(entry => entry.totalSales),
-        });
-    } catch (error) {
-        console.error("Error fetching sales data:", error);
-        res.status(500).json({ error: "Failed to fetch sales data" });
-    }
-});
+<td>
+    <% if (product.offerPrice && product.offerPrice < product.price) { %>
+      <div class="form-group">
+        <label for="offerDisplay">Discounted Price</label>
+        <p>
+          <span class="text-muted text-decoration-line-through">₹<%= product.price %></span>
+          <span class="font-weight-bold">₹<%= product.offerPrice %></span>
+          <span class="text-success">(<%= ((product.price - product.offerPrice) / product.price * 100).toFixed(2) %>% Off)</span>
+        </p>
+      </div>
+    <% } else { %>
+      <div class="form-group">
+        <label for="priceDisplay">Price</label>
+        <p>₹<%= product.price %></p>
+      </div>
+    <% } %>
+  </td>

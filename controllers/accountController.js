@@ -153,11 +153,14 @@ exports.getAllOrdersForUser = async (req, res) => {
         if (!userId) {
             return res.redirect('/login')
         }
-        const orders = await Order.find({ user: userId })
-            .select('-products') 
-            .sort({ orderedAt: -1 }) 
-            .skip((page - 1) * limit)
-            .limit(limit);
+        const orders = await Order.find({ 
+            user: userId, 
+            orderStatus: { $ne: "Pending" }  // Exclude orders with "Pending" status
+        })
+        .select('-products') 
+        .sort({ orderedAt: -1 }) 
+        .skip((page - 1) * limit)
+        .limit(limit);        
         res.render('user/orders', {
             orders,
             currentPage: page,
@@ -172,15 +175,19 @@ exports.getAllOrdersForUser = async (req, res) => {
 exports.getOrderDetails = async (req, res) => {
     try {
       const orderId = req.params.id;
-      const order = await Order.findById(orderId)
-      .populate({
+      const order = await Order.findOne({ 
+        _id: orderId, 
+        orderStatus: { $ne: "Pending" }  // Exclude orders with "Pending" status
+    })
+    .populate({
         path: 'products.product', 
         model: 'Product',
         select: 'name images price offerPrice'
-      }) 
-      .populate('user', 'username email')
-        .populate('shippingAddress.userId', 'username email')
-        .exec();
+    }) 
+    .populate('user', 'username email')
+    .populate('shippingAddress.userId', 'username email')
+    .exec();
+    
       if (!order) {
         return res.status(404).render('error', { message: 'Order not found' });
       }

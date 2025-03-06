@@ -13,6 +13,9 @@ adminrouter.use(adminAuth);
 // Admin Dashboard
 adminrouter.get('/dashboard', adminController.dashboardPage);
 adminrouter.get('/sales-Report',adminController.getfilter)
+adminrouter.get('/top-selling-products', adminController.getTopSellingProducts);
+adminrouter.get('/top-selling-categories', adminController.getTopSellingCategories);
+
 // User management
 adminrouter.get('/users', adminController.manageUsersPage);
 adminrouter.post("/admin/adduser",adminController.addUser)
