@@ -50,7 +50,7 @@ exports.dashboardPage = async (req, res) => {
       {
         $match: {
           orderStatus: "Delivered",
-          createdAt: {
+          deliveredAt: {
             $gte: new Date(new Date().setHours(0, 0, 0, 0)),
           },
         },
@@ -81,45 +81,44 @@ const monthlyRevenueData = await Order.aggregate([
   },
 ]);
 
-console.log("Monthly Revenue Data:", monthlyRevenueData); // Debugging
-    const totalRevenue = totalRevenueData[0]?.total || 0;
-    const monthlyRevenue = monthlyRevenueData[0]?.total || 0;
-    const totalProducts = await Product.countDocuments();
+const totalRevenue = Math.floor(totalRevenueData[0]?.total || 0);
+const monthlyRevenue = Math.floor(monthlyRevenueData[0]?.total || 0);
+const totalProducts = await Product.countDocuments();
 
-    const categoryRevenue = await Order.aggregate([
-      { $unwind: "$products" },
-      {
-        $lookup: {
-          from: "products",
-          localField: "products.product",
-          foreignField: "_id",
-          as: "productDetails",
-        },
-      },
-      { $unwind: "$productDetails" },
-      {
-        $group: {
-          _id: "$productDetails.category",
-          totalRevenue: { $sum: "$products.price" },
-        },
-      },
-      {
-        $lookup: {
-          from: "categories",
-          localField: "_id",
-          foreignField: "_id",
-          as: "categoryInfo",
-        },
-      },
-      { $unwind: "$categoryInfo" },
-      {
-        $project: {
-          _id: 0,
-          categoryName: "$categoryInfo.name",
-          totalRevenue: 1,
-        },
-      },
-    ]);
+const categoryRevenue = await Order.aggregate([
+  { $unwind: "$products" },
+  {
+    $lookup: {
+      from: "products",
+      localField: "products.product",
+      foreignField: "_id",
+      as: "productDetails",
+    },
+  },
+  { $unwind: "$productDetails" },
+  {
+    $group: {
+      _id: "$productDetails.category",
+      totalRevenue: { $sum: "$products.price" },
+    },
+  },
+  {
+    $lookup: {
+      from: "categories",
+      localField: "_id",
+      foreignField: "_id",
+      as: "categoryInfo",
+    },
+  },
+  { $unwind: "$categoryInfo" },
+  {
+    $project: {
+      _id: 0,
+      categoryName: "$categoryInfo.name",
+      totalRevenue: { $round: ["$totalRevenue", 2] },
+    },
+  },
+]);
 
     // Default: Fetch daily sales
     const salesReport = await getDailySales();
@@ -127,7 +126,7 @@ console.log("Monthly Revenue Data:", monthlyRevenueData); // Debugging
       adminEmail: req.session.adminEmail,
       completedOrders,
       ordersToShip,
-      todaysIncome: todaysIncome[0]?.total || 0,
+      todaysIncome: Math.floor(todaysIncome[0]?.total || 0),
       totalRevenue,
       totalProducts,
       categoryRevenue,
@@ -179,7 +178,7 @@ const getDailySales = async () => {
     {
       $group: {
         _id: {
-          $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+          $dateToString: { format: "%Y-%m-%d", date: "$deliveredAt" },
         },
         totalSales: { $sum: "$totalAmount" },
       },
@@ -195,8 +194,8 @@ const getWeeklySales = async () => {
     {
       $group: {
         _id: {
-          year: { $year: "$createdAt" },
-          week: { $week: "$createdAt" },
+          year: { $year: "$deliveredAt" },
+          week: { $week: "$deliveredAt" },
         },
         totalSales: { $sum: "$totalAmount" },
       },
@@ -217,7 +216,7 @@ const getMonthlySales = async () => {
     { $match: { orderStatus: "Delivered" } },
     {
       $group: {
-        _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+        _id: { $dateToString: { format: "%Y-%m", date: "$deliveredAt" } },
         totalSales: { $sum: "$totalAmount" },
       },
     },
@@ -231,7 +230,7 @@ const getYearlySales = async () => {
     { $match: { orderStatus: "Delivered" } },
     {
       $group: {
-        _id: { $year: "$createdAt" },
+        _id: { $year: "$deliveredAt" },
         totalSales: { $sum: "$totalAmount" },
       },
     },
@@ -239,86 +238,91 @@ const getYearlySales = async () => {
     { $project: { _id: 0, date: { $toString: "$_id" }, totalSales: 1 } },
   ]);
 };
+// Controller: Get Top-Selling Products
 exports.getTopSellingProducts = async (req, res) => {
   try {
-      const topProducts = await Order.aggregate([
-          { $unwind: '$products' },
-          {
-              $group: {
-                  _id: '$products.productId',
-                  totalQuantity: { $sum: '$products.quantity' }
-              }
-          },
-          { $sort: { totalQuantity: -1 } },
-          { $limit: 10 },
-          {
-              $lookup: {
-                  from: 'products',
-                  localField: '_id',
-                  foreignField: '_id',
-                  as: 'productDetails'
-              }
-          },
-          { $unwind: '$productDetails' },
-          {
-              $project: {
-                  _id: 1,
-                  name: '$productDetails.name',
-                  totalQuantity: 1
-              }
-          }
-      ]);
+    const topProducts = await Order.aggregate([
+      { $unwind: "$products" },
+      {
+        $group: {
+          _id: "$products.product",
+          totalQuantity: { $sum: "$products.quantity" }
+        }
+      },
+      { $sort: { totalQuantity: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      { $unwind: "$productDetails" },
+      {
+        $project: {
+          _id: 1,
+          name: "$productDetails.name",
+          price: "$productDetails.offerPrice",
+          totalQuantity: 1
+        }
+      }
+    ]);
 
-      res.json(topProducts);
+    // Render the EJS template with products data
+    res.render("admin/topSelling", { type: "products", data: topProducts });
   } catch (error) {
-      console.error('Error fetching top-selling products:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error fetching top-selling products:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
+// Controller: Get Top-Selling Categories
 exports.getTopSellingCategories = async (req, res) => {
   try {
-      const topCategories = await Order.aggregate([
-          { $unwind: '$products' },
-          {
-              $lookup: {
-                  from: 'products',
-                  localField: 'products.productId',
-                  foreignField: '_id',
-                  as: 'productDetails'
-              }
-          },
-          { $unwind: '$productDetails' },
-          {
-              $group: {
-                  _id: '$productDetails.category',
-                  totalSales: { $sum: '$products.quantity' }
-              }
-          },
-          { $sort: { totalSales: -1 } },
-          { $limit: 10 },
-          {
-              $lookup: {
-                  from: 'categories',
-                  localField: '_id',
-                  foreignField: '_id',
-                  as: 'categoryDetails'
-              }
-          },
-          { $unwind: '$categoryDetails' },
-          {
-              $project: {
-                  _id: 1,
-                  categoryName: '$categoryDetails.name',
-                  totalSales: 1
-              }
-          }
-      ]);
+    const topCategories = await Order.aggregate([
+      { $unwind: "$products" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.product",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      { $unwind: "$productDetails" },
+      {
+        $group: {
+          _id: "$productDetails.category",
+          totalSales: { $sum: "$products.quantity" }
+        }
+      },
+      { $sort: { totalSales: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "categoryDetails"
+        }
+      },
+      { $unwind: "$categoryDetails" },
+      {
+        $project: {
+          _id: 1,
+          name: "$categoryDetails.name",
+          totalSales: 1
+        }
+      }
+    ]);
 
-      res.json(topCategories);
+    // Render the EJS template with categories data
+    res.render("admin/topSelling", { type: "categories", data: topCategories });
   } catch (error) {
-      console.error('Error fetching top-selling categories:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error fetching top-selling categories:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 exports.manageUsersPage = async (req, res) => {
@@ -868,7 +872,9 @@ exports.updateOrderStatus = async (req, res) => {
           product.status = status;
       });
       if (status === 'Delivered') {
-          order.deliveredAt = new Date();
+          order.deliveredAt = new Date(); // Always updates to the current date and time
+      } else {
+          order.deliveredAt = null; // Clears the date if not delivered
       }
       await order.save();
       res.json({ message: 'Order and product statuses updated successfully', order });
@@ -877,6 +883,7 @@ exports.updateOrderStatus = async (req, res) => {
       res.status(500).json({ message: 'Server Error' });
   }
 };
+
 exports.viewOrder = async (req, res) => {
   try {
       const { orderId } = req.params;

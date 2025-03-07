@@ -12,6 +12,7 @@ router.post('/signup', UserController.handleSignup);
 //login
 router.get('/login', UserController.renderlogin);
 router.post('/login', UserController.handlelogin);
+router.get('/forgot-password', UserController.getforgetpassword)
 // Google Authentication Routes
 router.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 router.get("/auth/google/callback", 

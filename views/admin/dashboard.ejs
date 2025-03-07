@@ -20,8 +20,7 @@
       </div>
     </div>
   </nav>
-  <h2>Dashboard</h2>
-  <div class="container">
+  <div class="container mt-3">
     <h1>Hello Admin</h1>
     <h2>Welcome to V-Shop</h2>
 
@@ -226,18 +225,12 @@
 
 </script>
 <script>
-  document.getElementById('bestSellingProductsBtn').addEventListener('click', () => {
-      fetch('/admin/top-selling-products')
-          .then(response => response.json())
-          .then(data => alert(JSON.stringify(data, null, 2))) // Replace with your display logic
-          .catch(error => console.error('Error fetching top-selling products:', error));
-  });
+document.getElementById("bestSellingProductsBtn").addEventListener("click", () => {
+    window.location.href = "/admin/top-selling-products"; // Redirects to the backend route
+});
 
-  document.getElementById('bestSellingCategoriesBtn').addEventListener('click', () => {
-      fetch('/admin/top-selling-categories')
-          .then(response => response.json())
-          .then(data => alert(JSON.stringify(data, null, 2))) // Replace with your display logic
-          .catch(error => console.error('Error fetching top-selling categories:', error));
-  });
+document.getElementById("bestSellingCategoriesBtn").addEventListener("click", () => {
+    window.location.href = "/admin/top-selling-categories"; // Redirects to the backend route
+});
 </script>
   <%- include('footer') %>
