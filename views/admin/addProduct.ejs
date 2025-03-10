@@ -86,11 +86,17 @@
               <span id="stockError" class="error"></span>
             </div>
             
-            <div class="container mt-4">
-              <label for="images" class="form-label">Upload Images</label>
-              <input type="file" id="images" name="images" class="form-control" multiple accept="image/*" onchange="previewImages()">
-              <div id="previewContainer" class="d-flex gap-2 flex-wrap mt-2"></div>
+            <!-- Cropping Modal -->
+            <div class="form-group">
+              <label for="images">Add Image</label>
+              <input type="file" accept="image/*" name="images" class="form-control-file" id="images" multiple />
+              <!-- Original Image Preview Before Cropping -->
+<div id="image-preview" class="preview-container"></div>
+
+<!-- Cropped Images Preview -->
+<div id="cropped-images-preview" class="preview-container"></div>
             </div>            
+              
             </div>
             <div class="d-grid">
               <button type="submit" class="btn btn-custom">Add Product</button>
@@ -124,137 +130,134 @@
   <% } %>
   <!-- Toastify JS -->
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.12/cropper.min.js"></script>
-<script>
-  function previewImages() {
-    const previewContainer = document.getElementById('previewContainer');
-    previewContainer.innerHTML = ''; // Clear previous previews
-    const files = document.getElementById('images').files;
-    
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const reader = new FileReader();
-      
-      reader.onload = function (e) {
-        const imgElement = document.createElement('img');
-        imgElement.src = e.target.result;
-        imgElement.classList.add('img-thumbnail', 'm-2');
-        imgElement.style.width = '100px'; 
-        imgElement.style.cursor = 'pointer';
-        imgElement.setAttribute('data-index', i);
-        imgElement.onclick = () => replaceImage(i);
-        
-        const removeButton = document.createElement('button');
-        removeButton.textContent = 'Remove';
-        removeButton.classList.add('btn', 'btn-danger', 'btn-sm', 'mt-1');
-        removeButton.onclick = () => removeImage(i);
-        
-        const imageContainer = document.createElement('div');
-        imageContainer.classList.add('d-flex', 'flex-column', 'align-items-center');
-        imageContainer.appendChild(imgElement);
-        imageContainer.appendChild(removeButton);
-        
-        previewContainer.appendChild(imageContainer);
-      };
-      reader.readAsDataURL(file);
-    }
-  }
+<!-- Cropper.js CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet" />
 
-  function removeImage(index) {
-    const files = document.getElementById('images').files;
-    const dt = new DataTransfer(); // Create a new DataTransfer object to manipulate the file list
-
-    for (let i = 0; i < files.length; i++) {
-      if (i !== index) {
-        dt.items.add(files[i]); // Keep only non-deleted files
-      }
-    }
-
-    document.getElementById('images').files = dt.files; // Update input
-    previewImages(); // Refresh preview
-  }
-
-  function replaceImage(index) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    
-    input.onchange = function (event) {
-      const newFile = event.target.files[0];
-      if (newFile) {
-        const files = document.getElementById('images').files;
-        const dt = new DataTransfer();
-
-        for (let i = 0; i < files.length; i++) {
-          if (i === index) {
-            dt.items.add(newFile); // Replace the selected file
-          } else {
-            dt.items.add(files[i]); // Keep others unchanged
-          }
-        }
-
-        document.getElementById('images').files = dt.files; // Update file input
-        previewImages(); // Refresh preview
-      }
-    };
-    
-    input.click(); // Trigger file selection
-  }
-</script> 
-<script>
-function handleProductSubmit (event) {
-  event.preventDefault();
-    const Name = document.getElementById("productname").value.trim();
-    const Price = document.getElementById("price").value.trim();
-    const Offer = document.getElementById("offerPrice").value.trim();
-    const Description = document.getElementById("description").value.trim();
-    const Stock = document.getElementById("stock").value.trim();
-
-    const productnameError = document.getElementById("productnameError");
-    const priceError = document.getElementById("priceError");
-    const offerError = document.getElementById("offerPriceError");
-    const descriptionError = document.getElementById("descriptionError");
-    const stockError = document.getElementById("stockError");
-
-    productnameError.textContent = "";
-    priceError.textContent = "";
-    offerError.textContent = "";
-    descriptionError.textContent = "";
-    stockError.textContent = "";
-
-    let isValid = true;
-
-    if (Name === "") {
-        productnameError.textContent = "Product name is required.";
-        productnameError.style.color = "red";
-        isValid = false;
-    }
-    if (Price === "" || isNaN(Price) || Price <= 0) {
-        priceError.textContent = "Valid price is required.";
-        priceError.style.color = "red";
-        isValid = false;
-    }
-    if (Offer === "" || Offer < 0 ) {
-        offerError.textContent = "Offer price should be min 0";
-        offerError.style.color = "red";
-        isValid = false;
-    }
-    if (Description === "") {
-        descriptionError.textContent = "Description is required.";
-        descriptionError.style.color = "red";
-        isValid = false;
-    }
-    if (Stock === "" || isNaN(Stock) || Stock < 1) {
-        stockError.textContent = "Stock must be at least 1.";
-        stockError.style.color = "red";
-        isValid = false;
-    }
-    // Submit form if all fields are valid
-    if (isValid) {
-      document.getElementById("productForm").submit();
-    }
-}
-</script>
+<!-- Cropper.js JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const croppedImages = []; // Store only cropped images
+
+function previewImages() {
+    var preview = document.getElementById("image-preview");
+    preview.innerHTML = ""; // Clear previous preview
+
+    var files = document.getElementById("images").files;
+    for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        var reader = new FileReader();
+
+        reader.onload = function (event) {
+            var img = document.createElement("img");
+            var div = document.createElement("div");
+            div.className = "crop-img-container";
+            img.className = "canvas-image";
+            img.src = event.target.result;
+            div.appendChild(img);
+            preview.appendChild(div);
+
+            // Initialize cropper for the image
+            initializeCropper(img, div);
+        };
+
+        reader.readAsDataURL(file);
+    }
+}
+
+function initializeCropper(image, container) {
+    image.onload = function () {
+        var cropper = new Cropper(image, {
+            aspectRatio: NaN,
+            viewMode: 1, 
+            autoCropArea: 1,
+            cropBoxResizable: true,
+            preview: ".preview",
+        });
+
+        var cropButton = document.createElement("button");
+        cropButton.className = "btn btn-primary";
+        cropButton.innerText = "Crop";
+
+        cropButton.addEventListener("click", function (event) {
+            event.preventDefault();
+            cropper.getCroppedCanvas().toBlob(function (blob) {
+                var croppedFile = new File([blob], "cropped-image.jpg", { type: "image/jpeg" });
+                croppedImages.push(croppedFile); // Store cropped image
+
+                // Remove the original image after cropping
+                container.remove();
+
+                // Show the cropped image preview
+                var previewContainer = document.getElementById("cropped-images-preview");
+                var previewImage = document.createElement("img");
+                var deleteButton = document.createElement("button");
+
+                previewImage.className = "preview-image";
+                previewImage.src = URL.createObjectURL(blob);
+
+                deleteButton.textContent = "Drop";
+                deleteButton.className = "btn btn-sm btn-danger";
+                deleteButton.style.marginTop = "10px";
+
+                deleteButton.addEventListener("click", () => {
+                    previewImage.remove();
+                    deleteButton.remove();
+                    const index = croppedImages.indexOf(croppedFile);
+                    if (index !== -1) {
+                        croppedImages.splice(index, 1);
+                    }
+                });
+
+                previewContainer.appendChild(previewImage);
+                previewContainer.appendChild(deleteButton);
+            });
+        });
+
+        container.appendChild(cropButton);
+    };
+}
+
+// Attach the previewImages function to the change event of the file input
+document.getElementById("images").addEventListener("change", previewImages);
+
+// Modify the form submission to send only cropped images
+document.querySelector("form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var formData = new FormData();
+    // ✅ Collect text fields manually
+    formData.append("name", document.getElementById("productname").value);
+    formData.append("description", document.getElementById("description").value);
+    formData.append("price", document.getElementById("price").value);
+    formData.append("category", document.getElementById("category").value);
+    formData.append("stock", document.getElementById("stock").value);
+    formData.append("offerPrice", document.getElementById("offerPrice").value);
+    formData.append("quantity", document.getElementById("quantity").value);
+    formData.append("unit", document.getElementById("unit").value);
+    if (croppedImages.length < 3) {
+        alert("You must upload at least 3 cropped images.");
+        return;
+    }
+
+    croppedImages.forEach((image, index) => {
+        formData.append("images", image, `cropped-image-${index + 1}.jpg`);
+    });
+
+    // Send the cropped images to the backend
+    fetch("/admin/addProduct", {
+        method: "POST",
+        body: formData,
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.href = "/admin/product"; 
+        } else {
+            console.error("Upload failed");
+        }
+    })
+    .catch(error => console.error("Error:", error));
+});
+  </script>
+
 <%- include('footer') %>

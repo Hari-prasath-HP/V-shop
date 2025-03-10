@@ -960,7 +960,7 @@ exports.returnOrder = async (req, res) => {
 };
 exports.getWallet = async (req, res) => {
   try {
-      const wallet = await Wallet.findOne({ userId: req.session.user.id });
+      const wallet = await Wallet.findOne({ userId: req.session.user.id }).populate('userId', 'username');;
 
       if (!wallet) {
           return res.render('user/wallet', { wallet: { balance: 0, transactions: [] } });

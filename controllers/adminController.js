@@ -651,48 +651,80 @@ exports.addProductPage = async (req, res) => {
   }
 };
 
-
 exports.addProduct = async (req, res) => {
   try {
     const { name, description, price, category, stock, offerPrice, quantity, unit } = req.body;
-    const existingProduct = await Product.findOne({ name: new RegExp(`^${name}$`, 'i') });
-    if (existingProduct) {
-      req.session.error = 'Product already exists';
+
+    console.log("📥 Received Product Data:", req.body);
+    console.log("📸 Received Files:", req.files);
+
+    // Validate required fields
+    if (!name || !description || !price || !category || !stock || !quantity || !unit) {
+      req.session.error = 'All fields are required';
       return res.redirect('/admin/addProduct');
     }
+
+    // Trim and sanitize fields
+    const trimmedName = name.trim();
+    const trimmedDescription = description.trim();
+    const validPrice = parseFloat(price);
+    const validStock = parseInt(stock);
+    const validOfferPrice = offerPrice ? parseFloat(offerPrice) : validPrice;
+    const validQuantity = parseFloat(quantity);
+
+    // Check if product name already exists (case insensitive)
+    const existingProduct = await Product.findOne({ name: new RegExp(`^${trimmedName}$`, 'i') });
+    if (existingProduct) {
+      req.session.error = 'Product with this name already exists';
+      return res.redirect('/admin/addProduct');
+    }
+
     if (!category) {
       req.session.error = 'Category is required';
       return res.redirect('/admin/addProduct');
     }
+
+    // Ensure at least 3 cropped images are uploaded
     if (!req.files || req.files.length < 3) {
-      req.session.error = 'You must upload minimum 3 images';
+      req.session.error = 'You must upload at least 3 cropped images';
       return res.redirect('/admin/addProduct');
     }
-    const images = req.files.map(file => file.filename);
-    const offerPriceValue = offerPrice ? offerPrice : price;
 
+    // Extract only the filenames from the uploaded cropped images
+    const images = req.files.map(file => file.filename);
+
+    if (images.length === 0) {
+      req.session.error = 'No cropped images were uploaded';
+      return res.redirect('/admin/addProduct');
+    }
+
+    console.log("✅ Cropped Images Saved:", images);
+
+    // Save the product with the cropped images
     const newProduct = new Product({
-      name,
-      description,
-      price,
+      name: trimmedName,
+      description: trimmedDescription,
+      price: validPrice,
       category,
-      stock,
-      images,
-      offerPrice: offerPriceValue,
+      stock: validStock,
+      images, // Store only cropped images
+      offerPrice: validOfferPrice,
       isListed: true,
       quantity: {
-        value: quantity,
-        unit: unit
+        value: validQuantity,
+        unit: unit.trim(),
       }
     });
 
     await newProduct.save();
+    console.log("🎉 Product saved successfully:", newProduct);
     res.redirect('/admin/product');
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error adding product:", error);
     res.status(500).send('Server Error');
   }
 };
+
 
 exports.editProductPage = async (req, res) => {
   try {

@@ -6,13 +6,17 @@ const checkUserStatus = require('../middlewares/checkUserStatus');
 const passport = require("passport");
 const accountController = require("../controllers/accountController")
 const wishlistController = require("../controllers/wishlistController")
+const passwordController = require("../controllers/passwordController")
 //signup
 router.get("/signup", UserController.renderSignup);
 router.post('/signup', UserController.handleSignup);
 //login
 router.get('/login', UserController.renderlogin);
 router.post('/login', UserController.handlelogin);
-router.get('/forgot-password', UserController.getforgetpassword)
+router.get('/forgot-password', passwordController.getforgetpassword)
+router.post('/forgot-password', passwordController.postForgetPassword);
+router.post("/verify-otp", passwordController.postVerifyOtp);
+
 // Google Authentication Routes
 router.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 router.get("/auth/google/callback", 

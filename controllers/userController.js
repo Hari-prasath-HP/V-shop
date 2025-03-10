@@ -109,10 +109,7 @@ exports.handlelogin = async (req, res) => {
     return res.redirect('/login');
   }
 };
-exports.getforgetpassword = (req, res) => {
-  const error = req.query.error || null; // Fetch error from query params if available
-  res.render('user/forgetpassword', { error });
-};
+
 // otp verify
 exports.renderVerifyOtpPage = (req, res) => {
   const { email } = req.query;
