@@ -50,7 +50,7 @@ exports.addToCart = async (req, res) => {
     
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Server error' });
+    res.status(500).render("user/404");
   }
 };
   exports.viewCart = async (req, res) => {
@@ -92,7 +92,7 @@ exports.addToCart = async (req, res) => {
   
     } catch (err) {
       console.error('Error viewing cart:', err);
-      res.status(500).send('Server Error');
+      res.status(500).render("user/404");
     }
   };  
 exports.updateQuantity = async (req, res) => {
@@ -148,7 +148,7 @@ exports.removeFromCart = async (req, res) => {
     return res.json({ success: true, message: 'Product removed from cart' });
   } catch (error) {
     console.error('Error removing product from cart:', error);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).render("user/404");
   }
 };
 exports.getCheckoutPage = async (req, res) => {
@@ -304,7 +304,7 @@ exports.proceedToPayment = async (req, res) => {
 
   } catch (error) {
       console.error("Error proceeding to payment:", error);
-      res.status(500).send("Internal Server Error");
+      res.status(500).render("user/404");
   }
 };
 exports.getCheckoutPage2 = async (req, res) => {
@@ -664,7 +664,7 @@ exports.getSuccessPage = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching order:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).render("user/404");
   }
 };
 exports.cancelProduct = async (req, res) => {
@@ -748,8 +748,8 @@ exports.returnProduct = async (req, res) => {
 exports.cancelOrder = async (req, res) => {
   try {
     const { orderId, reason } = req.body;
-    const order = await Order.findById(orderId);
-    
+    const order = await Order.findById(orderId).populate('user');
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
@@ -757,12 +757,19 @@ exports.cancelOrder = async (req, res) => {
     if (order.isCancelled) {
       return res.status(400).json({ message: 'Order is already cancelled' });
     }
+
+    // Update order status
     order.isCancelled = true;
     order.orderStatus = 'Cancelled';
     order.cancellationReason = reason;
+
+    let refundAmount = 0;
+
+    // Update product stock and calculate refund
     for (let item of order.products) {
       item.status = 'Cancelled';
       item.cancellationReason = reason;
+      refundAmount += item.price * item.quantity;
       const product = await Product.findById(item.product);
       if (product) {
         product.stock += item.quantity;
@@ -770,11 +777,37 @@ exports.cancelOrder = async (req, res) => {
       }
     }
     order.markModified('products');
+
+    if (order.paymentMethod === 'Online Payment' && order.paymentStatus === 'Completed') {
+      console.log("Processing refund...");
+    
+      let wallet = await Wallet.findOne({ userId: order.user._id });
+    
+      if (!wallet) {
+        console.log("No wallet found, creating a new one...");
+        wallet = new Wallet({ userId: order.user._id, balance: 0, transactions: [] });
+      }
+    
+      console.log(`Refund Amount: ${refundAmount}`);
+      wallet.balance += refundAmount;
+    
+      wallet.transactions.push({
+        transactionType: 'credit',
+        amount: refundAmount,
+        description: `Refund for cancelled order: ${order._id}`,
+      });
+    
+      await wallet.save();
+      console.log("Wallet updated successfully:", wallet);
+    
+      order.paymentStatus = 'Refunded';
+    }    
     await order.save();
-    return res.status(200).json({ message: 'Order cancelled successfully, stock updated', order, success: true });
+    return res.status(200).json({ success: true, message: 'Order cancelled successfully, stock updated, and refund processed if applicable.', order });
+
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ success: false, message: 'Error cancelling order' });
   }
 };
 exports.returnOrder = async (req, res) => {
@@ -835,6 +868,6 @@ exports.getWallet = async (req, res) => {
       res.render('user/wallet', { wallet });
   } catch (error) {
       console.error(error);
-      res.status(500).send("Error loading wallet");
+      res.status(500).render("user/404");
   }
 };

@@ -8,7 +8,8 @@ const passport = require("passport");
 const flash = require('connect-flash');
 require("./config/passport");
 const app = express();
-
+const errorhandler = require("./middlewares/error")
+const error404 = require("./middlewares/404")
 // Body Parser Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -47,12 +48,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Admin Routes (importing the adminRoutes from separate file)
 const adminRoutes = require('./routes/adminRoutes');
 app.use('/admin', adminRoutes);
-
-// Error Handling Middleware (for catching unexpected errors)
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something went wrong! Please try again later.');
-});
+// 404 Not Found Middleware
+app.use(error404)
+app.use(errorhandler)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port 3000`);

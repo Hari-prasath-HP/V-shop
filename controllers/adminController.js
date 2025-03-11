@@ -238,6 +238,7 @@ const getYearlySales = async () => {
 exports.getTopSellingProducts = async (req, res) => {
   try {
     const topProducts = await Order.aggregate([
+      {$match:{orderStatus:"Delivered"}},
       { $unwind: "$products" },
       {
         $group: {
@@ -275,6 +276,7 @@ exports.getTopSellingProducts = async (req, res) => {
 exports.getTopSellingCategories = async (req, res) => {
   try {
     const topCategories = await Order.aggregate([
+      {$match:{orderStatus:"Delivered"}},
       { $unwind: "$products" },
       {
         $lookup: {
@@ -876,32 +878,56 @@ exports.getOrders = async (req, res) => {
 };
 exports.updateOrderStatus = async (req, res) => {
   try {
-      const { status } = req.body;
-      const { orderId } = req.params;
-      if (!orderId || !status) {
-          return res.status(400).json({ message: "Invalid request data" });
+    const { status } = req.body;
+    const { orderId } = req.params;
+
+    if (!orderId || !status) {
+      return res.status(400).json({ message: "Invalid request data" });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Update order status
+    order.orderStatus = status;
+
+    // Update product statuses
+    order.products.forEach(product => {
+      product.status = status;
+    });
+
+    // Update payment status based on order status
+    if (status === 'Ordered') {
+      order.deliveredAt = new Date();
+      if (order.paymentStatus === 'Refunded') {
+        order.paymentStatus = 'Completed';
       }
-      const order = await Order.findById(orderId);
-      if (!order) {
-          return res.status(404).json({ message: "Order not found" });
-      }
-      order.orderStatus = status;
-      order.products.forEach(product => {
-          product.status = status;
-      });
-      if (status === 'Delivered') {
-          order.deliveredAt = new Date();
-      } else {
-          order.deliveredAt = null; 
-      }
-      await order.save();
-      res.json({ message: 'Order and product statuses updated successfully', order });
+    } else if (status === 'Cancelled') {
+      order.paymentStatus = 'Refunded';
+    } else if (status === 'Delivered') {
+      order.paymentStatus = 'Completed';
+    } else {
+      order.deliveredAt = null;
+    }
+
+    // Reset isCancelled and isReturned to false if they were true
+    if (order.isCancelled) {
+      order.isCancelled = false;
+    }
+    if (order.isReturned) {
+      order.isReturned = false;
+    }
+
+    await order.save();
+    res.json({ message: 'Order and product statuses updated successfully', order });
+
   } catch (error) {
-      console.error("Error updating order status:", error);
-      res.status(500).json({ message: 'Server Error' });
+    console.error("Error updating order status:", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
-
 exports.viewOrder = async (req, res) => {
   try {
       const { orderId } = req.params;

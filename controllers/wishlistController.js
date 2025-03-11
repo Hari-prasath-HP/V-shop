@@ -85,11 +85,9 @@ exports.getWishlist = async (req, res) => {
 };
 exports.renderWishlistPage = async (req, res) => {
     const userId = req.session.user.id;
-
     if (!userId) {
         return res.redirect("/login");
     }
-
     try {
         const wishlist = await Wishlist.findOne({ userId }).populate("products");
         res.render("user/wishlist", { wishlist: wishlist ? wishlist.products : [] });

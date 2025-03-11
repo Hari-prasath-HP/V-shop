@@ -7,7 +7,6 @@ const Coupon = require('../models/coupon')
 cron.schedule('0 0 * * *', async () => {
     try {
         const currentDate = new Date();
-
         await CategoryOffer.updateMany(
             { endDate: { $lt: currentDate }, status: { $ne: "Inactive" } },
             { $set: { status: "Inactive" } }
@@ -104,7 +103,7 @@ exports.addCoupon = async (req, res) => {
         res.redirect('/admin/coupons');
     } catch (error) {
         console.error('Error adding coupon:', error);
-        res.status(500).send('Internal Server Error');
+        res.status(500).render("user/404");
     }
 };
 exports.deleteCoupon = async (req, res) => {
