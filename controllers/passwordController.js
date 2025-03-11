@@ -25,6 +25,7 @@ exports.postForgetPassword = async (req, res) => {
             return res.render("user/forgetpassword", { error: "User not found!" });
         }
         const otp = Math.floor(100000 + Math.random() * 900000);
+        console.log(otp)
         user.otp = otp;
         user.otpExpires = Date.now() + 6000; 
         await user.save();

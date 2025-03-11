@@ -3,230 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout</title>
-    <!-- Link to Bootstrap CSS -->
+    <title>Checkout - V-shop</title>
+    <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css"> <!-- Your custom styles -->
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <!-- Custom Styles -->
     <style>
-        /* General Page Styling */
-body {
-    font-family: 'Poppins', sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
-}
+        /* General Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
 
-/* Navbar Styling */
-.navbar {
-    background: linear-gradient(to right, #222, #444);
-    padding: 15px 0;
-}
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(135deg, #222, #444);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
 
-.navbar .navbar-brand h1 {
-    font-weight: bold;
-    color: #ffcc00;
-    text-transform: uppercase;
-}
+        .navbar-brand h1 {
+            font-weight: bold;
+            color: #ffcc00;
+            text-transform: uppercase;
+        }
 
-.navbar .nav-link {
-    color: #ddd;
-    font-size: 18px;
-    transition: color 0.3s;
-}
+        .navbar .nav-link {
+            color: #ddd;
+            font-size: 18px;
+            transition: color 0.3s;
+        }
 
-.navbar .nav-link:hover {
-    color: #ffcc00;
-}
+        .navbar .nav-link:hover {
+            color: #ffcc00;
+        }
 
-/* Progress Bar */
-.progress-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 30px 0;
-}
+        /* Progress Bar */
+        .progress-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px 0;
+        }
 
-.step {
-    width: 40px;
-    height: 40px;
-    background-color:#aaa;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 18px;
-    transition: background 0.3s, transform 0.2s ease-in-out;
-}
+        .step {
+            width: 40px;
+            height: 40px;
+            background-color: #aaa;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            transition: background 0.3s, transform 0.2s ease-in-out;
+        }
 
-.step.active {
-    background-color: #008000;
-    transform: scale(1.1);
-}
+        .step.active {
+            background-color: #008000;
+            transform: scale(1.1);
+        }
 
-.line {
-    width: 120px;
-    height: 5px;
-    background: #ddd;
-    margin: 0 10px;
-}
+        .line {
+            width: 120px;
+            height: 5px;
+            background: #ddd;
+            margin: 0 10px;
+        }
 
-.line.active {
-    background: linear-gradient(135deg, #00b894, #00cec9);
-}
+        .line.active {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+        }
 
-/* Checkout Card Styling */
-.card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 25px;
-    transition: transform 0.3s;
-}
+        /* Checkout Card */
+        .checkout-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            transition: transform 0.3s;
+        }
 
-.card:hover {
-    transform: translateY(-5px);
-}
+        .checkout-card:hover {
+            transform: translateY(-5px);
+        }
 
-.card h3 {
-    font-weight: bold;
-    color: #333;
-}
+        .checkout-card h3 {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
 
-/* Shipping Information */
-.card p {
-    font-size: 16px;
-    color: #555;
-}
+        /* Shipping Information */
+        .shipping-info p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 10px;
+        }
 
-/* Payment Methods */
-.form-check-label {
-    font-size: 18px;
-    font-weight: 500;
-    color: #222;
-    cursor: pointer;
-}
+        /* Payment Methods */
+        .payment-methods {
+            margin-top: 20px;
+        }
 
-.form-check-input {
-    transform: scale(1.2);
-    margin-right: 10px;
-}
+        .payment-methods h3 {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
 
-.form-check:hover .form-check-label {
-    color: #636363;
-}
+        .payment-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
 
-/* Continue Button */
-.btn-success {
-    background: linear-gradient(135deg, #ff6600, #ffcc00);
-    color: white;
-    font-size: 18px;
-    padding: 12px 25px;
-    border: none;
-    border-radius: 6px;
-    transition: all 0.3s ease-in-out;
-}
+        .payment-option:hover {
+            border-color: #00b894;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
 
-.btn-success:hover {
-    background: linear-gradient(135deg, #00b894, #00cec9);
-    transform: scale(1.05);
-}
+        .payment-option.active {
+            border-color: #00b894;
+            background-color: #f0faf7;
+        }
 
-/* Breadcrumb */
-.breadcrumb a {
-    color: #ff6600;
-    font-weight: bold;
-    transition: color 0.3s;
-}
+        .payment-option i {
+            font-size: 24px;
+            margin-right: 15px;
+            color: #00b894;
+        }
 
-.breadcrumb a:hover {
-    color: #00b894;
-}
+        .payment-option label {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+        }
 
-/* Footer */
-footer {
-    background: linear-gradient(to right, #222, #444);
-    color: white;
-    padding: 40px 0;
-    text-align: center;
-}
+        /* Continue Button */
+        .btn-continue {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            font-size: 18px;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
 
-footer p {
-    margin: 0;
-}
+        .btn-continue:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
 
-footer .social-icons a {
-    color: white;
-    margin: 0 12px;
-    font-size: 20px;
-    transition: transform 0.3s ease-in-out, color 0.3s;
-}
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, #222, #444);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
 
-footer .social-icons a:hover {
-    color: #ff6600;
-    transform: scale(1.2);
-}
-hr {
-    height: 4px;
-    background-color: #878584; /* Change to your preferred color */
-    border: none;
-}
+        footer p {
+            margin: 0;
+        }
 
+        footer .social-icons a {
+            color: white;
+            margin: 0 12px;
+            font-size: 20px;
+            transition: transform 0.3s ease, color 0.3s;
+        }
+
+        footer .social-icons a:hover {
+            color: #ffcc00;
+            transform: scale(1.2);
+        }
+
+        hr {
+            height: 2px;
+            background-color: #ddd;
+            border: none;
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark" style="height:10vh">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <h1>V-shop</h1>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-              <form class="d-flex me-3" onsubmit="return false;">
-                <input class="form-control me-2" type="text" id="searchInput" placeholder="Search products..." onkeyup="searchProducts()">
-            </form>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="/" id="homeLink" style="font-weight: bold; font-size: 22px;">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/shop" id="shopLink" style="font-weight: bold; font-size: 22px;">Products</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/cart" id="cartLink" style="font-weight: bold; font-size: 22px;">Cart</a>
-                </li>
-            </ul>                               
-              <ul class="navbar-nav">
-                <% if (user) { %>  <!-- Check if user is logged in -->
-                  <li class="nav-item">
-                    <a href="/userdetails" class="nav-link text-success" style="font-size: 16px;font-weight: bold;">
-                      <i class="icofont-user"></i> <%= user.name || user.username %>
-                    </a>
-                  </li>
-                  <!-- Show Signout button when the user is logged in -->
-                  <li class="nav-item me-2">
-                    <form action="/logout" method="POST">
-                      <button type="submit" class="btn btn-dark text-white" style="font-size: 16px">
-                        logout
-                      </button>
-                    </form>
-                  </li>
-                <% } else { %>
-                  <!-- Show Sign in button when the user is not logged in -->
-                  <li class="nav-item me-2">
-                    <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
-                      Sign in
-                    </a>
-                  </li>
-                <% } %>
-              </ul>
-                             
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/cart">Cart</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
+
     <!-- Breadcrumbs -->
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -237,94 +232,100 @@ hr {
         </ol>
     </nav>
 
-<!-- Address Details (Modified with table header and dynamic address details in the next row) -->
-<div class="address-details">
-    <h3>CheckOut-2</h3>
-    
-    <div class="progress-container pt-5 pb-5">
-        <div class="step active">1</div>
-        <div class="line"></div>
-        <div class="step active">2</div>
-        <div class="line"></div>
-        <div class="step">3</div>
-    </div>
-    <!-- Display shipping address dynamically from DB -->
-    <form action="/paymentMethod" method="POST">
-        <div class="container d-flex justify-content-center" style="width: 90%;">
-            <div class="card shadow p-3 mb-4 bg-white rounded w-100">
-                <div class="card-body">
-                    <h3 class="text-center">Shipping Information</h3>
-                    <% if (checkoutAddress) { %>
-                        <div class="mb-3">
+    <!-- Checkout Content -->
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="checkout-card">
+                    <h3 class="text-center">Checkout - Step 2</h3>
+                    <!-- Progress Bar -->
+                    <div class="progress-container pt-5 pb-5">
+                        <div class="step active">1</div>
+                        <div class="line"></div>
+                        <div class="step active">2</div>
+                        <div class="line"></div>
+                        <div class="step">3</div>
+                    </div>
+
+                    <!-- Shipping Information -->
+                    <div class="shipping-info">
+                        <h3 class="text-center">Shipping Information</h3>
+                        <% if (checkoutAddress) { %>
                             <p><strong>Name:</strong> <%= checkoutAddress.name %></p>
                             <p><strong>Home No:</strong> <%= checkoutAddress.houseNo %></p>
                             <p><strong>Area:</strong> <%= checkoutAddress.area %></p>
                             <p><strong>City:</strong> <%= checkoutAddress.city %></p>
                             <p><strong>State:</strong> <%= checkoutAddress.state %></p>
                             <p><strong>Pincode:</strong> <%= checkoutAddress.pincode %></p>
-                            <input type="hidden" name="name" value="<%= checkoutAddress.name %>">
-                            <input type="hidden" name="houseNo" value="<%= checkoutAddress.houseNo %>">
-                            <input type="hidden" name="area" value="<%= checkoutAddress.area %>">
-                            <input type="hidden" name="city" value="<%= checkoutAddress.city %>">
-                            <input type="hidden" name="state" value="<%= checkoutAddress.state %>">
-                            <input type="hidden" name="pincode" value="<%= checkoutAddress.pincode %>">
-                        </div>
-                    <% } else { %>
-                        <p class="text-center text-danger">No address found</p>
-                    <% } %>
-                    <hr>
-                    <h3 class="text-center mt-4">Payment Methods</h3>
-                    <div class="mt-3">
-                            <input type="hidden" name="totalAmount" value="500"> <!-- Example total amount -->
-                        
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="paymentMethod" id="cod" value="COD" required>
-                                <label class="form-check-label" for="cod">Cash on Delivery</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="paymentMethod" id="online" value="Online Payment">
-                                <label class="form-check-label" for="online">Online Payment</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="paymentMethod" id="wallet" value="Wallet">
-                                <label class="form-check-label" for="wallet">Wallet</label>
-                            </div>
-                            <button type="submit" class="btn btn-success">Continue</button>                                       
+                        <% } else { %>
+                            <p class="text-center text-danger">No address found</p>
+                        <% } %>
+                        <hr>
                     </div>
+
+                    <!-- Payment Methods -->
+                    <form action="/paymentMethod" method="POST" id="paymentForm">
+                        <div class="payment-methods">
+                            <h3 class="text-center">Payment Methods</h3>
+                            <div class="payment-option" onclick="selectPayment('cod')">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <label>
+                                    <input type="radio" name="paymentMethod" value="COD" required> Cash on Delivery
+                                </label>
+                            </div>
+                            <div class="payment-option" onclick="selectPayment('online')">
+                                <i class="fas fa-credit-card"></i>
+                                <label>
+                                    <input type="radio" name="paymentMethod" value="Online Payment"> Online Payment
+                                </label>
+                            </div>
+                            <div class="payment-option" onclick="selectPayment('wallet')">
+                                <i class="fas fa-wallet"></i>
+                                <label>
+                                    <input type="radio" name="paymentMethod" value="Wallet"> Wallet
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-continue w-100 mt-4">Continue</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-    </form>    
+    </div>
 
-</div>
-<!-- Footer -->
-<footer>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6">
-                <p>&copy; 2025 Vegishop. All rights reserved.</p>
-            </div>
-            <div class="col-md-6 text-md-end">
-                <a href="privacy.html" class="text-white mx-2">Privacy Policy</a>
-                <a href="terms.html" class="text-white mx-2">Terms of Service</a>
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; 2025 V-shop. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="privacy.html" class="text-white mx-2">Privacy Policy</a>
+                    <a href="terms.html" class="text-white mx-2">Terms of Service</a>
+                </div>
             </div>
         </div>
-    </div>
-</footer>
-<script>
-    document.querySelector("form").addEventListener("submit", function (event) {
-    let selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+    </footer>
 
-    if (!selectedPaymentMethod) {
-        alert("Please select a payment method");
-        event.preventDefault(); // Stop submission if no method is selected
-    } else {
-        console.log("Selected Payment Method:", selectedPaymentMethod.value);
-    }
-});
-</script>
+    <!-- Scripts -->
+    <script>
+        function selectPayment(method) {
+            const options = document.querySelectorAll('.payment-option');
+            options.forEach(option => option.classList.remove('active'));
+            document.querySelector(`[onclick="selectPayment('${method}')"]`).classList.add('active');
+        }
 
-    <!-- Bootstrap JS and dependencies -->
+        // Form Submission Validation
+        document.getElementById('paymentForm').addEventListener('submit', function (e) {
+            const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
+            if (!selectedPayment) {
+                e.preventDefault();
+                alert('Please select a payment method.');
+            }
+        });
+    </script>
+    <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

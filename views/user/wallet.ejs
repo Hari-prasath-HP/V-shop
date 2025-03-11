@@ -189,8 +189,10 @@
                             <% console.log("EJS orderId:", transaction.orderId); %> 
                             <% if (transaction.isReturnOrCancel && transaction.orderId) { %>
                                 <a href="/order/view/<%= transaction.orderId._id.toString() %>" class="btn btn-primary">View Order</a>
+                            <% } else { %>
+                                <p>-</p>
                             <% } %>
-                        </td>                                                                                         
+                        </td>                                                                                                                
                       </tr>
                     <% }); %>
                   </tbody>

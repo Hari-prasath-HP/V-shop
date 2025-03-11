@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify OTP | V-Shop</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <style>
         body {
             background: linear-gradient(135deg, #fbbf3b, #eb543b);
@@ -13,43 +14,90 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
         }
         .verify-container {
-            background: #fff;
+            background: rgba(255, 255, 255, 0.9);
             padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
             max-width: 450px;
+            width: 100%;
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .verify-container h2 {
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .verify-container p {
+            color: #666;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .form-control {
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #eb543b;
+            box-shadow: 0 0 8px rgba(235, 84, 59, 0.3);
         }
         .btn-custom {
             background: linear-gradient(45deg, #eb543b, #fbbf3b);
             color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
             width: 100%;
-            font-weight: bold;
         }
         .btn-custom:hover {
             background: linear-gradient(45deg, #fbbf3b, #eb543b);
+            transform: translateY(-2px);
         }
         .error {
             color: red;
             font-size: 0.9rem;
+            margin-top: 5px;
         }
         .timer {
             font-size: 1rem;
             color: red;
+            font-weight: 500;
         }
         header {
             width: 100%;
-            background: #222;
             padding: 15px 0;
             text-align: center;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
         }
         header h1 {
             color: white;
             margin: 0;
             font-size: 1.8rem;
             font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .btn-link {
+            color: #eb543b;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .btn-link:hover {
+            color: #fbbf3b;
         }
     </style>
 </head>
@@ -59,8 +107,8 @@
     </header>
     <div class="container d-flex justify-content-center align-items-center flex-grow-1">
         <div class="verify-container">
-            <h2 class="text-center">Verify OTP</h2>
-            <p class="text-center mb-4">Enter the OTP sent to your email</p>
+            <h2>Verify OTP</h2>
+            <p>Enter the OTP sent to your email</p>
             <form id="verifyOtpForm" action="/verify-otp" method="post" onsubmit="validateOtp(event)">
                 <input type="hidden" id="email" name="email" value="<%= email %>" />
             
@@ -83,24 +131,23 @@
         function validateOtp(event) {
             event.preventDefault();
             const otp = document.getElementById("otp").value.trim();
-            const email = document.querySelector('input[name="email"]').value.trim(); // Correct email retrieval
+            const email = document.querySelector('input[name="email"]').value.trim();
             const otpError = document.getElementById("otpError");
             otpError.textContent = "";
     
             if (!otp) {
                 otpError.textContent = "OTP is required.";
             } else {
-                // Send OTP & Email to backend for verification
                 fetch("/verify-otp", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, otp })  // Send email & OTP
+                    body: JSON.stringify({ email, otp })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         alert("OTP Verified Successfully!");
-                        window.location.href = "/dashboard"; // Redirect on success
+                        window.location.href = "/dashboard";
                     } else {
                         otpError.textContent = "Invalid OTP!";
                     }
@@ -126,7 +173,7 @@
         updateTimer();
     
         async function resendOtp() {
-            const email = document.querySelector('input[name="email"]').value.trim(); // Correct email retrieval
+            const email = document.querySelector('input[name="email"]').value.trim();
     
             if (!email) {
                 alert("Email not found. Please re-enter your email.");
@@ -141,7 +188,7 @@
                 const response = await fetch("/send-otp", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email })  // Send email for OTP resend
+                    body: JSON.stringify({ email })
                 });
     
                 const data = await response.json();
@@ -157,6 +204,5 @@
             }
         }
     </script>
-    
 </body>
 </html>

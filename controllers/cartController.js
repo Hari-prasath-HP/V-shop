@@ -838,7 +838,9 @@ exports.cancelOrder = async (req, res) => {
     }
     order.markModified('products');
 
-    if (order.paymentMethod === 'Online Payment' && order.paymentStatus === 'Completed') {
+    if (
+      (order.paymentMethod === 'Online Payment' && order.paymentStatus === 'Completed') || 
+      order.paymentMethod === 'Wallet' && order.paymentStatus === 'Completed') {
       console.log("Processing refund...");
     
       let wallet = await Wallet.findOne({ userId: order.user._id });

@@ -3,237 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout</title>
-    <!-- Link to Bootstrap CSS -->
+    <title>Checkout - V-Shop</title>
+    <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css"> <!-- Your custom styles -->
     <!-- Toastify CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-<!-- Toastify JS -->
-<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .progress-container {
-    display: flex;
-    justify-content: center;
-    margin: 20px;
-}
-.step {
-    width: 40px;
-    height: 40px;
-    background-color: gray;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    transition: background-color 0.3s;
-}
-.step.active {
-    background-color: green;
-}
-.line {
-    width: 100px;
-    height: 5px;
-    background-color: gray;
-    margin: 15px 5px;
-    transition: background-color 0.3s;
-}
-.line.active {
-    background-color: green;
-}
-.navbar {
-            background-color: #333;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        /* Global Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
         }
 
-        .navbar .navbar-brand h3 {
-            color: #fff;
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            color: #2c3e50;
         }
 
-        .navbar .nav-link {
-            color: #ccc;
-        }
-
-        .navbar .nav-link:hover {
-            color: #fff;
-        }
-
-        .navbar-toggler-icon {
-            background-color: #fff;
-        }
-        @media (max-width: 991px) { /* Applies only on smaller screens */
-            .navbar-collapse {
-                background-color: white !important; /* Change to desired color */
-                padding: 10px;
-                border-radius: 5px;
-            }
-            .navbar-nav{
-                margin-bottom: 5px;
-            }
-        }
         .navbar {
-            position: relative;
-            z-index: 1000; /* Ensures navbar stays on top */
-        }
-        .navbar-collapse {
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .cart-container {
-            max-width: 73%; /* Adjust width as needed */
-            margin: auto; /* Center the table */
-        }
-        .cart-table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #fff;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #333333;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            height: 10vh;
         }
 
-        .cart-table th, .cart-table td {
-            padding: 12px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
+        .navbar-brand h1 {
+            color: #fff;
+            font-weight: 700;
+            font-size: 24px;
+        }
+
+        .nav-link {
+            color: #ccc !important;
+            font-size: 18px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #fff !important;
+        }
+
+        .breadcrumb {
+            background-color: transparent;
+            padding: 10px 0;
+            margin: 20px 0;
+        }
+
+        .breadcrumb-item a {
+            color: #6c757d;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: #2c3e50;
+        }
+
+        .breadcrumb-item.active {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+
+        .step {
+            width: 50px;
+            height: 50px;
+            background-color: #e9ecef;
+            color: #6c757d;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background-color: #28a745;
+            color: #fff;
+        }
+
+        .line {
+            width: 120px;
+            height: 6px;
+            background-color: #e9ecef;
+            margin: 0 10px;
+            align-self: center;
+            transition: all 0.3s ease;
+        }
+
+        .line.active {
+            background-color: #28a745;
+        }
+
+        /* Cart Table */
+        .cart-container {
+            max-width: 90%;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
         .cart-table th {
             background-color: #f8f9fa;
-            font-weight: bold;
+            font-weight: 600;
+            color: #2c3e50;
+            padding: 15px;
+        }
+
+        .cart-table td {
+            vertical-align: middle;
+            padding: 15px;
         }
 
         .cart-image {
             width: 80px;
             height: 80px;
             object-fit: cover;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .quantity-control input {
-            width: 50px;
+            width: 60px;
             text-align: center;
-            border: 1px solid #ccc;
+            border: 1px solid #ddd;
             border-radius: 5px;
-            padding: 5px;
+            padding: 8px;
         }
 
         .total-row {
-            font-weight: bold;
             background-color: #f8f9fa;
+            font-weight: 600;
         }
 
         #grandTotal {
             color: #28a745;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
+        }
+
+        /* Shipping and Payment Card */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .card p {
+            color: #6c757d;
+        }
+
+        /* Coupon Section */
+        .coupon-section {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 500px;
+        }
+
+        .coupon-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .coupon-section input {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            width: 70%;
+        }
+
+        .coupon-section button {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            color: #fff;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .coupon-section button:hover {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+        }
+        #continue-button{background: linear-gradient(135deg, #00b894, #00cec9);
         }
         /* Footer */
         footer {
-            background-color: #333;
-            color: white;
-            padding: 30px 0;
-        }
-
-        footer .text-muted {
-            color: #aaa;
-        }
-
-        footer .social-icons a {
+            background-color: #2c3e50;
             color: #fff;
-            margin: 0 10px;
-            font-size: 18px;
+            padding: 30px 0;
+            margin-top: 40px;
         }
 
-        footer .social-icons a:hover {
-            color: #ff6600;
-        }
-        .breadcrumb a {
+        footer a {
+            color: #fff;
             text-decoration: none;
-            color: inherit;
+            margin: 0 10px;
+            transition: color 0.3s ease;
         }
 
-        .breadcrumb-item a {
-            color: #6e7478; /* Set a neutral color similar to text */
-            font-weight: normal;
+        footer a:hover {
+            color: #28a745;
         }
-        hr {
-    height: 4px;
-    background-color: #878584; /* Change to your preferred color */
-    border: none;
-}
-.remove-coupon-btn {
-      display: inline-block;
-      background-color: #dc3545; /* Red color */
-      color: white;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 5px;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s ease-in-out;
-  }
-
-  .remove-coupon-btn:hover {
-      background-color: #c82333; /* Darker red on hover */
-  }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark" style="height:10vh">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <h1>V-shop</h1>
+                <h1>V-Shop</h1>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-              <form class="d-flex me-3" onsubmit="return false;">
-                <input class="form-control me-2" type="text" id="searchInput" placeholder="Search products..." onkeyup="searchProducts()">
-            </form>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="/" id="homeLink" style="font-weight: bold; font-size: 22px;">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/shop" id="shopLink" style="font-weight: bold; font-size: 22px;">Products</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/cart" id="cartLink" style="font-weight: bold; font-size: 22px;">Cart</a>
-                </li>
-            </ul>                               
-              <ul class="navbar-nav">
-                <% if (user) { %>  <!-- Check if user is logged in -->
-                  <li class="nav-item">
-                    <a href="/userdetails" class="nav-link text-success" style="font-size: 16px;font-weight: bold;">
-                      <i class="icofont-user"></i> <%= user.name || user.username %>
-                    </a>
-                  </li>
-                  <!-- Show Signout button when the user is logged in -->
-                  <li class="nav-item me-2">
-                    <form action="/logout" method="POST">
-                      <button type="submit" class="btn btn-dark text-white" style="font-size: 16px">
-                        logout
-                      </button>
-                    </form>
-                  </li>
-                <% } else { %>
-                  <!-- Show Sign in button when the user is not logged in -->
-                  <li class="nav-item me-2">
-                    <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
-                      Sign in
-                    </a>
-                  </li>
-                <% } %>
-              </ul>
-                             
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/cart">Cart</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
+
     <!-- Breadcrumbs -->
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -241,422 +268,422 @@
             <li class="breadcrumb-item"><a href="/cart">Cart</a></li>
             <li class="breadcrumb-item"><a href="/checkout1">Checkout-1</a></li>
             <li class="breadcrumb-item"><a href="/checkout-2">Checkout-2</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Payment</li>
+            <li class="breadcrumb-item active">Payment</li>
         </ol>
     </nav>
-<!-- Address Details (Modified with table header and dynamic address details in the next row) -->
-<div class="address-details">
-    <h1>Order Summary</h1>
 
-    <div class="progress-container pt-5 pb-5">
-        <div class="step active">1</div>
-        <div class="line"></div>
-        <div class="step active">2</div>
-        <div class="line"></div>
-        <div class="step active">3</div>
+    <!-- Main Content -->
+    <div class="container my-5">
+        <h1 class="text-center mb-4">Order Summary</h1>
+        <div class="progress-container">
+            <div class="step active">1</div>
+            <div class="line active"></div>
+            <div class="step active">2</div>
+            <div class="line active"></div>
+            <div class="step active">3</div>
+        </div>
+
+        <!-- Main Order Form -->
+        <form id="payment-form" action="/placeorder" method="POST">
+            <div class="cart-container">
+                <table class="cart-table table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Image</th>
+                            <th>Product Name</th>
+                            <th>Quantity</th>
+                            <th>Sub Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartBody">
+                        <% let grandTotal = 0; %>
+                        <% orderSummaryData.cartItems.forEach(function(item) { %>
+                            <% let subTotal = item.productId.offerPrice * item.quantity; %>
+                            <% grandTotal += subTotal; %>
+                            <tr data-id="<%= item.productId._id %>" data-price="<%= item.productId.offerPrice %>" data-stock="<%= item.productId.stock %>">
+                                <td>
+                                    <img src="/uploads/products/<%= item.productId.images[0] %>" class="cart-image" alt="<%= item.productId.name %>">
+                                </td>
+                                <td><%= item.productId.name %></td>
+                                <td class="quantity-control">
+                                    <input type="text" class="product-quantity form-control" value="<%= item.quantity %>" readonly>
+                                </td>
+                                <td class="subTotal">₹<%= subTotal.toFixed(2) %></td>
+
+                                <!-- Hidden inputs for each product -->
+                                <input type="hidden" name="products[<%= item.productId._id %>][productId]" value="<%= item.productId._id %>">
+                                <input type="hidden" name="products[<%= item.productId._id %>][name]" value="<%= item.productId.name %>">
+                                <input type="hidden" name="products[<%= item.productId._id %>][quantity]" value="<%= item.quantity %>">
+                                <input type="hidden" name="products[<%= item.productId._id %>][price]" value="<%= item.productId.price %>">
+                                <input type="hidden" name="products[<%= item.productId._id %>][offerPrice]" value="<%= item.productId.offerPrice %>">
+                                <input type="hidden" name="products[<%= item.productId._id %>][subTotal]" value="<%= subTotal.toFixed(2) %>">
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="container d-flex justify-content-center pt-3" style="width: 90%;">
+                <div class="card shadow p-3 mb-4 bg-white rounded w-100">
+                    <div class="card-body">
+                        <h2 class="text-center">Shipping Information</h2>
+                        <% if (orderSummaryData.shippingAddress) { %>
+                            <div class="mb-3">
+                                <h3>Shipping Address:</h3>
+                                <p><%= orderSummaryData.shippingAddress.name %></p>
+                                <p><%= orderSummaryData.shippingAddress.houseNo %></p>
+                                <p><%= orderSummaryData.shippingAddress.area %></p>
+                                <p><%= orderSummaryData.shippingAddress.city %></p>
+                                <p><%= orderSummaryData.shippingAddress.state %></p>
+                                <p><%= orderSummaryData.shippingAddress.pincode %></p>
+                            </div>
+                        <% } else { %>
+                            <p class="text-center text-danger">No address found</p>
+                        <% } %>
+                        <hr>
+                        <div>
+                            <h3>Payment Method:</h3>
+                            <p><%= orderSummaryData.paymentMethod %></p>
+                        </div>
+                        <hr>
+
+                        <h3>Available Coupons</h3>
+                        <ul>
+                            <% if (orderSummaryData.coupons.length > 0) { %>
+                                <% orderSummaryData.coupons.forEach(coupon => { %>
+                                    <li>
+                                        <strong>Code:</strong> <%= coupon.code %> -
+                                        <strong>Discount:</strong> 
+                                        <% if (coupon.discountType === 'percentage') { %>
+                                            <%= coupon.discountValue %>%
+                                        <% } else { %>
+                                            ₹<%= coupon.discountValue %>
+                                        <% } %>
+                                    </li>
+                                <% }) %>
+                            <% } else { %>
+                                <p>No available coupons.</p>
+                            <% } %>
+                        </ul>
+
+                        <% if (orderSummaryData.appliedCoupon) { %>
+                            <p>Applied Coupon: <strong><%= orderSummaryData.appliedCoupon.code %></strong></p>
+                            <p>Discount: ₹<%= orderSummaryData.appliedCoupon.discount %></p>
+                            <a href="/remove-coupon">Remove Coupon</a>
+                        <% } %>
+
+                        <div class="mb-3">
+                            <h5>Order Summary</h5>
+                            <% orderSummaryData.cartItems.forEach(item => { %>
+                                <div class="order-item">
+                                    <p><strong><%= item.productId.name %></strong> ₹<%= item.productId.offerPrice %></p>
+                                </div>
+                            <% }); %>
+                            <div id="appliedCouponSection" style="display: none;"></div>
+                            <h5><strong>Grand Total: </strong>
+                                <span id="grandTotalDisplay" class="text-success">₹<%= grandTotal.toFixed(2) %></span>
+                            </h5>
+                        </div>
+                        
+                        <!-- Grand total hidden input -->
+                        <input type="hidden" id="grandTotalInput" name="grandTotal" value="<%= grandTotal.toFixed(2) %>">
+                        <input type="hidden" id="paymentMethod" name="paymentMethod" value="<%= orderSummaryData.paymentMethod %>">
+                        <!-- Coupon Code Hidden Input -->
+                        <input type="hidden" id="couponCodeInput" name="couponCode" value="<%= appliedCoupon ? appliedCoupon.code : '' %>">
+                        <div class="mt-3 text-center">
+                            <button type="submit" id="continue-button" class="btn btn-success">Continue</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Apply Coupon Section (Styled) -->
+        <div class="coupon-section text-center mt-4 p-4 rounded shadow-sm" style="background: #fff; border: 1px solid #ddd; max-width: 500px; margin: 20px auto;">
+            <h3 class="mb-3 text-primary">Apply Coupon</h3>
+            <form id="coupon-form" class="d-flex justify-content-center">
+                <input 
+                    type="hidden" 
+                    id="coupon-grandTotal" 
+                    name="grandTotal" 
+                    value="<%= grandTotal.toFixed(2) %>"
+                >
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="couponCode" 
+                        name="couponCode" 
+                        class="form-control border-primary" 
+                        placeholder="Enter coupon code" 
+                        required 
+                        style="max-width: 250px;"
+                    >
+                    <button type="submit" class="btn btn-primary px-3">Apply</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <!-- Main Order Form -->
-    <form id="payment-form" action="/placeorder" method="POST">
-        <div class="cart-container">
-            <table class="cart-table table table-bordered">
-                <thead class="table-light">
-                    <tr>
-                        <th>Image</th>
-                        <th>Product Name</th>
-                        <th>Quantity</th>
-                        <th>Sub Total</th>
-                    </tr>
-                </thead>
-                <tbody id="cartBody">
-                    <% let grandTotal = 0; %>
-                    <% orderSummaryData.cartItems.forEach(function(item) { %>
-                        <% let subTotal = item.productId.offerPrice * item.quantity; %>
-                        <% grandTotal += subTotal; %>
-                        <tr data-id="<%= item.productId._id %>" data-price="<%= item.productId.offerPrice %>" data-stock="<%= item.productId.stock %>">
-                            <td>
-                                <img src="/uploads/products/<%= item.productId.images[0] %>" class="cart-image" alt="<%= item.productId.name %>">
-                            </td>
-                            <td><%= item.productId.name %></td>
-                            <td class="quantity-control">
-                                <input type="text" class="product-quantity form-control" value="<%= item.quantity %>" readonly>
-                            </td>
-                            <td class="subTotal">₹<%= subTotal.toFixed(2) %></td>
-
-                            <!-- Hidden inputs for each product -->
-                            <input type="hidden" name="products[<%= item.productId._id %>][productId]" value="<%= item.productId._id %>">
-                            <input type="hidden" name="products[<%= item.productId._id %>][name]" value="<%= item.productId.name %>">
-                            <input type="hidden" name="products[<%= item.productId._id %>][quantity]" value="<%= item.quantity %>">
-                            <input type="hidden" name="products[<%= item.productId._id %>][price]" value="<%= item.productId.price %>">
-                            <input type="hidden" name="products[<%= item.productId._id %>][offerPrice]" value="<%= item.productId.offerPrice %>">
-                            <input type="hidden" name="products[<%= item.productId._id %>][subTotal]" value="<%= subTotal.toFixed(2) %>">
-                        </tr>
-                    <% }); %>
-                </tbody>
-            </table>
+    <!-- Toast message for success or failure -->
+    <div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+        <div id="toastMessage" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastText"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
         </div>
-
-        <div class="container d-flex justify-content-center" style="width: 90%;">
-            <div class="card shadow p-3 mb-4 bg-white rounded w-100">
-                <div class="card-body">
-                    <h2 class="text-center">Shipping Information</h2>
-                    <% if (orderSummaryData.shippingAddress) { %>
-                        <div class="mb-3">
-                            <h3>Shipping Address:</h3>
-                            <p><%= orderSummaryData.shippingAddress.name %></p>
-                            <p><%= orderSummaryData.shippingAddress.houseNo %></p>
-                            <p><%= orderSummaryData.shippingAddress.area %></p>
-                            <p><%= orderSummaryData.shippingAddress.city %></p>
-                            <p><%= orderSummaryData.shippingAddress.state %></p>
-                            <p><%= orderSummaryData.shippingAddress.pincode %></p>
-                        </div>
-                    <% } else { %>
-                        <p class="text-center text-danger">No address found</p>
-                    <% } %>
-                    <hr>
-                    <div>
-                        <h3>Payment Method:</h3>
-                        <p><%= orderSummaryData.paymentMethod %></p>
-                    </div>
-                    <hr>
-
-                    <h3>Available Coupons</h3>
-                    <ul>
-                        <% if (orderSummaryData.coupons.length > 0) { %>
-                            <% orderSummaryData.coupons.forEach(coupon => { %>
-                                <li>
-                                    <strong>Code:</strong> <%= coupon.code %> -
-                                    <strong>Discount:</strong> 
-                                    <% if (coupon.discountType === 'percentage') { %>
-                                        <%= coupon.discountValue %>%
-                                    <% } else { %>
-                                        ₹<%= coupon.discountValue %>
-                                    <% } %>
-                                </li>
-                            <% }) %>
-                        <% } else { %>
-                            <p>No available coupons.</p>
-                        <% } %>
-                    </ul>
-
-                    <% if (orderSummaryData.appliedCoupon) { %>
-                        <p>Applied Coupon: <strong><%= orderSummaryData.appliedCoupon.code %></strong></p>
-                        <p>Discount: ₹<%= orderSummaryData.appliedCoupon.discount %></p>
-                        <a href="/remove-coupon">Remove Coupon</a>
-                    <% } %>
-
-                    <div class="mb-3">
-                        <h5>Order Summary</h5>
-                        <% orderSummaryData.cartItems.forEach(item => { %>
-                            <div class="order-item">
-                                <p><strong><%= item.productId.name %></strong> ₹<%= item.productId.offerPrice %></p>
-                            </div>
-                        <% }); %>
-                        <div id="appliedCouponSection" style="display: none;"></div>
-                        <h5><strong>Grand Total: </strong>
-                            <span id="grandTotalDisplay" class="text-success">₹<%= grandTotal.toFixed(2) %></span>
-                        </h5>
-                    </div>
-                    
-                    <!-- Grand total hidden input -->
-                    <input type="hidden" id="grandTotalInput" name="grandTotal" value="<%= grandTotal.toFixed(2) %>">
-                    <input type="hidden" id="paymentMethod" name="paymentMethod" value="<%= orderSummaryData.paymentMethod %>">
-                    <!-- Coupon Code Hidden Input -->
-                    <input type="hidden" id="couponCodeInput" name="couponCode" value="<%= appliedCoupon ? appliedCoupon.code : '' %>">
-                    <div class="mt-3 text-center">
-                        <button type="submit" id="continue-button" class="btn btn-success">Continue</button>
-                    </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; 2025 Vegishop. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="privacy.html" class="text-white mx-2">Privacy Policy</a>
+                    <a href="terms.html" class="text-white mx-2">Terms of Service</a>
                 </div>
             </div>
         </div>
-    </form>
-
-    <!-- Apply Coupon Section (Styled) -->
-<div class="coupon-section text-center mt-4 p-4 rounded shadow-sm" style="background: #fff; border: 1px solid #ddd; max-width: 500px; margin: 20px auto;">
-    <h3 class="mb-3 text-primary">Apply Coupon</h3>
-    <form id="coupon-form" class="d-flex justify-content-center">
-        <input 
-            type="hidden" 
-            id="coupon-grandTotal" 
-            name="grandTotal" 
-            value="<%= grandTotal.toFixed(2) %>"
-        >
-        <div class="input-group">
-            <input 
-                type="text" 
-                id="couponCode" 
-                name="couponCode" 
-                class="form-control border-primary" 
-                placeholder="Enter coupon code" 
-                required 
-                style="max-width: 250px;"
-            >
-            <button type="submit" class="btn btn-primary px-3">Apply</button>
-        </div>
-    </form>
-</div>
-  
-</div>
-        <!-- Toast message for success or failure -->
-        <div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
-            <div id="toastMessage" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body" id="toastText"></div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Footer -->
-        <footer>
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p>&copy; 2025 Vegishop. All rights reserved.</p>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                        <a href="privacy.html" class="text-white mx-2">Privacy Policy</a>
-                        <a href="terms.html" class="text-white mx-2">Terms of Service</a>
-                    </div>
-                </div>
-            </div>
-        </footer>
-        
-<!-- Bootstrap JS and dependencies -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<!-- Razorpay SDK -->
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-    const couponForm = document.getElementById("coupon-form");
-    const paymentForm = document.getElementById("payment-form");
-    const grandTotalDisplay = document.getElementById("grandTotalDisplay");
-    const grandTotalInput = document.getElementById("grandTotalInput");
-    const appliedCouponSection = document.getElementById("appliedCouponSection");
-
-    if (!appliedCouponSection) {
-        console.error("Error: appliedCouponSection not found in DOM!");
-        return;
-    }
-
-    // Apply Coupon
-    couponForm.addEventListener("submit", async function (event) {
+    </footer>
+    
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        const couponForm = document.getElementById("coupon-form");
+        const paymentForm = document.getElementById("payment-form");
+        const grandTotalDisplay = document.getElementById("grandTotalDisplay");
+        const grandTotalInput = document.getElementById("grandTotalInput");
+        const appliedCouponSection = document.getElementById("appliedCouponSection");
+      
+        if (!appliedCouponSection) {
+            console.error("Error: appliedCouponSection not found in DOM!");
+            return;
+        }
+      
+        // Apply Coupon
+        couponForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
+      
+            const formData = new FormData(this);
+            try {
+                const response = await fetch("/apply-coupon", {
+                    method: "POST",
+                    body: new URLSearchParams(formData),
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" }
+                });
+      
+                const result = await response.json();
+      
+                if (result.success) {
+                    grandTotalDisplay.innerText = `₹${result.finalAmount.toFixed(2)}`;
+                    grandTotalInput.value = result.finalAmount.toFixed(2);
+      
+                    appliedCouponSection.innerHTML = `
+                        <p>✅ <strong>Coupon Applied:</strong> <span class="text-success">${result.appliedCoupon}</span></p>
+                        <hr>
+                        <p><strong>Original Price:</strong> ₹${(result.finalAmount + result.discountAmount).toFixed(2)}</p>
+                        <p><strong>Discount Applied:</strong> <span class="text-warning">- ₹${result.discountAmount.toFixed(2)}</span></p>
+                        <hr>
+                        <a href="#" id="removeCoupon" class="remove-coupon-btn">Remove Coupon</a>
+                    `;
+                    // Attach the event listener immediately
+                    document.getElementById("removeCoupon").addEventListener("click", removeCoupon);
+                    setTimeout(() => {
+                        appliedCouponSection.style.display = "block";
+                        const removeCouponBtn = document.getElementById("removeCoupon");
+                        if (removeCouponBtn) {
+                            removeCouponBtn.addEventListener("click", removeCoupon);
+                        }
+                    }, 50);
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error("Error applying coupon:", error);
+            }
+        });
+        async function removeCoupon(event) {
         event.preventDefault();
-
-        const formData = new FormData(this);
+        const appliedCouponElement = document.querySelector("span.text-success"); 
+        const appliedCoupon = appliedCouponElement ? appliedCouponElement.innerText.trim() : "";
+        const discountElement = document.querySelector("span.text-warning"); 
+        const discountText = discountElement ? discountElement.innerText.trim() : "0"; 
+        // Remove non-numeric characters (₹ and extra spaces) before parsing
+        const discountAmount = discountText ? parseFloat(discountText.replace(/[^\d.]/g, "")) : 0; 
+        const grandTotalInput = document.getElementById("grandTotalInput");
+        const originalAmount = grandTotalInput ? parseFloat(grandTotalInput.value) : 0;
+        if (!appliedCoupon) {
+            console.error("No coupon found in the UI.");
+            alert("No coupon applied.");
+            return;
+        }
+      
+        if (originalAmount <= 0) {
+            console.error("Original amount is invalid.");
+            alert("Error: Invalid original amount.");
+            return;
+        }
+      
         try {
-            const response = await fetch("/apply-coupon", {
+            const response = await fetch("/remove-coupon", {
                 method: "POST",
-                body: new URLSearchParams(formData),
-                headers: { "Content-Type": "application/x-www-form-urlencoded" }
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ appliedCoupon, originalAmount, discountAmount }) 
             });
-
+      
             const result = await response.json();
-
             if (result.success) {
-                grandTotalDisplay.innerText = `₹${result.finalAmount.toFixed(2)}`;
-                grandTotalInput.value = result.finalAmount.toFixed(2);
-
-                appliedCouponSection.innerHTML = `
-                    <p>✅ <strong>Coupon Applied:</strong> <span class="text-success">${result.appliedCoupon}</span></p>
-                    <hr>
-                    <p><strong>Original Price:</strong> ₹${(result.finalAmount + result.discountAmount).toFixed(2)}</p>
-                    <p><strong>Discount Applied:</strong> <span class="text-warning">- ₹${result.discountAmount.toFixed(2)}</span></p>
-                    <hr>
-                    <a href="#" id="removeCoupon" class="remove-coupon-btn">Remove Coupon</a>
-                `;
-                // Attach the event listener immediately
-                document.getElementById("removeCoupon").addEventListener("click", removeCoupon);
-                setTimeout(() => {
-                    appliedCouponSection.style.display = "block";
-                    const removeCouponBtn = document.getElementById("removeCoupon");
-                    if (removeCouponBtn) {
-                        removeCouponBtn.addEventListener("click", removeCoupon);
-                    }
-                }, 50);
+                grandTotalDisplay.innerText = `₹${result.originalAmount1.toFixed(2)}`;
+                grandTotalInput.value = result.originalAmount1.toFixed(2);
+                appliedCouponSection.innerHTML = ""; 
             } else {
                 alert(result.message);
             }
         } catch (error) {
-            console.error("Error applying coupon:", error);
+            console.error("Error removing coupon:", error);
         }
-    });
-    async function removeCoupon(event) {
-    event.preventDefault();
-    const appliedCouponElement = document.querySelector("span.text-success"); 
-    const appliedCoupon = appliedCouponElement ? appliedCouponElement.innerText.trim() : "";
-    const discountElement = document.querySelector("span.text-warning"); 
-    const discountText = discountElement ? discountElement.innerText.trim() : "0"; 
-    // Remove non-numeric characters (₹ and extra spaces) before parsing
-    const discountAmount = discountText ? parseFloat(discountText.replace(/[^\d.]/g, "")) : 0; 
-    const grandTotalInput = document.getElementById("grandTotalInput");
-    const originalAmount = grandTotalInput ? parseFloat(grandTotalInput.value) : 0;
-    if (!appliedCoupon) {
-        console.error("No coupon found in the UI.");
-        alert("No coupon applied.");
-        return;
-    }
-
-    if (originalAmount <= 0) {
-        console.error("Original amount is invalid.");
-        alert("Error: Invalid original amount.");
-        return;
-    }
-
-    try {
-        const response = await fetch("/remove-coupon", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ appliedCoupon, originalAmount, discountAmount }) 
+      }
+      
+        // Ensure correct grand total is submitted
+        paymentForm.addEventListener("submit", function () {
+            console.log("Final amount being submitted:", grandTotalInput.value);
         });
-
-        const result = await response.json();
-        if (result.success) {
-            grandTotalDisplay.innerText = `₹${result.originalAmount1.toFixed(2)}`;
-            grandTotalInput.value = result.originalAmount1.toFixed(2);
-            appliedCouponSection.innerHTML = ""; 
-        } else {
-            alert(result.message);
-        }
-    } catch (error) {
-        console.error("Error removing coupon:", error);
-    }
-}
-
-    // Ensure correct grand total is submitted
-    paymentForm.addEventListener("submit", function () {
-        console.log("Final amount being submitted:", grandTotalInput.value);
-    });
-});
-
-</script>
-<script>
-    document.getElementById("continue-button").addEventListener("click", async function (event) {
-    event.preventDefault();
-
-    // Get stored payment method and grand total
-    const paymentMethod = document.getElementById("paymentMethod").value;
-    const grandTotal = document.getElementById("grandTotalInput").value;
-    const couponCode = document.getElementById("couponCodeInput") ? document.getElementById("couponCodeInput").value : "";
-
-    // Retrieve all cart items dynamically from the table
-    const cartItems = [];
-    document.querySelectorAll("tr[data-id]").forEach(row => {
-        const productId = row.getAttribute("data-id");
-        const price = parseFloat(row.getAttribute("data-price"));
-        const stock = parseInt(row.getAttribute("data-stock"));
-        const quantity = parseInt(row.querySelector(".product-quantity").value);
-        const subTotal = price * quantity;
-
-        cartItems.push({ productId, price, quantity, subTotal });
-    });
-
-    const response = await fetch("/placeorder", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-        paymentMethod: paymentMethod,
-        grandTotal: grandTotal,  
-        products: cartItems, 
-        couponCode: couponCode // 🔹 Added Coupon Code Here!
-    })
-});
-
-const data = await response.json();
-
-// 🔹 Show a Toast Notification if the order amount is greater than ₹500 for COD
-if (data.success === false && data.message) {
-    Toastify({
-        text: data.message,
-        duration: 3000,
-        gravity: "top", // Top position
-        position: "center", // Center alignment
-        backgroundColor: "#FF3B30", // Red color for error
-        stopOnFocus: true, // Stop on hover
-    }).showToast();
-    return; // Stop further execution
-}
-
-if (data.paymentMethod === "Online Payment") {
-    const options = {
-        key: data.key, 
-        amount: data.amount * 100, 
-        currency: "INR",
-        name: "V-Shop",
-        description: "Milk-based products",
-        order_id: data.razorpayOrderId,
-        handler: async function (response) {
-            const verifyResponse = await fetch("/verify-payment", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    orderId: data.orderId,
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                })
-            });
-
-            const verifyData = await verifyResponse.json();
-            
-            if (verifyData.success) {
-                document.body.innerHTML = verifyData.html;
-            } else {
-                Toastify({
-                    text: "Payment verification failed. Please try again.",
-                    duration: 3000,
-                    gravity: "top",
-                    position: "center",
-                    backgroundColor: "#FF3B30",
-                }).showToast();
-            }
-        },
-        theme: { color: "#3399cc" }
-    };
-
-    const rzp = new Razorpay(options);
-    rzp.open();
-} else {
-    if (data.success) {
-        window.location.href = data.redirectUrl;
-    } else {
+      });
+      
+      </script>
+      <script>
+        document.getElementById("continue-button").addEventListener("click", async function (event) {
+        event.preventDefault();
+      
+        // Get stored payment method and grand total
+        const paymentMethod = document.getElementById("paymentMethod").value;
+        const grandTotal = document.getElementById("grandTotalInput").value;
+        const couponCode = document.getElementById("couponCodeInput") ? document.getElementById("couponCodeInput").value : "";
+      
+        // Retrieve all cart items dynamically from the table
+        const cartItems = [];
+        document.querySelectorAll("tr[data-id]").forEach(row => {
+            const productId = row.getAttribute("data-id");
+            const price = parseFloat(row.getAttribute("data-price"));
+            const stock = parseInt(row.getAttribute("data-stock"));
+            const quantity = parseInt(row.querySelector(".product-quantity").value);
+            const subTotal = price * quantity;
+      
+            cartItems.push({ productId, price, quantity, subTotal });
+        });
+      
+        const response = await fetch("/placeorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            paymentMethod: paymentMethod,
+            grandTotal: grandTotal,  
+            products: cartItems, 
+            couponCode: couponCode // 🔹 Added Coupon Code Here!
+        })
+      });
+      
+      const data = await response.json();
+      
+      // 🔹 Show a Toast Notification if the order amount is greater than ₹500 for COD
+      if (data.success === false && data.message) {
         Toastify({
-            text: "Order placement failed. Please try again.",
+            text: data.message,
             duration: 3000,
+            gravity: "top", // Top position
+            position: "center", // Center alignment
+            backgroundColor: "#FF3B30", // Red color for error
+            stopOnFocus: true, // Stop on hover
+        }).showToast();
+        return; // Stop further execution
+      }
+      
+      if (data.paymentMethod === "Online Payment") {
+        const options = {
+            key: data.key, 
+            amount: data.amount * 100, 
+            currency: "INR",
+            name: "V-Shop",
+            description: "Milk-based products",
+            order_id: data.razorpayOrderId,
+            handler: async function (response) {
+                const verifyResponse = await fetch("/verify-payment", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        orderId: data.orderId,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                    })
+                });
+      
+                const verifyData = await verifyResponse.json();
+                
+                if (verifyData.success) {
+                    document.body.innerHTML = verifyData.html;
+                } else {
+                    Toastify({
+                        text: "Payment verification failed. Please try again.",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "center",
+                        backgroundColor: "#FF3B30",
+                    }).showToast();
+                }
+            },
+            theme: { color: "#3399cc" }
+        };
+      
+        const rzp = new Razorpay(options);
+        rzp.open();
+      } else {
+        if (data.success) {
+            window.location.href = data.redirectUrl;
+        } else {
+            Toastify({
+                text: "Order placement failed. Please try again.",
+                duration: 3000,
+                gravity: "top",
+                position: "center",
+                backgroundColor: "#FF3B30",
+            }).showToast();
+        }
+      }
+      });
+      // Function to show toast message
+      function showToast(message, bgColor = "linear-gradient(to right, #ff416c, #ff4b2b)") {
+        Toastify({
+            text: message,
+            duration: 3000,
+            close: true,
             gravity: "top",
             position: "center",
-            backgroundColor: "#FF3B30",
+            backgroundColor: bgColor,
         }).showToast();
-    }
-}
-});
-// Function to show toast message
-function showToast(message, bgColor = "linear-gradient(to right, #ff416c, #ff4b2b)") {
-    Toastify({
-        text: message,
-        duration: 3000,
-        close: true,
-        gravity: "top",
-        position: "center",
-        backgroundColor: bgColor,
-    }).showToast();
-}
-
-// Example: Show toast when wallet balance is insufficient
-fetch("/placeOrder", { method: "POST", body: JSON.stringify(orderData) })
-    .then(response => response.json())
-    .then(data => {
-        if (!data.success) {
-            showToast(data.message);
-        } else {
-            window.location.href = data.redirectUrl; // Redirect on success
-        }
-    })
-    .catch(error => console.error("Error:", error));
-</script> 
+      }
+      
+      // Example: Show toast when wallet balance is insufficient
+      fetch("/placeOrder", { method: "POST", body: JSON.stringify(orderData) })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                showToast(data.message);
+            } else {
+                window.location.href = data.redirectUrl; // Redirect on success
+            }
+        })
+        .catch(error => console.error("Error:", error));
+      </script> 
 </body>
 </html>
