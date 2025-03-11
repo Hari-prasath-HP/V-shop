@@ -24,7 +24,13 @@ const walletSchema = new mongoose.Schema({
             },
             description: { 
                 type: String, 
+                enum: ['cancel', 'return', 'online_added', 'placed_using_wallet','referred'], 
                 required: true 
+            },
+            orderId: {  // 🔹 Added this field to link transactions to orders
+                type: mongoose.Schema.Types.ObjectId, 
+                ref: 'Order',
+                required: function() { return this.description === 'cancel' || this.description === 'return'; } // Required for returns/cancellations
             },
             createdAt: { 
                 type: Date, 

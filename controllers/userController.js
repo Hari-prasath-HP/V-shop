@@ -11,6 +11,8 @@ const PdfPrinter = require('pdfmake');
 const fs = require('fs');
 const path = require('path');
 const Order = require('../models/order');
+const crypto = require("crypto");
+const Wallet = require("../models/wallet");
 exports.renderSignup = (req, res) => {
   if (req.session.logstate) {
     return res.redirect("/home");
@@ -20,36 +22,67 @@ exports.renderSignup = (req, res) => {
   res.render("user/signup", { error });
 }
 exports.handleSignup = async (req, res) => {
-  const { username, email, phone, password, confirmPassword } = req.body;
+  const { username, email, phone, password, confirmPassword, referralCode } = req.body;
+
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-        return res.render("user/signup", { 
-            error: "Email already exists", 
-            username, 
-            email, 
-            phone,
-            password,
-            confirmPassword
-        });
+      return res.render("user/signup", {
+        error: "Email already exists",
+        username,
+        email,
+        phone,
+        password,
+        confirmPassword,
+        referralCode
+      });
     }
+
+    // ✅ Generate referral code for the new user
+    const generatedReferralCode = `${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+
+    let referredByUser = null;
+
+    // ✅ If a referral code is entered, check if it exists
+    if (referralCode) {
+      referredByUser = await User.findOne({ referralCode });
+
+      if (!referredByUser) {
+        return res.render("user/signup", {
+          error: "Invalid referral code",
+          username,
+          email,
+          phone,
+          password,
+          confirmPassword,
+          referralCode
+        });
+      }
+    }
+
     const otp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpires = new Date(Date.now() + 1 * 60 * 1000); 
+    const otpExpires = new Date(Date.now() + 1 * 60 * 1000);
     req.session.otpExpires = otpExpires;
+
     await Otp.findOneAndUpdate(
       { email },
       { otp, otpExpires },
       { upsert: true, new: true }
     );
+
     await otpService.sendOtp(email, otp);
     console.log(`✅ OTP: ${otp} sent to ${email}, expires at: ${otpExpires}`);
-    req.session.signupData = { username, email, phone, password };
-    res.render("user/verifyOtp", { 
-      email, 
-      signerr: null, 
+
+    // ✅ Store signup data and referral details in session
+    req.session.signupData = { username, email, phone, password, generatedReferralCode, referredByUser };
+
+    res.render("user/verifyOtp", {
+      email,
+      signerr: null,
       otpExpires: otpExpires.getTime(),
-      otpExpired: false 
+      otpExpired: false
     });
+
   } catch (err) {
     console.error("Error during sign-up:", err);
     req.session.signerr = "An internal server error occurred. Please try again later.";
@@ -163,6 +196,7 @@ exports.verifyOtp = async (req, res) => {
         otpExpires: req.session.otpExpires ? new Date(req.session.otpExpires) : null
       });
     }
+
     req.session.otpExpires = req.session.otpExpires || otpRecord.otpExpires;
 
     if (Date.now() > new Date(req.session.otpExpires)) {
@@ -180,18 +214,47 @@ exports.verifyOtp = async (req, res) => {
         otpExpires: new Date(req.session.otpExpires) 
       });
     }
-    await Otp.deleteOne({ email });
-    req.session.otpExpires = null; 
 
-    const { username, phone, password } = req.session.signupData;
+    await Otp.deleteOne({ email });
+    req.session.otpExpires = null;
+
+    const { username, phone, password, generatedReferralCode, referredByUser } = req.session.signupData;
+
     const newUser = new User({
       username,
       email,
       phone,
-      password: await bcrypt.hash(password, 10)
+      password: await bcrypt.hash(password, 10),
+      referralCode: generatedReferralCode
     });
 
     await newUser.save();
+
+    // ✅ Create a wallet for the new user
+    const newWallet = new Wallet({
+      userId: newUser._id,
+      balance: 0,
+      transactions: []
+    });
+
+    await newWallet.save();
+
+    // ✅ If referred by someone, credit 100 to their wallet
+    if (referredByUser) {
+      const referrerWallet = await Wallet.findOne({ userId: referredByUser._id });
+
+      if (referrerWallet) {
+        referrerWallet.balance += 150;
+        referrerWallet.transactions.push({
+          transactionType: "credit",
+          amount: 100,
+          description: "referred"
+        });
+
+        await referrerWallet.save();
+      }
+    }
+
     return res.render("user/login", {
       email, 
       loginerr: null,
@@ -207,6 +270,7 @@ exports.verifyOtp = async (req, res) => {
     });
   }
 };
+
 exports.renderhome = async (req, res) => {
   try {
     let user = req.user || null;

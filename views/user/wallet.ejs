@@ -162,41 +162,48 @@
             <h3 class="text-secondary">Transaction History</h3>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover text-center">
-                    <thead class="table-dark text-light">
-                        <tr>
-                            <th style="width: 20%;">Transaction ID</th>
-                            <th style="width: 20%;">Transaction Date</th>
-                            <th style="width: 20%;">User</th>
-                            <th style="width: 20%;">Transaction Type</th>
-                            <th style="width: 20%;">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% wallet.transactions.forEach(transaction => { %>
-                            <tr class="<%= transaction.transactionType === 'credit' ? 'table-success' : 'table-danger' %>">
-                                <td><%= transaction._id %></td>
-                                <td><%= new Date(transaction.createdAt).toLocaleDateString() %></td>
-                                <td><%= wallet.userId.username %></td>
-                                <td>
-                                    <span class="fw-bold">
-                                        <i class="me-2 <%= transaction.transactionType === 'credit' ? 'fas fa-plus-circle' : 'fas fa-minus-circle' %>"></i>
-                                        <%= transaction.transactionType %>
-                                    </span>
-                                </td>
-                                <td class="fw-bold">₹<%= transaction.amount %></td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
+                  <thead class="table-dark text-light">
+                    <tr>
+                      <th style="width: 20%;">Transaction ID</th>
+                      <th style="width: 10%;">Transaction Date</th>
+                      <th style="width: 20%;">Source</th>
+                      <th style="width: 15%;">Transaction Type</th>
+                      <th style="width: 20%;">Amount</th>
+                      <th style="width: 20%;">Action</th> <!-- New column for the button -->
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% wallet.transactions.forEach(transaction => { %>
+                      <tr class="<%= transaction.transactionType === 'credit' ? 'table-success' : 'table-danger' %>">
+                        <td><%= transaction._id %></td>
+                        <td><%= new Date(transaction.createdAt).toLocaleDateString() %></td>
+                        <td><%= transaction.description %></td>
+                        <td>
+                          <span class="fw-bold">
+                            <i class="me-2 <%= transaction.transactionType === 'credit' ? 'fas fa-plus-circle' : 'fas fa-minus-circle' %>"></i>
+                            <%= transaction.transactionType %>
+                          </span>
+                        </td>
+                        <td class="fw-bold">₹<%= transaction.amount %></td>
+                        <td>
+                            <% console.log("EJS orderId:", transaction.orderId); %> 
+                            <% if (transaction.isReturnOrCancel && transaction.orderId) { %>
+                                <a href="/order/view/<%= transaction.orderId._id.toString() %>" class="btn btn-primary">View Order</a>
+                            <% } %>
+                        </td>                                                                                         
+                      </tr>
+                    <% }); %>
+                  </tbody>
                 </table>
-            </div>
+              </div>
         </div>
     </div> 
 </div>
-    <footer>
-        <p>&copy; 2025 Vegishop. All rights reserved.</p>
-        <a href="privacy.html">Privacy Policy</a>
-        <a href="terms.html">Terms of Service</a>
-    </footer>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+<footer>
+    <p>&copy; 2025 Vegishop. All rights reserved.</p>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html">Terms of Service</a>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
 </body>
 </html>

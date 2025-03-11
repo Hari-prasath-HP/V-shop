@@ -634,6 +634,29 @@ if (data.paymentMethod === "Online Payment") {
     }
 }
 });
+// Function to show toast message
+function showToast(message, bgColor = "linear-gradient(to right, #ff416c, #ff4b2b)") {
+    Toastify({
+        text: message,
+        duration: 3000,
+        close: true,
+        gravity: "top",
+        position: "center",
+        backgroundColor: bgColor,
+    }).showToast();
+}
+
+// Example: Show toast when wallet balance is insufficient
+fetch("/placeOrder", { method: "POST", body: JSON.stringify(orderData) })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            showToast(data.message);
+        } else {
+            window.location.href = data.redirectUrl; // Redirect on success
+        }
+    })
+    .catch(error => console.error("Error:", error));
 </script> 
 </body>
 </html>

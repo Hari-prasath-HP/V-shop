@@ -16,7 +16,8 @@ exports.viewUserDetails = async (req, res) => {
             user: {
                 username: user.username,
                 phone: user.phone,
-                email: user.email
+                email: user.email,
+                refferalcode:user.referralCode||null,
             }
         });
     } catch (err) {
@@ -174,47 +175,57 @@ exports.getAllOrdersForUser = async (req, res) => {
 };
 exports.getOrderDetails = async (req, res) => {
     try {
-      const orderId = req.params.id;
-      const order = await Order.findOne({ 
-        _id: orderId, 
-        orderStatus: { $ne: "Pending" }  
-    })
-    .populate({
-        path: 'products.product', 
-        model: 'Product',
-        select: 'name images price offerPrice'
-    }) 
-    .populate('user', 'username email')
-    .populate('shippingAddress.userId', 'username email')
-    .exec();
-    
-      if (!order) {
-        return res.status(404).render('error', { message: 'Order not found' });
-      }
-      const orderProducts = order.products.map(item => ({
-        image: item.product && item.product.images.length > 0 ? item.product.images[0] : '/images/default.jpg', 
-        name: item.product ? item.product.name : 'Unknown',
-        price: item.price,
-        offerPrice: item.offerPrice,
-        quantity: item.quantity,
-        status:item.status,
-        subtotal: item.quantity * (item.offerPrice || item.price),
-        productId: item.product ? item.product._id : '',
-      }));
-      res.render('user/vieworders', {
-        orderId: order._id,
-        orderedAt: order.orderedAt,
-        shippingAddress: order.shippingAddress,
-        paymentMethod: order.paymentMethod,
-        paymentStatus: order.paymentStatus,
-        grandTotal: order.totalAmount,
-        orderStatus: order.orderStatus,
-        products: orderProducts,
-      });
+        const orderId = req.params.id;
+
+        console.log("Received orderId:", orderId); // Debugging log
+
+        // Validate if orderId is a valid ObjectId
+        if (!orderId || orderId.length !== 24) {
+            return res.status(400).render('error', { message: 'Invalid Order ID' });
+        }
+
+        const order = await Order.findOne({
+            _id: orderId,
+            orderStatus: { $ne: "Pending" }
+        })
+        .populate({
+            path: 'products.product',
+            model: 'Product',
+            select: 'name images price offerPrice'
+        })
+        .populate('user', 'username email')
+        .populate('shippingAddress.userId', 'username email')
+        .exec();
+
+        if (!order) {
+            return res.status(500).render("user/404");
+        }
+
+        const orderProducts = order.products.map(item => ({
+            image: item.product && item.product.images.length > 0 ? item.product.images[0] : '/images/default.jpg',
+            name: item.product ? item.product.name : 'Unknown',
+            price: item.price,
+            offerPrice: item.offerPrice,
+            quantity: item.quantity,
+            status: item.status,
+            subtotal: item.quantity * (item.offerPrice || item.price),
+            productId: item.product ? item.product._id : '',
+        }));
+
+        res.render('user/vieworders', {
+            orderId: order._id,
+            orderedAt: order.orderedAt,
+            shippingAddress: order.shippingAddress,
+            paymentMethod: order.paymentMethod,
+            paymentStatus: order.paymentStatus,
+            grandTotal: order.totalAmount,
+            orderStatus: order.orderStatus,
+            products: orderProducts,
+        });
     } catch (error) {
-      console.error('Error fetching order details:', error);
-      res.status(500).render('error', { message: 'Internal Server Error' });
+        console.error('Error fetching order details:', error);
+        res.status(500).render("user/404");
     }
-  };
-  
+};
+
   
