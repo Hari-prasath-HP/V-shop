@@ -109,12 +109,12 @@
         <div class="verify-container">
             <h2>Verify OTP</h2>
             <p>Enter the OTP sent to your email</p>
-            <form id="verifyOtpForm" action="/verify-otp" method="post" onsubmit="validateOtp(event)">
-                <input type="hidden" id="email" name="email" value="<%= email %>" />
+            <form id="verifyOtpForm" action="/verify-otp" method="post">
+                <input type="hidden" name="email" value="<%= email %>">
             
                 <div class="mb-3">
                     <label for="otp" class="form-label">OTP:</label>
-                    <input type="text" id="otp" name="otp" class="form-control" placeholder="Enter OTP">
+                    <input type="text" id="otp" name="otp" class="form-control" placeholder="Enter OTP" required>
                     <span id="otpError" class="error"></span>
                 </div>
             
@@ -127,82 +127,49 @@
             </form>          
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
-        function validateOtp(event) {
-            event.preventDefault();
-            const otp = document.getElementById("otp").value.trim();
-            const email = document.querySelector('input[name="email"]').value.trim();
-            const otpError = document.getElementById("otpError");
-            otpError.textContent = "";
-    
-            if (!otp) {
-                otpError.textContent = "OTP is required.";
-            } else {
-                fetch("/verify-otp", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, otp })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert("OTP Verified Successfully!");
-                        window.location.href = "/dashboard";
-                    } else {
-                        otpError.textContent = "Invalid OTP!";
-                    }
-                })
-                .catch(error => console.error("Error verifying OTP:", error));
-            }
-        }
-    
-        let timeLeft = 60;
-        const timerElement = document.getElementById("timer");
-        const resendOtpButton = document.getElementById("resendOtp");
-    
-        function updateTimer() {
-            if (timeLeft > 0) {
-                timerElement.textContent = timeLeft;
+        function startTimer() {
+            let timeLeft = 60;
+            const timerElement = document.getElementById("timer");
+            const resendButton = document.getElementById("resendOtp");
+
+            const countdown = setInterval(() => {
                 timeLeft--;
-                setTimeout(updateTimer, 1000);
-            } else {
-                resendOtpButton.removeAttribute("disabled");
-                timerElement.textContent = "0";
-            }
-        }
-        updateTimer();
-    
-        async function resendOtp() {
-            const email = document.querySelector('input[name="email"]').value.trim();
-    
-            if (!email) {
-                alert("Email not found. Please re-enter your email.");
-                return;
-            }
-    
-            resendOtpButton.setAttribute("disabled", "true");
-            timeLeft = 60;
-            updateTimer();
-    
-            try {
-                const response = await fetch("/send-otp", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email })
-                });
-    
-                const data = await response.json();
-    
-                if (data.success) {
-                    alert("OTP Resent! Check your email.");
-                } else {
-                    alert("Failed to resend OTP. Try again.");
+                timerElement.textContent = timeLeft;
+                if (timeLeft === 0) {
+                    clearInterval(countdown);
+                    resendButton.removeAttribute("disabled");
                 }
-            } catch (error) {
-                console.error("Error resending OTP:", error);
-                alert("An error occurred. Please try again.");
-            }
+            }, 1000);
         }
+
+        function resendOtp() {
+            const email = "<%= email %>";
+
+            fetch("/resend-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Toastify({ text: "OTP resent successfully!", backgroundColor: "green" }).showToast();
+                    startTimer();
+                    document.getElementById("resendOtp").setAttribute("disabled", "true");
+                } else {
+                    Toastify({ text: data.message || "Failed to resend OTP", backgroundColor: "red" }).showToast();
+                }
+            })
+            .catch(error => {
+                console.error("Error resending OTP:", error);
+                Toastify({ text: "An error occurred. Please try again.", backgroundColor: "red" }).showToast();
+            });
+        }
+
+        startTimer(); // Start countdown on page load
     </script>
 </body>
 </html>

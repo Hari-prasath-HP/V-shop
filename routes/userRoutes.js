@@ -16,6 +16,7 @@ router.post('/login', UserController.handlelogin);
 router.get('/forgot-password', passwordController.getforgetpassword)
 router.post('/forgot-password', passwordController.postForgetPassword);
 router.post("/verify-otp", passwordController.postVerifyOtp);
+router.post("/set-new-password", passwordController.setNewPassword);
 
 // Google Authentication Routes
 router.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
