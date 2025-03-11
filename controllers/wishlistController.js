@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 
 exports.addToWishlist = async (req, res) => {
     const { productId } = req.body;
-    const userId = req.session.user?.id; // Ensure session exists
+    const userId = req.session.user?.id;
 
     if (!userId) {
         return res.status(401).json({ success: false, message: "User not logged in" });
@@ -14,7 +14,6 @@ exports.addToWishlist = async (req, res) => {
         let wishlist = await Wishlist.findOne({ userId });
 
         if (!wishlist) {
-            // If no wishlist exists, create a new one with the product
             wishlist = new Wishlist({ userId, products: [productId] });
             await wishlist.save();
             return res.json({ success: true, message: "Product added to wishlist", action: "added" });
@@ -23,12 +22,10 @@ exports.addToWishlist = async (req, res) => {
         const productExists = wishlist.products.some(id => id.toString() === productId);
 
         if (productExists) {
-            // Remove product from wishlist if it already exists
             wishlist.products = wishlist.products.filter(id => id.toString() !== productId);
             await wishlist.save();
             return res.json({ success: true, message: "Product removed from wishlist", action: "removed" });
         } else {
-            // Add product to wishlist
             wishlist.products.push(productId);
             await wishlist.save();
             return res.json({ success: true, message: "Product added to wishlist", action: "added" });
@@ -40,7 +37,7 @@ exports.addToWishlist = async (req, res) => {
 };
 exports.removeFromWishlist = async (req, res) => {
     const { productId } = req.body;
-    const userId = req.session.user?.id; // Use optional chaining to avoid errors
+    const userId = req.session.user?.id;
 
     if (!userId) {
         return res.status(401).json({ success: false, message: "User not logged in" });
@@ -51,12 +48,8 @@ exports.removeFromWishlist = async (req, res) => {
         if (!wishlist) {
             return res.status(404).json({ success: false, message: "Wishlist not found" });
         }
-
-        // Remove the product from wishlist
         wishlist.products = wishlist.products.filter(id => id.toString() !== productId);
         await wishlist.save();
-
-        // Redirect with a query parameter to trigger success alert on the frontend
         res.redirect(`/wishlist?removed=true`);
     } catch (error) {
         console.error("Error removing from wishlist:", error);
@@ -65,7 +58,7 @@ exports.removeFromWishlist = async (req, res) => {
 };
 exports.getWishlist = async (req, res) => {
     try {
-        const userId = req.session.user?.id; // Ensure session exists
+        const userId = req.session.user?.id;
         if (!userId) {
             return res.status(401).json({ success: false, message: "User not logged in" });
         }
@@ -81,7 +74,7 @@ exports.getWishlist = async (req, res) => {
             wishlist: wishlist.products.map(product => ({
                 productId: product._id,
                 name: product.name,
-                image: product.images[0], // Assuming images array
+                image: product.images[0], 
                 price: product.price
             }))
         });

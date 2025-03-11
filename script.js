@@ -1,4 +1,3 @@
-// Required Dependencies
 const express = require('express');
 const session = require('express-session');
 const mongoose = require('mongoose');
@@ -8,8 +7,6 @@ const connectDB = require('./config/mongo');
 const passport = require("passport");
 const flash = require('connect-flash');
 require("./config/passport");
-
-// Initialize Express App
 const app = express();
 
 // Body Parser Middleware

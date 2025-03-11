@@ -36,7 +36,6 @@ exports.login = async (req, res) => {
     return res.redirect('/admin/login');
   }
 };
-// Dashboard Page
 exports.dashboardPage = async (req, res) => {
   if (!req.session.isAdmin) {
     return res.redirect("/admin/login");
@@ -70,13 +69,13 @@ const monthlyRevenueData = await Order.aggregate([
   {
     $match: {
       orderStatus: "Delivered",
-      deliveredAt: { $exists: true, $gte: startOfMonth, $lt: startOfNextMonth }, // Ensure deliveredAt exists
+      deliveredAt: { $exists: true, $gte: startOfMonth, $lt: startOfNextMonth },
     },
   },
   {
     $group: {
       _id: null,
-      total: { $sum: "$totalAmount" }, // Sum up totalAmount
+      total: { $sum: "$totalAmount" },
     },
   },
 ]);
@@ -120,7 +119,6 @@ const categoryRevenue = await Order.aggregate([
   },
 ]);
 
-    // Default: Fetch daily sales
     const salesReport = await getDailySales();
     res.render("admin/dashboard", {
       adminEmail: req.session.adminEmail,
@@ -171,7 +169,6 @@ exports.getfilter = async (req, res) => {
   }
 };
 
-// Helper Functions for Sales Data
 const getDailySales = async () => {
   return await Order.aggregate([
     { $match: { orderStatus: "Delivered" } },
@@ -238,7 +235,6 @@ const getYearlySales = async () => {
     { $project: { _id: 0, date: { $toString: "$_id" }, totalSales: 1 } },
   ]);
 };
-// Controller: Get Top-Selling Products
 exports.getTopSellingProducts = async (req, res) => {
   try {
     const topProducts = await Order.aggregate([
@@ -269,8 +265,6 @@ exports.getTopSellingProducts = async (req, res) => {
         }
       }
     ]);
-
-    // Render the EJS template with products data
     res.render("admin/topSelling", { type: "products", data: topProducts });
   } catch (error) {
     console.error("Error fetching top-selling products:", error);
@@ -278,7 +272,6 @@ exports.getTopSellingProducts = async (req, res) => {
   }
 };
 
-// Controller: Get Top-Selling Categories
 exports.getTopSellingCategories = async (req, res) => {
   try {
     const topCategories = await Order.aggregate([
@@ -318,7 +311,6 @@ exports.getTopSellingCategories = async (req, res) => {
       }
     ]);
 
-    // Render the EJS template with categories data
     res.render("admin/topSelling", { type: "categories", data: topCategories });
   } catch (error) {
     console.error("Error fetching top-selling categories:", error);
@@ -658,13 +650,11 @@ exports.addProduct = async (req, res) => {
     console.log("📥 Received Product Data:", req.body);
     console.log("📸 Received Files:", req.files);
 
-    // Validate required fields
     if (!name || !description || !price || !category || !stock || !quantity || !unit) {
       req.session.error = 'All fields are required';
       return res.redirect('/admin/addProduct');
     }
 
-    // Trim and sanitize fields
     const trimmedName = name.trim();
     const trimmedDescription = description.trim();
     const validPrice = parseFloat(price);
@@ -672,7 +662,6 @@ exports.addProduct = async (req, res) => {
     const validOfferPrice = offerPrice ? parseFloat(offerPrice) : validPrice;
     const validQuantity = parseFloat(quantity);
 
-    // Check if product name already exists (case insensitive)
     const existingProduct = await Product.findOne({ name: new RegExp(`^${trimmedName}$`, 'i') });
     if (existingProduct) {
       req.session.error = 'Product with this name already exists';
@@ -684,13 +673,11 @@ exports.addProduct = async (req, res) => {
       return res.redirect('/admin/addProduct');
     }
 
-    // Ensure at least 3 cropped images are uploaded
     if (!req.files || req.files.length < 3) {
       req.session.error = 'You must upload at least 3 cropped images';
       return res.redirect('/admin/addProduct');
     }
 
-    // Extract only the filenames from the uploaded cropped images
     const images = req.files.map(file => file.filename);
 
     if (images.length === 0) {
@@ -700,14 +687,13 @@ exports.addProduct = async (req, res) => {
 
     console.log("✅ Cropped Images Saved:", images);
 
-    // Save the product with the cropped images
     const newProduct = new Product({
       name: trimmedName,
       description: trimmedDescription,
       price: validPrice,
       category,
       stock: validStock,
-      images, // Store only cropped images
+      images, 
       offerPrice: validOfferPrice,
       isListed: true,
       quantity: {
@@ -904,9 +890,9 @@ exports.updateOrderStatus = async (req, res) => {
           product.status = status;
       });
       if (status === 'Delivered') {
-          order.deliveredAt = new Date(); // Always updates to the current date and time
+          order.deliveredAt = new Date();
       } else {
-          order.deliveredAt = null; // Clears the date if not delivered
+          order.deliveredAt = null; 
       }
       await order.save();
       res.json({ message: 'Order and product statuses updated successfully', order });
@@ -950,13 +936,10 @@ exports.viewOrder = async (req, res) => {
 };
 exports.getSalesReport = async (req, res) => {
   try {
-      // Fetch only orders with status "Delivered"
       const orders = await Order.find({ orderStatus: "Delivered" })
-        .populate('user', 'name') // Populate user name only
-        .populate('products.product') // Populate product details
+        .populate('user', 'name') 
+        .populate('products.product')
         .sort({ createdAt: -1 });
-
-      // Fetch full product details using the product IDs
       const formattedOrders = await Promise.all(
         orders.map(async (order) => {
           const items = await Promise.all(
@@ -971,7 +954,7 @@ exports.getSalesReport = async (req, res) => {
 
           return {
             userName: order.shippingAddress.name, 
-            orderDate: order.createdAt.toISOString().split('T')[0], // Format date
+            orderDate: order.createdAt.toISOString().split('T')[0],
             items,
             price: order.totalAmount,
             offerPrice: order.products.reduce((sum, item) => sum + (item.offerPrice * item.quantity), 0), 
@@ -998,14 +981,14 @@ exports.filterOrders = async (req, res) => {
         }
 
         const startDate = new Date(from);
-        startDate.setHours(0, 0, 0, 0); // Normalize time to start of day
+        startDate.setHours(0, 0, 0, 0); 
 
         const endDate = new Date(to);
-        endDate.setHours(23, 59, 59, 999); // Normalize time to end of day
+        endDate.setHours(23, 59, 59, 999);
 
         const orders = await Order.find({
           orderStatus: "Delivered",orderedAt: { $gte: startDate, $lte: endDate }
-        }).populate('products.product', 'name') // Populate product names
+        }).populate('products.product', 'name') 
         .lean().sort({ createdAt: -1 });
         const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
         res.json({ success: true, orders , totalSales});
@@ -1014,10 +997,9 @@ exports.filterOrders = async (req, res) => {
         res.json({ success: false, message: "Server error" });
     }
 };
-// ✅ API to get all orders (Clear Filter)
 exports.getAllOrders = async (req, res) => {
   try {
-      const orders = await Order.find({ orderStatus: "Delivered" }).populate('products.product', 'name') // Populate product names
+      const orders = await Order.find({ orderStatus: "Delivered" }).populate('products.product', 'name')
       .lean().sort({ createdAt: -1 });
       const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
       res.json({ success: true, orders , totalSales});
@@ -1035,12 +1017,12 @@ exports.filterOrdersByTime = async (req, res) => {
 
       if (filterType === "week") {
         startDate = new Date(now);
-        startDate.setDate(startDate.getDate() - startDate.getDay()); // Move to the start of the week (Sunday)
-        startDate.setHours(0, 0, 0, 0); // Start of the week
+        startDate.setDate(startDate.getDate() - startDate.getDay()); 
+        startDate.setHours(0, 0, 0, 0); 
     
         endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + 6); // Move to the end of the week (Saturday)
-        endDate.setHours(23, 59, 59, 999); // End of the week
+        endDate.setDate(endDate.getDate() + 6); 
+        endDate.setHours(23, 59, 59, 999);
     } else if (filterType === "month") {
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); 
@@ -1073,8 +1055,8 @@ exports.downloadSalesXlsx = async (req, res) => {
       let query = {orderStatus: "Delivered"};
       if (timeFilter) {
         if (timeFilter === 'week') {
-          from = today.startOf('week').toDate(); // Start of the week (Sunday by default)
-          to = today.endOf('week').toDate(); // End of the week (Saturday by default)
+          from = today.startOf('week').toDate(); 
+          to = today.endOf('week').toDate(); 
       } else if (timeFilter === 'month') {
             from = today.startOf('month').toDate();
             to = today.endOf('month').toDate();
@@ -1106,7 +1088,6 @@ exports.downloadSalesXlsx = async (req, res) => {
               orderDate: moment(order.orderedAt).format('YYYY-MM-DD ')
           });
       });
-      // Add Total Sales row at the end
       worksheet.addRow([]);
       worksheet.addRow({ _id: 'Total Sales', totalAmount: totalSales });
       const filePath = './sales_report.xlsx';
@@ -1129,8 +1110,8 @@ exports.downloadSalesPdf = async (req, res) => {
     let query = {orderStatus: "Delivered"};
     if (timeFilter) {
       if (timeFilter === 'week') {
-        from = today.startOf('week').toDate(); // Start of the week (Sunday by default)
-        to = today.endOf('week').toDate(); // End of the week (Saturday by default)
+        from = today.startOf('week').toDate(); 
+        to = today.endOf('week').toDate(); 
     } else if (timeFilter === 'month') {
           from = today.startOf('month').toDate();
           to = today.endOf('month').toDate();
@@ -1167,7 +1148,6 @@ exports.downloadSalesPdf = async (req, res) => {
         { text: order.products.map(p => p.product.name).join(', ') || 'N/A', style: 'tableCell', fillColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' }
       ]);
     });
-    // Add Total Sales row at the end
     tableBody.push([
       { text: '', colSpan: 2, border: [false, false, false, false] },
       {},

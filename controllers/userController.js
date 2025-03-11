@@ -11,7 +11,6 @@ const PdfPrinter = require('pdfmake');
 const fs = require('fs');
 const path = require('path');
 const Order = require('../models/order');
-//handle signup
 exports.renderSignup = (req, res) => {
   if (req.session.logstate) {
     return res.redirect("/home");
@@ -35,11 +34,8 @@ exports.handleSignup = async (req, res) => {
         });
     }
     const otp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpires = new Date(Date.now() + 1 * 60 * 1000); // Expires in 1 min
-
-    // Store otpExpires in session
+    const otpExpires = new Date(Date.now() + 1 * 60 * 1000); 
     req.session.otpExpires = otpExpires;
-
     await Otp.findOneAndUpdate(
       { email },
       { otp, otpExpires },
@@ -60,17 +56,14 @@ exports.handleSignup = async (req, res) => {
     return res.redirect("/signup");
   }
 };
-// Google Authentication Callback
 exports.googleAuthCallback = (req, res) => {
   if (req.user) {
-    req.session.user = req.user; // Store user in session
-    res.redirect("/"); // Redirect to homepage after login
+    req.session.user = req.user;
+    res.redirect("/"); 
   } else {
     res.redirect("/login");
   }
 };
-
-// render login
 exports.renderlogin = (req, res) => {
   if (req.session.logstate) {
     return res.redirect("/");
@@ -109,8 +102,6 @@ exports.handlelogin = async (req, res) => {
     return res.redirect('/login');
   }
 };
-
-// otp verify
 exports.renderVerifyOtpPage = (req, res) => {
   const { email } = req.query;
 
@@ -273,8 +264,6 @@ exports.getShopProducts = async (req, res) => {
     const categoryFilter = req.query.category || "";
     const minPrice = Number.isNaN(parseInt(req.query.minPrice)) ? 0 : parseInt(req.query.minPrice);
     const maxPrice = Number.isNaN(parseInt(req.query.maxPrice)) ? 1000 : parseInt(req.query.maxPrice);
-
-    // Sorting options
     const sortOptions = {
       "low-high": { offerPrice: 1 },
       "high-low": { offerPrice: -1 },
@@ -283,34 +272,22 @@ exports.getShopProducts = async (req, res) => {
       "new-arrivals": { createdAt: -1 },
     };
     const sortCriteria = sortOptions[sortOption] || {};
-
-    // Search filter
     let searchFilter = { isDeleted: { $ne: true } };
 
     if (searchQuery) {
       searchFilter.name = { $regex: searchQuery, $options: "i" };
     }
-
-    // Category filter
     if (categoryFilter && categoryFilter !== "all") {
       searchFilter.category = new mongoose.Types.ObjectId(categoryFilter);
     }
-
-    // Price range filter
     searchFilter.offerPrice = { $gte: minPrice, $lte: maxPrice };
-
-    // Fetch total product count
     const totalProducts = await Product.countDocuments(searchFilter);
     const totalPages = Math.ceil(totalProducts / itemsPerPage);
-
-    // Fetch products with applied filters
     const products = await Product.find(searchFilter)
       .sort(sortCriteria)
       .skip((currentPage - 1) * itemsPerPage)
       .limit(itemsPerPage)
       .populate("category");
-
-    // Process product details
     products.forEach((product) => {
       product.imagePaths = product.images.map((image) => `/uploads/products/${image}`);
       
@@ -326,11 +303,7 @@ exports.getShopProducts = async (req, res) => {
       product.quantity = product.stock;
       product.unit = product.unit || "Unit";
     });
-
-    // Fetch categories for filtering
     const categories = await Category.find({});
-
-    // Render shop products page
     res.render("user/shopproduct", {
       user,
       username,
@@ -406,12 +379,10 @@ exports.viewProduct = async (req, res) => {
     res.status(500).send(`Server Error: ${err.message}`);
   }
 };
-// Ensure 'invoices' directory exists
 const invoicesDir = path.join(__dirname, '../invoices');
 if (!fs.existsSync(invoicesDir)) {
     fs.mkdirSync(invoicesDir, { recursive: true });
 }
-// Define font paths
 const fonts = {
   Helvetica: {
       normal: 'Helvetica',
@@ -420,8 +391,6 @@ const fonts = {
       bolditalics: 'Helvetica-BoldOblique'
   }
 };
-
-// Instantiate PdfPrinter with fonts
 const printer = new PdfPrinter(fonts);
 exports.getInvoice = async (req, res) => {
   try {
@@ -509,8 +478,6 @@ exports.getInvoice = async (req, res) => {
               summaryBody: { fontSize: 12, margin: [5, 5, 5, 5] }
           }
       };
-
-      // Generate PDF
       const pdfDoc = printer.createPdfKitDocument(docDefinition);
       const filePath = path.join(invoicesDir, `invoice_${orderId}.pdf`);
       const writeStream = fs.createWriteStream(filePath);
@@ -521,7 +488,7 @@ exports.getInvoice = async (req, res) => {
       writeStream.on('finish', () => {
           res.download(filePath, `invoice_${orderId}.pdf`, (err) => {
               if (err) console.log(err);
-              fs.unlinkSync(filePath); // Delete after download
+              fs.unlinkSync(filePath); 
           });
       });
 

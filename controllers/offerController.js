@@ -17,30 +17,22 @@ cron.schedule('0 0 * * *', async () => {
         console.error("❌ Error updating expired offers:", error);
     }
 });
-// Get all category offers
 exports.getCategoryOffers = async (req, res) => {
     try {
-        // Fetch all category offers
         const offers = await CategoryOffer.find().populate('category', 'name');
-
-        // Fetch all categories to display in the dropdown for adding a new offer
         const categories = await Category.find({ isListed: true });
-
-        // Update status if the offer is expired
         const currentDate = new Date();
         for (const offer of offers) {
             if (new Date(offer.endDate) < currentDate && offer.status !== "Inactive") {
                 await CategoryOffer.findByIdAndUpdate(offer._id, { status: "Inactive" });
             }
         }
-
         res.render('admin/categoryoffer', { offers, categories });
     } catch (error) {
         console.error("Error fetching category offers:", error);
         res.status(500).send("Server Error");
     }
 };
-
 exports.postAddCategoryOffer = async (req, res) => {
     try {
         const { category, percentage, startDate, endDate } = req.body;
@@ -51,7 +43,7 @@ exports.postAddCategoryOffer = async (req, res) => {
         if (!categoryExists) {
             return res.status(400).json({ error: "Invalid Category ID" });
         }
-        const status = req.body.status || "Active"; // Default status
+        const status = req.body.status || "Active"; 
         const newOffer = new CategoryOffer({ category, percentage, startDate, endDate, status });
         await newOffer.save()
             .then(() => console.log("✅ Category offer added successfully!"))
@@ -95,13 +87,10 @@ exports.getCoupons = async (req, res) => {
 exports.addCoupon = async (req, res) => {
     try {
         const { code, discountType, discountValue, minPurchaseAmount,  usageLimit, expiryDate, startDate } = req.body;
-        // Check if a coupon with the same code already exists
         const existingCoupon = await Coupon.findOne({ code });
-
         if (existingCoupon) {
             return res.status(400).json({ success: false, message: "Coupon code already exists" });
         }
-
         const newCoupon = new Coupon({
             code,
             discountType,
@@ -111,7 +100,6 @@ exports.addCoupon = async (req, res) => {
             startDate,
             expiryDate
         });
-
         await newCoupon.save();
         res.redirect('/admin/coupons');
     } catch (error) {
@@ -119,55 +107,6 @@ exports.addCoupon = async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 };
-// exports.editCoupon = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         console.log("Received Coupon ID:", id);
-//         console.log("Received Coupon Data:", req.body);
-
-//         // Destructure and parse request body
-//         const { code, discountType, discountValue, minPurchaseAmount, usageLimit, startDate, expiryDate, isActive } = req.body;
-        
-//         // Ensure required fields are provided
-//         if (!id || !code || !discountType || !discountValue) {
-//             return res.status(400).json({ success: false, message: "Missing required fields" });
-//         }
-
-//         // Convert boolean and date values
-//         const isActiveBool = isActive === "true"; 
-//         const formattedStartDate = startDate ? new Date(startDate) : null;
-//         const formattedExpiryDate = expiryDate ? new Date(expiryDate) : null;
-
-//         // Find and update the coupon
-//         const updatedCoupon = await Coupon.findByIdAndUpdate(
-//             id,
-//             {
-//                 code,
-//                 discountType,
-//                 discountValue,
-//                 minPurchaseAmount,
-//                 usageLimit,
-//                 startDate: formattedStartDate,
-//                 expiryDate: formattedExpiryDate,
-//                 isActive: isActiveBool
-//             },
-//             { new: true } // Return the updated document
-//         );
-
-//         // If coupon not found, return error
-//         if (!updatedCoupon) {
-//             console.log("Coupon not found for ID:", id);
-//             return res.status(404).json({ success: false, message: 'Coupon not found' });
-//         }
-
-//         console.log("Coupon updated successfully:", updatedCoupon);
-//         res.status(200).json({ success: true, message: 'Coupon updated successfully', coupon: updatedCoupon });
-
-//     } catch (error) {
-//         console.error('Error updating coupon:', error);
-//         res.status(500).json({ success: false, message: 'Internal Server Error' });
-//     }
-// };
 exports.deleteCoupon = async (req, res) => {
     try {
         const { id } = req.params;

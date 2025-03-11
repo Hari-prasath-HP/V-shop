@@ -1,11 +1,10 @@
 exports.adminAuth = (req, res, next) => {
     if (!req.session.isAdmin) {
-      // Allow access to login page to avoid redirect loop
       if (req.path === "/login") {
         return next();
       }
-      return res.redirect('/admin/login'); // Redirect only if not on login page
+      return res.redirect('/admin/login'); 
     }
-    next(); // Continue if authenticated
+    next(); 
   };
   

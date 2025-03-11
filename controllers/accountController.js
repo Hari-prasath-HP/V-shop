@@ -155,7 +155,7 @@ exports.getAllOrdersForUser = async (req, res) => {
         }
         const orders = await Order.find({ 
             user: userId, 
-            orderStatus: { $ne: "Pending" }  // Exclude orders with "Pending" status
+            orderStatus: { $ne: "Pending" }  
         })
         .select('-products') 
         .sort({ orderedAt: -1 }) 
@@ -177,7 +177,7 @@ exports.getOrderDetails = async (req, res) => {
       const orderId = req.params.id;
       const order = await Order.findOne({ 
         _id: orderId, 
-        orderStatus: { $ne: "Pending" }  // Exclude orders with "Pending" status
+        orderStatus: { $ne: "Pending" }  
     })
     .populate({
         path: 'products.product', 
