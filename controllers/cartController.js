@@ -103,12 +103,10 @@ exports.updateQuantity = async (req, res) => {
     try {
         let cartItem = await Cart.findOne({ userId: req.session.user.id, productId: cartItemId });
         if (!cartItem) {
-            console.log("Cart item not found");
             return res.status(404).json({ success: false, message: "Cart item not found" });
         }
         let product = await Product.findById(cartItem.productId);
         if (!product) {
-            console.log("Product not found");
             return res.status(404).json({ success: false, message: "Product not found" });
         }
         if (quantity > 0) {
@@ -338,7 +336,6 @@ exports.savePaymentMethod = async (req, res) => {
       .sort({ createdAt: -1 });
     
     if (!existingOrder) {
-      console.log("No pending order found for user");
       return res.redirect('/cart');
     }
     
@@ -420,7 +417,6 @@ exports.applyCoupon = async (req, res) => {
 
       const finalAmount = grandTotal - discountAmount;
       await Coupon.updateOne({ _id: coupon._id }, { $inc: { usedCount: 1 } });
-      console.log(discountAmount,finalAmount)
       return res.status(200).json({
           success: true,
           message: "Coupon applied successfully!",
@@ -438,7 +434,6 @@ exports.applyCoupon = async (req, res) => {
 exports.cancelCoupon = async (req, res) => {
   try {
       const { appliedCoupon, originalAmount, discountAmount } = req.body;
-      console.log(req.body)
       if (!appliedCoupon) {
           return res.status(400).json({ success: false, message: "No coupon applied to cancel." });
       }
@@ -658,7 +653,6 @@ exports.placeOrder = async (req, res) => {
 exports.verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId, couponCode } = req.body;
-    console.log(couponCode)
     const userId = req.session.user.id
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ message: "Order not found." });
@@ -769,7 +763,6 @@ exports.returnProduct = async (req, res) => {
           return res.status(404).json({ message: "Product not found in order" });
       }
       const productDetails = order.products[productIndex];
-      console.log(productDetails)
       if (productDetails.status !== 'Delivered') {
           return res.status(400).json({ message: "Product cannot be returned" });
       }
@@ -788,7 +781,6 @@ exports.returnProduct = async (req, res) => {
               wallet = new Wallet({ userId: order.user._id, balance: 0, transactions: [] });
           }
           const refundAmount = productDetails.price * productDetails.quantity;
-          console.log(refundAmount)
           wallet.balance += refundAmount;
           wallet.transactions.push({
               transactionType: 'credit',
@@ -841,16 +833,12 @@ exports.cancelOrder = async (req, res) => {
     if (
       (order.paymentMethod === 'Online Payment' && order.paymentStatus === 'Completed') || 
       order.paymentMethod === 'Wallet' && order.paymentStatus === 'Completed') {
-      console.log("Processing refund...");
     
       let wallet = await Wallet.findOne({ userId: order.user._id });
     
       if (!wallet) {
-        console.log("No wallet found, creating a new one...");
         wallet = new Wallet({ userId: order.user._id, balance: 0, transactions: [] });
       }
-    
-      console.log(`Refund Amount: ${refundAmount}`);
       wallet.balance += refundAmount;
     
       wallet.transactions.push({

@@ -649,9 +649,6 @@ exports.addProduct = async (req, res) => {
   try {
     const { name, description, price, category, stock, offerPrice, quantity, unit } = req.body;
 
-    console.log("📥 Received Product Data:", req.body);
-    console.log("📸 Received Files:", req.files);
-
     if (!name || !description || !price || !category || !stock || !quantity || !unit) {
       req.session.error = 'All fields are required';
       return res.redirect('/admin/addProduct');
@@ -687,8 +684,6 @@ exports.addProduct = async (req, res) => {
       return res.redirect('/admin/addProduct');
     }
 
-    console.log("✅ Cropped Images Saved:", images);
-
     const newProduct = new Product({
       name: trimmedName,
       description: trimmedDescription,
@@ -705,7 +700,6 @@ exports.addProduct = async (req, res) => {
     });
 
     await newProduct.save();
-    console.log("🎉 Product saved successfully:", newProduct);
     res.redirect('/admin/product');
   } catch (error) {
     console.error("❌ Error adding product:", error);
@@ -1059,8 +1053,6 @@ exports.filterOrdersByTime = async (req, res) => {
           return res.json({ success: false, message: "Invalid filter type" });
       }
 
-      console.log(`Filtering orders from: ${startDate} to ${endDate}`);
-
       const orders = await Order.find({orderStatus: "Delivered",
           orderedAt: { $gte: startDate, $lte: endDate }
       }).populate('products.product', 'name')
@@ -1075,7 +1067,6 @@ exports.filterOrdersByTime = async (req, res) => {
 exports.downloadSalesXlsx = async (req, res) => {
   try {
       let { from, to, timeFilter } = req.query;
-      console.log(req.query)
       let totalSales = req.query.totalSales;
       const today = moment().startOf('day');  
       let query = {orderStatus: "Delivered"};
@@ -1130,7 +1121,6 @@ exports.downloadSalesXlsx = async (req, res) => {
 exports.downloadSalesPdf = async (req, res) => {
   try {
     let { from, to, timeFilter } = req.query;
-    console.log(req.query)
     let totalSales = req.query.totalSales;
     const today = moment().startOf('day');  
     let query = {orderStatus: "Delivered"};

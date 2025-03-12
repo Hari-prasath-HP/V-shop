@@ -53,7 +53,6 @@ exports.saveAddress = async (req, res) => {
     const userId = req.session.user.id;
     try {
         const validUserId = new mongoose.Types.ObjectId(userId);
-        console.log(validUserId);
         const { name, phone, houseNo, area, city, state, pincode, title } = req.body;
         const newAddress = new Address({
             userId: validUserId,
@@ -176,8 +175,6 @@ exports.getAllOrdersForUser = async (req, res) => {
 exports.getOrderDetails = async (req, res) => {
     try {
         const orderId = req.params.id;
-
-        console.log("Received orderId:", orderId); // Debugging log
 
         // Validate if orderId is a valid ObjectId
         if (!orderId || orderId.length !== 24) {

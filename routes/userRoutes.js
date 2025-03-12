@@ -74,6 +74,8 @@ router.post("/wishlist/remove", checkUserStatus ,wishlistController.removeFromWi
 router.get("/wishlist/get",checkUserStatus , wishlistController.getWishlist);
 router.get("/wishlist", wishlistController.renderWishlistPage);
 
+router.post("/wallet/add",wishlistController.createWalletOrder);
+router.post("/wallet/verify-payment",wishlistController.verifyWalletPayment);
 router.get("/download-invoice/:orderId",UserController.getInvoice)
 // logout
 router.post('/logout', UserController.logout);

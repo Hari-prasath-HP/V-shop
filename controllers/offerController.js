@@ -11,7 +11,6 @@ cron.schedule('0 0 * * *', async () => {
             { endDate: { $lt: currentDate }, status: { $ne: "Inactive" } },
             { $set: { status: "Inactive" } }
         );
-        console.log("✅ Expired category offers updated to Inactive.");
     } catch (error) {
         console.error("❌ Error updating expired offers:", error);
     }
@@ -109,7 +108,6 @@ exports.addCoupon = async (req, res) => {
 exports.deleteCoupon = async (req, res) => {
     try {
         const { id } = req.params;
-        console.log(req.params)
         const deletedCoupon = await Coupon.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
 
         if (!deletedCoupon) {

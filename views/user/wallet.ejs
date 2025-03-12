@@ -23,15 +23,6 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
-        .wallet-balance {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        .transactions {
-            list-style: none;
-            padding: 0;
-        }
         .transaction {
             display: flex;
             justify-content: space-between;
@@ -156,8 +147,32 @@
             <!-- Wallet Balance Section -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="fw-bold text-primary">Balance: ₹<%= wallet.balance %></h4>
+                <button id="addMoneyBtn" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addAmountModal">Add Money</button>
             </div>
-    
+
+            <!-- Add Amount Modal -->
+            <div class="modal fade" id="addAmountModal" tabindex="-1" aria-labelledby="addAmountModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addAmountModalLabel">Add Money to Wallet</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="/wallet/add" method="POST">
+                                <div class="mb-3">
+                                    <label for="amount" class="form-label">Enter Amount</label>
+                                    <input type="number" class="form-control" id="amount" name="amount" min="1" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" id="addmoneyBtn" class="btn btn-primary">Add Money</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Transaction History -->
             <h3 class="text-secondary">Transaction History</h3>
             <div class="table-responsive">
@@ -207,5 +222,76 @@
     <a href="terms.html">Terms of Service</a>
 </footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+<!-- Bootstrap JS (Make sure it's included before your script) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const addMoneyButton = document.getElementById("addMoneyBtn");
+        const addAmountModal = new bootstrap.Modal(document.getElementById("addAmountModal"));
+
+        addMoneyButton.addEventListener("click", function () {
+            addAmountModal.show();
+        });
+    });
+</script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("addmoneyBtn").addEventListener("click", async function () {
+        const amount = document.getElementById("amount").value;
+        
+        if (!amount || amount <= 0) {
+            alert("Enter a valid amount.");
+            return;
+        }
+
+        const response = await fetch("/wallet/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            const options = {
+                key: data.key,
+                amount: data.amount * 100,
+                currency: "INR",
+                name: "V-Shop Wallet",
+                description: "Add Money to Wallet",
+                order_id: data.razorpayOrderId,
+                handler: async function (response) {
+                    const verifyResponse = await fetch("/wallet/verify-payment", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            amount
+                        })
+                    });
+
+                    const verifyData = await verifyResponse.json();
+                    
+                    if (verifyData.success) {
+                        alert("Money added successfully! New balance: ₹" + verifyData.newBalance);
+                        location.reload();
+                    } else {
+                        alert("Payment verification failed. Please try again.");
+                    }
+                },
+                theme: { color: "#3399cc" }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+        } else {
+            alert("Failed to create Razorpay order.");
+        }
+    });
+});
+</script>
 </body>
 </html>

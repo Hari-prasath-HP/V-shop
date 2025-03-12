@@ -21,7 +21,6 @@ exports.getforgetpassword = (req, res) => {
   exports.postForgetPassword = async (req, res) => {
     try {
         const { email } = req.body;
-        console.log(email)
         const user = await User.findOne({ email });
         if (!user) {
             return res.render("user/forgetpassword", { error: "User not found!" });
@@ -33,7 +32,6 @@ exports.getforgetpassword = (req, res) => {
 
         // Save OTP in the Otp collection
         const otpData = await Otp.create({ email, otp });
-        console.log("OTP saved successfully:", otpData);
 
         // Email setup
         const mailOptions = {

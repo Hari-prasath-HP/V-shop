@@ -16,6 +16,7 @@
     "chart.js": "^4.4.8",
     "connect-flash": "^0.1.1",
     "cropperjs": "^1.6.2",
+    "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "ejs": "^3.1.10",
     "exceljs": "^4.4.0",
