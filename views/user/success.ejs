@@ -5,66 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - V-shop</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/styles.css"> <!-- Your custom styles -->
     <style>
         /* Custom styling for the container */
         .order-container {
             background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            padding: 50px;
             margin-top: 50px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
         }
+
         /* Custom styling for success message */
         .alert-heading {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
-            color: #4CAF50;
+            color: #333; /* Neutral color for success message */
+            margin-bottom: 20px;
         }
+
         /* Styling for Order ID */
         .order-id {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
             color: #333;
+            background-color: #f8f9fa;
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 10px 0;
         }
+
         /* Styling for Back to Shop button */
         .btn-lg {
-            padding: 15px 30px;
+            padding: 15px 40px;
             font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: linear-gradient(135deg, #00b894, #00cec9); /* Gradient button */
+            border: none;
+            color: white;
         }
+
+        .btn-lg:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
         .logout-btn {
-        background-color: #000000; /* Red shade for logout */
-        color: white;
-        font-size: 18px;
-        font-weight: bold;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 8px;
-        transition: background-color 0.3s, transform 0.2s;
-        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    .logout-btn:hover {
-        background-color: #000000; /* Darker red on hover */
-        transform: scale(1.05); /* Slight zoom effect */
-        box-shadow: 3px 3px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    .logout-btn:active {
-        transform: scale(0.98); /* Pressed effect */
-        box-shadow: none;
-    }
-    html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
+            background-color: #000000;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
         }
 
-        /* Main content should take full height and push footer down */
-        .main-content {
-            flex: 1;
+        .logout-btn:hover {
+            background-color: #000000;
+            transform: scale(1.05);
+            box-shadow: 3px 3px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .logout-btn:active {
+            transform: scale(0.98);
+            box-shadow: none;
         }
 
         /* Footer styling */
@@ -75,6 +88,7 @@
             text-align: center;
             position: relative;
             width: 100%;
+            margin-top: 50px;
         }
 
         footer .text-muted {
@@ -85,19 +99,72 @@
             color: #fff;
             margin: 0 10px;
             font-size: 18px;
+            transition: color 0.3s;
         }
 
         footer .social-icons a:hover {
             color: #ff6600;
         }
+
+        /* Breadcrumbs styling */
+        .breadcrumb {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
         .breadcrumb a {
             text-decoration: none;
             color: inherit;
         }
 
         .breadcrumb-item a {
-            color: #6e7478; /* Set a neutral color similar to text */
+            color: #6e7478;
             font-weight: normal;
+        }
+
+        /* Main content styling */
+        .main-content {
+            flex: 1;
+            padding: 20px 0;
+        }
+
+        /* Navbar styling */
+        .navbar {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .nav-link {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .order-container {
+                padding: 30px;
+            }
+
+            .alert-heading {
+                font-size: 24px;
+            }
+
+            .order-id {
+                font-size: 20px;
+            }
+
+            .btn-lg {
+                padding: 12px 30px;
+                font-size: 16px;
+            }
         }
     </style>
 </head>
@@ -106,6 +173,7 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
+        <!-- Logo on the left -->
         <a class="navbar-brand" href="/">
             <h1 class="h4 text-white">V-shop</h1>
         </a>
@@ -113,21 +181,22 @@
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
+        <!-- Navigation items on the right -->
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link" href="/" style="font-weight: bold; font-size: 22px;">Home</a>
+                    <a class="nav-link" href="/">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/shop" style="font-weight: bold; font-size: 22px;">Products</a>
+                    <a class="nav-link" href="/shop">Products</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/cart" style="font-weight: bold; font-size: 22px;">Cart</a>
+                    <a class="nav-link" href="/cart">Cart</a>
                 </li>
                 <% if (user) { %>  
                     <li class="nav-item">
-                        <a href="/userdetails" class="nav-link" style="font-size: 22px; font-weight: bold;">
-                            <i class="icofont-user"></i> My Account
+                        <a href="/userdetails" class="nav-link">
+                            <i class="fas fa-user"></i> My Account
                         </a>
                     </li>
                     <li class="nav-item me-2">
@@ -139,7 +208,7 @@
                     </li>
                 <% } else { %>
                     <li class="nav-item me-2">
-                        <a href="/login" class="btn btn-success text-white" style="font-size: 22px">
+                        <a href="/login" class="btn btn-success text-white">
                             Sign in
                         </a>
                     </li>
@@ -157,33 +226,35 @@
         <li class="breadcrumb-item active" aria-current="page">Order Success</li>
     </ol>
 </nav>
+
+<!-- Main Content -->
 <div class="main-content">
-<!-- Order Success Section -->
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-10 col-lg-12">
-            <!-- Order container with shadow and padding -->
-            <div class="order-container">
-                <!-- Success Message -->
-                <div class="alert alert-success text-center mb-4">
-                    <h4 class="alert-heading">Your order has been placed successfully!</h4>
-                </div>
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-12">
+                <!-- Order container with shadow and padding -->
+                <div class="order-container">
+                    <!-- Success Message -->
+                    <div class="alert alert-light text-center mb-4"> <!-- Changed to neutral color -->
+                        <h4 class="alert-heading">Your order has been placed successfully!</h4>
+                    </div>
 
-                <!-- Order ID -->
-                <div class="text-center mb-4">
-                    <p>Your Order ID: <span class="order-id"><%= orderId %></span> to check the status.</p>
-                    <p>We are pleased to serve you</p>                    
-                </div>
+                    <!-- Order ID -->
+                    <div class="text-center mb-4">
+                        <p>Your Order ID: <span class="order-id"><%= orderId %></span></p>
+                        <p>We are pleased to serve you. You can track your order using the Order ID.</p>                    
+                    </div>
 
-                <!-- Back to Shop Button -->
-                <div class="text-center">
-                    <a href="/shop" class="btn btn-primary btn-lg">Back to Shop</a>
+                    <!-- Back to Shop Button -->
+                    <div class="text-center">
+                        <a href="/shop" class="btn btn-lg">Back to Shop</a> <!-- Gradient button -->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-</div>
+
 <!-- Footer -->
 <footer>
     <div class="container">
@@ -198,6 +269,7 @@
         </div>
     </div>
 </footer>
+
 <!-- Bootstrap JS and dependencies -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>

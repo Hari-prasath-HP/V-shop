@@ -295,22 +295,34 @@
 }
 .zoom-container {
   position: relative;
+  display: inline-block;
+}
+
+.zoomable {
+  width: 100%;
+  cursor: crosshair;
 }
 
 .zoom-result {
-  position: absolute;
-  width: 200px;
+  position: fixed; /* Ensures it stays at the top */
+  width: 200px; /* Adjust size as needed */
   height: 200px;
-  background-size: 200%;
+  background-size: 250%;
   background-repeat: no-repeat;
   display: none;
-  pointer-events: none; 
+  pointer-events: none;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  z-index: 10;
-  transform: translate(-50%, -50%);
+  z-index: 1000;
+  border: 2px solid #ccc;
+  background-color: white;
+  top: 10px; /* Positions it at the top */
+  transform: translate(-0%, -0%);
 }
+
+
 .carousel-control-prev, 
   .carousel-control-next {
+    transform: translate(-50%, -100%);
     width: 50px; 
     height: 50px; 
     border-radius: 50%;
@@ -650,7 +662,7 @@ document.querySelectorAll('.zoomable').forEach(img => {
     const y = ((event.pageY - top) / height) * 100;
     zoomResult.style.backgroundImage = `url(${this.dataset.zoomImage})`;
     zoomResult.style.backgroundPosition = `${x}% ${y}%`;
-    const zoomBoxSize = 200;
+    const zoomBoxSize = 225;
 
     const offsetX = event.pageX - zoomBoxSize / 2;
     const offsetY = event.pageY - zoomBoxSize / 2;
