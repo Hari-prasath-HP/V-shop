@@ -113,6 +113,7 @@ exports.createWalletOrder = async (req, res) => {
         }
 
         const userId = req.session.user.id;
+        console.log(userId)
         let wallet = await Wallet.findOne({ userId });
         if (!wallet) {
             wallet = new Wallet({ userId, balance: 0, transactions: [] });
@@ -120,11 +121,11 @@ exports.createWalletOrder = async (req, res) => {
         }
 
         const razorpayOrder = await razorpay.orders.create({
-            amount: amount * 100,
+            amount: amount,
             currency: "INR",
-            receipt: `wallet_${userId}_${Date.now()}`
-        });
-
+            receipt: `wallet_${userId.slice(-6)}_${Date.now().toString().slice(-6)}` // ✅ Shortened
+        });        
+        console.log(razorpayOrder)
         return res.json({
             success: true,
             razorpayOrderId: razorpayOrder.id,
