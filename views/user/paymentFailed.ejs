@@ -131,26 +131,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/cart">Cart</a>
                     </li>
-                    <% if (user) { %>  
-                        <li class="nav-item">
-                            <a href="/userdetails" class="nav-link">
-                                <i class="fas fa-user"></i> My Account
-                            </a>
-                        </li>
-                        <li class="nav-item me-2">
-                            <form action="/logout" method="POST">
-                                <button type="submit" class="btn logout-btn">
-                                    Logout
-                                </button>
-                            </form>                        
-                        </li>
-                    <% } else { %>
-                        <li class="nav-item me-2">
-                            <a href="/login" class="btn btn-success text-white">
-                                Sign in
-                            </a>
-                        </li>
-                    <% } %>
+                    
                 </ul>                       
             </div>
         </div>
@@ -167,11 +148,15 @@
 
     <!-- Payment Failed Content -->
     <div class="container">
-        <h2>Payment Failed</h2>
-        <p>Unfortunately, your payment was not successful. Please try again.</p>
-        <a href="/retry-payment/<%= orderId %>">
-            <button class="retry-button">Retry Payment</button>
-        </a>
+        <% if (order) { %>
+            <h1>Payment Failed</h1>
+            <p>Order ID: <%= order._id %></p>
+            <p>Reason: <%= order.cancellationReason || "Unknown" %></p>
+            <a href="/">Return to Home</a>
+        <% } else { %>
+            <h1>Payment Failed</h1>
+            <p>Order not found.</p>
+        <% } %>        
     </div>
 
     <!-- Bootstrap JS -->

@@ -121,7 +121,7 @@ exports.createWalletOrder = async (req, res) => {
         }
 
         const razorpayOrder = await razorpay.orders.create({
-            amount: amount,
+            amount: amount*100,
             currency: "INR",
             receipt: `wallet_${userId.slice(-6)}_${Date.now().toString().slice(-6)}` // ✅ Shortened
         });        

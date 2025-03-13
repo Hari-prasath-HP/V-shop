@@ -74,6 +74,8 @@
         }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 </head>
 <body>
     <nav class="breadcrumb">
@@ -223,15 +225,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
 <!-- Bootstrap JS (Make sure it's included before your script) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("addmoneyBtn").addEventListener("click", async function (event) {
-        event.preventDefault(); // Prevent form submission
+        event.preventDefault();
 
         const amount = document.getElementById("amount").value;
         
         if (!amount || amount <= 0) {
-            alert("Enter a valid amount.");
+            showToast("Enter a valid amount", "error");
             return;
         }
 
@@ -266,10 +269,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     const verifyData = await verifyResponse.json();
 
                     if (verifyData.success) {
-                        alert("Money added successfully! New balance: ₹" + verifyData.newBalance);
-                        location.reload();
+                        showToast(`Money added successfully! New balance: ₹${verifyData.newBalance}`, "success");
+                        setTimeout(() => location.reload(), 2000);
                     } else {
-                        alert("Payment verification failed. Please try again.");
+                        showToast("Payment verification failed. Please try again.", "error");
                     }
                 },
                 theme: { color: "#3399cc" }
@@ -278,10 +281,22 @@ document.addEventListener("DOMContentLoaded", function () {
             const rzp = new Razorpay(options);
             rzp.open();
         } else {
-            alert("Failed to create Razorpay order.");
+            showToast("Failed to create Razorpay order.", "error");
         }
     });
 });
+
+// Function to show toast notifications
+function showToast(message, type) {
+    Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "top", 
+        position: "right", 
+        backgroundColor: type === "success" ? "#4CAF50" : "#FF3E4D",
+        stopOnFocus: true,
+    }).showToast();
+}
 </script>
 </body>
 </html>
