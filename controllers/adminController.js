@@ -49,7 +49,7 @@ exports.dashboardPage = async (req, res) => {
       {
         $match: {
           orderStatus: "Delivered",
-          deliveredAt: {
+          updatedAt: {
             $gte: new Date(new Date().setHours(0, 0, 0, 0)),
           },
         },
