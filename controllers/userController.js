@@ -13,14 +13,28 @@ const path = require('path');
 const Order = require('../models/order');
 const crypto = require("crypto");
 const Wallet = require("../models/wallet");
-exports.renderSignup = async(req, res) => {
-  if (req.session.logstate) {
-    return res.redirect("/home");
+exports.renderSignup = async (req, res) => {
+  try {
+    if (req.session.logstate) {
+      return res.redirect("/home");
+    }
+
+    const error = req.session.signerr || null;
+    req.session.signerr = null;
+
+    res.render("user/signup", { 
+      error, 
+      toastMessage: error || "Email already exists" || null 
+    });
+
+  } catch (err) {
+    console.error("❌ Error rendering signup page:", err);
+    res.status(500).render("user/signup", { 
+      error: "Something went wrong. Please try again.", 
+      toastMessage: null 
+    });
   }
-  const error = req.session.signerr || null;
-  req.session.signerr = null;
-  res.render("user/signup", { error,toastMessage:"Email already exists"||null });
-}
+};
 exports.handleSignup = async (req, res) => {
   const { username, email, phone, password, confirmPassword, referralCode } = req.body;
 
