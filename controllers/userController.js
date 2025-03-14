@@ -13,7 +13,7 @@ const path = require('path');
 const Order = require('../models/order');
 const crypto = require("crypto");
 const Wallet = require("../models/wallet");
-exports.renderSignup = (req, res) => {
+exports.renderSignup = async(req, res) => {
   if (req.session.logstate) {
     return res.redirect("/home");
   }
@@ -114,7 +114,7 @@ exports.handleSignup = async (req, res) => {
   }
 };
 
-exports.googleAuthCallback = (req, res) => {
+exports.googleAuthCallback = async(req, res) => {
   if (req.user) {
     req.session.user = req.user;
     res.redirect("/"); 
@@ -122,7 +122,7 @@ exports.googleAuthCallback = (req, res) => {
     res.redirect("/login");
   }
 };
-exports.renderlogin = (req, res) => {
+exports.renderlogin = async(req, res) => {
   if (req.session.logstate) {
     return res.redirect("/");
   }
@@ -160,7 +160,7 @@ exports.handlelogin = async (req, res) => {
     return res.redirect('/login');
   }
 };
-exports.renderVerifyOtpPage = (req, res) => {
+exports.renderVerifyOtpPage = async(req, res) => {
   const { email } = req.query;
 
   if (!email) {
