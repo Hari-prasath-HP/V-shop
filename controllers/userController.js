@@ -41,7 +41,7 @@ exports.handleSignup = async (req, res) => {
 
     if (password !== confirmPassword) {
       return res.render("user/signup", {
-        error: "Password is not matching the confirm password",
+        error: "Password and Confirm Password do not match",
         username,
         email,
         phone,
@@ -51,9 +51,7 @@ exports.handleSignup = async (req, res) => {
         toastMessage: { message: "Password and Confirm Password do not match", type: "error" },
       });
     }
-
     const generatedReferralCode = `${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
-
     let referredByUser = null;
     if (referralCode) {
       referredByUser = await User.findOne({ referralCode });
@@ -71,10 +69,23 @@ exports.handleSignup = async (req, res) => {
         });
       }
     }
+    // ✅ Check for existing OTP and validate expiry
+    const existingOtp = await Otp.findOne({ email }).lean();
+    const currentTime = new Date();
 
+    if (existingOtp && existingOtp.otpExpires && new Date(existingOtp.otpExpires) > currentTime) {
+      return res.render("user/verifyOtp", {
+        email,
+        signerr: null,
+        otpExpires: new Date(existingOtp.otpExpires).getTime(),
+        otpExpired: false,
+      });
+    }
+
+    // ✅ Generate new OTP and store it in the database
     const otp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpires = new Date(Date.now() + 1 * 60 * 1000);
-    req.session.otpExpires = otpExpires;
+    const otpExpires = new Date(Date.now() + 1 * 60 * 1000); // 1 min expiry time
+    req.session.otpExpires = otpExpires.getTime();
 
     await Otp.findOneAndUpdate(
       { email },
@@ -83,19 +94,20 @@ exports.handleSignup = async (req, res) => {
     );
 
     await otpService.sendOtp(email, otp);
-    console.log(`✅ OTP: ${otp} sent to ${email}, expires at: ${otpExpires}`);
+    console.log(`✅ New OTP1: ${otp} sent to ${email}, expires at: ${otpExpires}`);
 
-    req.session.signupData = { username, email, phone, password, generatedReferralCode, referredByUser };
+    // ✅ Store signup data in session
+    req.session.signupData = { username, email, phone, password, referralCode,generatedReferralCode };
 
     res.render("user/verifyOtp", {
       email,
       signerr: null,
-      otpExpires: otpExpires.getTime(),
+      otpExpires: req.session.otpExpires,
       otpExpired: false,
     });
 
   } catch (err) {
-    console.error("Error during sign-up:", err);
+    console.error("❌ Error during sign-up:", err);
     return res.render("user/signup", {
       toastMessage: { message: "An internal server error occurred. Please try again later.", type: "error" },
     });
@@ -164,40 +176,42 @@ exports.renderVerifyOtpPage = (req, res) => {
 };
 exports.resendOtp = async (req, res) => {
   const { email } = req.body;
+
   try {
     if (!email) {
-      return res.status(400).send("Email is required");
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const existingOtp = await Otp.findOne({ email }).lean();
+    const currentTime = new Date();
+    const otpExpiryTime = process.env.OTP_EXPIRY || 60000; // 1-minute expiry time
+
+    if (existingOtp && existingOtp.otpExpires && new Date(existingOtp.otpExpires) > currentTime) {
+      return res.status(400).json({ message: "OTP is still valid. Please wait before resending." });
     }
 
     const newOtp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpires = new Date(Date.now() + 60 * 1000); // Set 1 min expiry time
+    const otpExpires = new Date(Date.now() + otpExpiryTime); // Expiry set dynamically
 
-    // ✅ Store new OTP and expiration time in the database
     await Otp.findOneAndUpdate(
       { email },
       { otp: newOtp, otpExpires },
       { upsert: true, new: true }
     );
 
-    // ✅ Send new OTP via email
     await otpService.sendOtp(email, newOtp);
-    console.log(`New OTP: ${newOtp} sent to ${email}, expires at: ${otpExpires}`);
+    console.log(`✅ OTP2: ${newOtp} sent to ${email}, expires at: ${otpExpires}`);
 
-    // ✅ Update session with new expiration time
-    req.session.otpExpires = otpExpires.getTime(); 
+    req.session.otpExpires = otpExpires.getTime();
 
-    res.render("user/verifyOtp", { 
-      email, 
-      signerr: null, 
-      otpExpires: req.session.otpExpires,
-      otpExpired: false 
-    });
+    return res.json({ success: true, message: "New OTP sent successfully" });
 
   } catch (err) {
-    console.error("Error in resendOtp:", err);
-    res.status(500).send("Server error. Try again later.");
+    console.error(`❌ Error in resendOtp for ${email}:`, err);
+    return res.status(500).json({ message: "Server error. Try again later." });
   }
 };
+
 exports.verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
 

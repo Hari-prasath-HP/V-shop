@@ -70,6 +70,8 @@
   </style>
   <!-- Toastify CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <!-- Toastify JS -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 </head>
 
 <body>
@@ -130,38 +132,99 @@
   <!-- Toastify JS -->
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script>
-    let otpExpires = <%= otpExpires ? new Date(otpExpires).getTime() : 0 %>;
+    document.addEventListener("DOMContentLoaded", function () {
+      const resendBtn = document.getElementById("resendBtn");
+      const timerElement = document.getElementById("timer");
+      const circle = document.querySelector(".timer-circle circle");
+      const verifyBtn = document.getElementById("verifyBtn");
+      const resendOtpForm = document.getElementById("resendOtpForm");
   
-    let timerElement = document.getElementById("timer");
-    let circle = document.querySelector('.timer-circle circle');
-    let verifyBtn = document.getElementById("verifyBtn");
-    let resendOtpForm = document.getElementById("resendOtpForm");
+      let otpExpires = <%= otpExpires ? new Date(otpExpires).getTime() : 0 %>; 
   
-    if (otpExpires > 0) {
-      let countdown = Math.floor((otpExpires - Date.now()) / 1000);
-      let totalTime = countdown;
-      
-      function updateTimer() {
-        if (countdown > 0) {
-          timerElement.innerText = countdown;
-          circle.style.strokeDashoffset = 283 - (283 * (totalTime - countdown) / totalTime);
-          countdown--;
-          setTimeout(updateTimer, 1000);
-        } else {
-          timerElement.innerText = "0";
-          circle.style.strokeDashoffset = 283;
-          verifyBtn.disabled = true;
-          resendOtpForm.style.display = "block";
-        }
+      if (otpExpires > 0) {
+        startTimer(otpExpires);
+      } else {
+        resetUI();
       }
   
-      updateTimer();
-    } else {
-      timerElement.innerText = "0";
-      circle.style.strokeDashoffset = 283;
-      verifyBtn.disabled = true;
-      resendOtpForm.style.display = "block";
-    }
+      function startTimer(expiryTime) {
+        let countdown = Math.floor((expiryTime - Date.now()) / 1000);
+        let totalTime = countdown;
+        verifyBtn.disabled = false; 
+        resendOtpForm.style.display = "none"; 
+  
+        function updateTimer() {
+          if (countdown > 0) {
+            timerElement.innerText = countdown;
+            circle.style.strokeDashoffset = 283 - (283 * (totalTime - countdown) / totalTime);
+            countdown--;
+            setTimeout(updateTimer, 1000);
+          } else {
+            resetUI();
+          }
+        }
+  
+        updateTimer();
+      }
+  
+      function resetUI() {
+        timerElement.innerText = "0";
+        circle.style.strokeDashoffset = 283;
+        verifyBtn.disabled = true;
+        resendOtpForm.style.display = "block";
+      }
+  
+      if (resendBtn) {
+        resendBtn.addEventListener("click", async function () {
+          const email = "<%= email %>";
+  
+          try {
+            resendBtn.disabled = true;
+            const response = await fetch("/resendOtp", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email }),
+            });
+  
+            const data = await response.json();
+  
+            if (response.ok) {
+              showToast(data.message, "success");
+  
+              // Reset OTP expiry time
+              const newOtpExpires = Date.now() + 60000; 
+              otpExpires = newOtpExpires;
+  
+              // Restart timer
+              startTimer(newOtpExpires);
+            } else {
+              showToast(data.message, "error");
+            }
+          } catch (error) {
+            console.error("❌ Error resending OTP:", error);
+            showToast("Something went wrong. Try again later.", "error");
+          } finally {
+            setTimeout(() => (resendBtn.disabled = false), 30000);
+          }
+        });
+      }
+  
+      function showToast(message, type) {
+        Toastify({
+          text: message,
+          duration: 3000,
+          gravity: "top",
+          position: "center",
+          backgroundColor: type === "success" ? "green" : "red",
+          close: true,
+        }).showToast();
+      }
+    });
   </script>
+  
+  <!-- Toastify CSS -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  
+  
 </body>
 </html>
