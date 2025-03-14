@@ -111,7 +111,9 @@ exports.createWalletOrder = async (req, res) => {
         if (!amount || amount <= 0) {
             return res.status(400).json({ success: false, message: "Invalid amount" });
         }
-
+        if(amount >10000){
+            return res.status(400).json({success: false,message:"Amount should be less than 10,000"})
+        }
         const userId = req.session.user.id;
         console.log(userId)
         let wallet = await Wallet.findOne({ userId });
