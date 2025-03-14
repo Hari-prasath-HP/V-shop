@@ -19,7 +19,7 @@ exports.renderSignup = (req, res) => {
   }
   const error = req.session.signerr || null;
   req.session.signerr = null;
-  res.render("user/signup", { error });
+  res.render("user/signup", { error,toastMessage:"Email already exists"||null });
 }
 exports.handleSignup = async (req, res) => {
   const { username, email, phone, password, confirmPassword, referralCode } = req.body;
@@ -34,16 +34,27 @@ exports.handleSignup = async (req, res) => {
         phone,
         password,
         confirmPassword,
-        referralCode
+        referralCode,
+        toastMessage: { message: "Email already exists", type: "error" },
       });
     }
 
-    // ✅ Generate referral code for the new user
+    if (password !== confirmPassword) {
+      return res.render("user/signup", {
+        error: "Password is not matching the confirm password",
+        username,
+        email,
+        phone,
+        password,
+        confirmPassword,
+        referralCode,
+        toastMessage: { message: "Password and Confirm Password do not match", type: "error" },
+      });
+    }
+
     const generatedReferralCode = `${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
 
     let referredByUser = null;
-
-    // ✅ If a referral code is entered, check if it exists
     if (referralCode) {
       referredByUser = await User.findOne({ referralCode });
 
@@ -55,7 +66,8 @@ exports.handleSignup = async (req, res) => {
           phone,
           password,
           confirmPassword,
-          referralCode
+          referralCode,
+          toastMessage: { message: "Invalid referral code", type: "error" },
         });
       }
     }
@@ -73,22 +85,23 @@ exports.handleSignup = async (req, res) => {
     await otpService.sendOtp(email, otp);
     console.log(`✅ OTP: ${otp} sent to ${email}, expires at: ${otpExpires}`);
 
-    // ✅ Store signup data and referral details in session
     req.session.signupData = { username, email, phone, password, generatedReferralCode, referredByUser };
 
     res.render("user/verifyOtp", {
       email,
       signerr: null,
       otpExpires: otpExpires.getTime(),
-      otpExpired: false
+      otpExpired: false,
     });
 
   } catch (err) {
     console.error("Error during sign-up:", err);
-    req.session.signerr = "An internal server error occurred. Please try again later.";
-    return res.redirect("/signup");
+    return res.render("user/signup", {
+      toastMessage: { message: "An internal server error occurred. Please try again later.", type: "error" },
+    });
   }
 };
+
 exports.googleAuthCallback = (req, res) => {
   if (req.user) {
     req.session.user = req.user;
@@ -155,23 +168,33 @@ exports.resendOtp = async (req, res) => {
     if (!email) {
       return res.status(400).send("Email is required");
     }
+
     const newOtp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpires = new Date(Date.now() + 1 * 60 * 1000); 
+    const otpExpires = new Date(Date.now() + 60 * 1000); // Set 1 min expiry time
+
+    // ✅ Store new OTP and expiration time in the database
     await Otp.findOneAndUpdate(
       { email },
       { otp: newOtp, otpExpires },
       { upsert: true, new: true }
     );
+
+    // ✅ Send new OTP via email
     await otpService.sendOtp(email, newOtp);
     console.log(`New OTP: ${newOtp} sent to ${email}, expires at: ${otpExpires}`);
+
+    // ✅ Update session with new expiration time
+    req.session.otpExpires = otpExpires.getTime(); 
+
     res.render("user/verifyOtp", { 
       email, 
       signerr: null, 
-      otpExpires: otpExpires.getTime(),
+      otpExpires: req.session.otpExpires,
       otpExpired: false 
     });
+
   } catch (err) {
-    console.error(" Error in resendOtp:", err);
+    console.error("Error in resendOtp:", err);
     res.status(500).send("Server error. Try again later.");
   }
 };
@@ -183,41 +206,47 @@ exports.verifyOtp = async (req, res) => {
       return res.render("user/verifyOtp", {
         email,
         signerr: "Email and OTP are required.",
-        otpExpires: req.session.otpExpires ? new Date(req.session.otpExpires) : null 
+        otpExpires: req.session.otpExpires || null 
       });
     }
 
+    // ✅ Fetch the latest OTP from the database
     const otpRecord = await Otp.findOne({ email });
 
     if (!otpRecord) {
       return res.render("user/verifyOtp", {
         email,
         signerr: "OTP not found. Please request a new OTP.",
-        otpExpires: req.session.otpExpires ? new Date(req.session.otpExpires) : null
+        otpExpires: req.session.otpExpires || null
       });
     }
 
-    req.session.otpExpires = req.session.otpExpires || otpRecord.otpExpires;
+    // ✅ Always update session with latest OTP expiry from the database
+    req.session.otpExpires = otpRecord.otpExpires.getTime();
 
-    if (Date.now() > new Date(req.session.otpExpires)) {
+    // ✅ Check if the OTP is expired (use database expiry time)
+    if (Date.now() > req.session.otpExpires) {
       return res.render("user/verifyOtp", {
         email,
         signerr: "OTP has expired. Please request a new one.",
-        otpExpires: new Date(req.session.otpExpires)
+        otpExpires: req.session.otpExpires
       });
     }
 
+    // ✅ Check if OTP is correct
     if (String(otpRecord.otp) !== String(otp)) {
       return res.render("user/verifyOtp", {
         email,
         signerr: "Invalid OTP. Please try again.",
-        otpExpires: new Date(req.session.otpExpires) 
+        otpExpires: req.session.otpExpires 
       });
     }
 
+    // ✅ OTP is correct, delete it from DB
     await Otp.deleteOne({ email });
     req.session.otpExpires = null;
 
+    // ✅ Continue with user creation
     const { username, phone, password, generatedReferralCode, referredByUser } = req.session.signupData;
 
     const newUser = new User({
@@ -266,7 +295,7 @@ exports.verifyOtp = async (req, res) => {
     return res.render("user/verifyOtp", {
       email,
       signerr: "An error occurred. Please try again.",
-      otpExpires: req.session.otpExpires ? new Date(req.session.otpExpires) : null
+      otpExpires: req.session.otpExpires || null
     });
   }
 };

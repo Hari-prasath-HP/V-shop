@@ -255,5 +255,22 @@
       }
     }
   </script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    <% if (toastMessage) { %>
+      Toastify({
+        text: "<%= toastMessage.message %>",
+        duration: 3000,
+        close: true,
+        gravity: "top",
+        position: "right",
+        style: {
+          background: "<%= toastMessage.type === 'error' ? 'red' : 'green' %>",
+        },
+      }).showToast();
+    <% } %>
+  });
+</script>
+
 </body>
 </html>
