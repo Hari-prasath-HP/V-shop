@@ -49,7 +49,7 @@ exports.dashboardPage = async (req, res) => {
       {
         $match: {
           orderStatus: "Delivered",
-          updatedAt: {
+          deliveredAt: {
             $gte: new Date(new Date().setHours(0, 0, 0, 0)),
           },
         },
@@ -831,14 +831,20 @@ exports.unlistProduct = async (req, res) => {
 exports.getOrders = async (req, res) => {
   try {
       let perPage = 10;
-      let page = req.query.page || 1;
+      let page = parseInt(req.query.page) || 1;
 
       const totalOrders = await Order.countDocuments();
+      const totalPages = Math.ceil(totalOrders / perPage);
+
+      // Ensure the page does not exceed the totalPages
+      if (page > totalPages) page = totalPages;
+      if (page < 1) page = 1;
+
       const orders = await Order.find()
           .populate('user', 'username email')
           .populate('products.product', 'name price images')
           .sort({ orderedAt: -1 })
-          .skip((perPage * page) - perPage)
+          .skip(perPage * (page - 1))
           .limit(perPage);
 
       res.render('admin/ordermanagement', {
@@ -863,7 +869,7 @@ exports.getOrders = async (req, res) => {
               deliveredAt: order.deliveredAt
           })),
           currentPage: page,
-          totalPages: Math.ceil(totalOrders / perPage)
+          totalPages
       });
   } catch (error) {
       console.error("Error fetching orders:", error);
@@ -894,13 +900,13 @@ exports.updateOrderStatus = async (req, res) => {
 
     // Update payment status based on order status
     if (status === 'Ordered') {
-      order.deliveredAt = new Date();
       if (order.paymentStatus === 'Refunded') {
         order.paymentStatus = 'Completed';
       }
     } else if (status === 'Cancelled') {
       order.paymentStatus = 'Refunded';
     } else if (status === 'Delivered') {
+      order.deliveredAt = new Date();
       order.paymentStatus = 'Completed';
     } else {
       order.deliveredAt = null;
@@ -1224,12 +1230,14 @@ exports.downloadSalesPdf = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("Error during logout:", err);
-      return res.status(500).send("Error logging out");
-    }
+  try {
+    req.session.isAdmin = false; // Mark admin as logged out
+    req.session.adminEmail = null; // Clear stored admin email
+
     res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
     res.redirect('/admin/login');
-  });
+  } catch (err) {
+    console.error("Error during logout:", err);
+    res.status(500).send("Error logging out");
+  }
 };

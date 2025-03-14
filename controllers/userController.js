@@ -563,13 +563,9 @@ exports.getInvoice = async (req, res) => {
 };
 exports.logout = (req, res) => {
   try {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Error destroying session:', err);
-        return res.status(500).send('An error occurred while logging out');
-      }
-      res.redirect('/');
-    });
+    req.session.logstate = false;
+    req.session.user = null; // Clearing user data
+    res.redirect('/');
   } catch (err) {
     console.error('Error during logout:', err);
     res.status(500).send('An error occurred during logout');
