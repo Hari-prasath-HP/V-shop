@@ -8,16 +8,25 @@ exports.viewUserDetails = async (req, res) => {
         return res.redirect('/login');
     }
     try {
-        const user = await User.findById(req.session.user.id);
+        let user;
+        if (req.session.user.id) {
+            // Normal login
+            user = await User.findById(req.session.user.id);
+        } else if (req.session.user.googleId) {
+            // Google login
+            user = await User.findOne({ googleId: req.session.user.googleId });
+        }
+
         if (!user) {
             return res.status(404).send('User not found');
         }
-        res.render('user/userdetails', { 
+
+        res.render('user/userdetails', {
             user: {
-                username: user.username,
-                phone: user.phone,
+                username: user.username || user.name,  // Google users might have `name`
+                phone: user.phone || 'N/A',
                 email: user.email,
-                refferalcode:user.referralCode||null,
+                referralCode: user.referralCode || null,
             }
         });
     } catch (err) {
@@ -27,35 +36,68 @@ exports.viewUserDetails = async (req, res) => {
 };
 exports.updateUser = async (req, res) => {
     const { username, mobile } = req.body;
-    const userId = req.session.user.id;
+    
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+
     try {
-        const user = await User.findByIdAndUpdate(
-            userId,
-            { username, phone: mobile },
-            { new: true, runValidators: true }
-        );
+        let user;
+        if (req.session.user.id) {
+            // Normal login
+            user = await User.findByIdAndUpdate(
+                req.session.user.id,
+                { username, phone: mobile },
+                { new: true, runValidators: true }
+            );
+        } else if (req.session.user.googleId) {
+            // Google login
+            user = await User.findOneAndUpdate(
+                { googleId: req.session.user.googleId },
+                { username, phone: mobile },
+                { new: true, runValidators: true }
+            );
+        }
+
         if (!user) {
             return res.redirect('/login');
         }
+
         res.redirect('/userdetails?success=Profile updated successfully');
     } catch (error) {
         console.error(error);
         res.status(500).send('Something went wrong');
     }
 };
+
+// Render Add Address Page
 exports.addAddress = (req, res) => {
     res.render('user/addaddress');
 };
+
+// Save Address to Database
 exports.saveAddress = async (req, res) => {
-    if (!req.session.user || !req.session.user.id) {
-        return res.redirect('/login')
+    if (!req.session.user) {
+        return res.redirect('/login');
     }
-    const userId = req.session.user.id;
+
     try {
-        const validUserId = new mongoose.Types.ObjectId(userId);
+        let userId;
+        if (req.session.user.id) {
+            userId = new mongoose.Types.ObjectId(req.session.user.id);
+        } else if (req.session.user.googleId) {
+            const user = await User.findOne({ googleId: req.session.user.googleId });
+            if (!user) {
+                return res.redirect('/login');
+            }
+            userId = user._id;
+        } else {
+            return res.redirect('/login');
+        }
+
         const { name, phone, houseNo, area, city, state, pincode, title } = req.body;
         const newAddress = new Address({
-            userId: validUserId,
+            userId,
             name,
             phone,
             houseNo,
@@ -65,19 +107,35 @@ exports.saveAddress = async (req, res) => {
             pincode,
             title,
         });
+
         await newAddress.save();
         res.redirect('/address');
     } catch (error) {
         console.error('Error saving address:', error);
         res.status(500).send('Server error');
     }
-}
+};
+
+// Fetch User Addresses
 exports.getAddresses = async (req, res) => {
-    if (!req.session.user || !req.session.user.id) {
+    if (!req.session.user) {
         return res.redirect('/login');
     }
+
     try {
-        const userId = new mongoose.Types.ObjectId(req.session.user.id);
+        let userId;
+        if (req.session.user.id) {
+            userId = new mongoose.Types.ObjectId(req.session.user.id);
+        } else if (req.session.user.googleId) {
+            const user = await User.findOne({ googleId: req.session.user.googleId });
+            if (!user) {
+                return res.redirect('/login');
+            }
+            userId = user._id;
+        } else {
+            return res.redirect('/login');
+        }
+
         const addresses = await Address.find({ userId });
         res.render('user/address', { user: req.session.user, addresses });
     } catch (error) {
@@ -145,14 +203,28 @@ exports.deleteAddress = async (req, res) => {
 };
 exports.getAllOrdersForUser = async (req, res) => {
     try {
-        const userId = req.session.user.id;
+        if (!req.session.user) {
+            return res.redirect('/login');
+        }
+
+        let userId;
+        if (req.session.user.id) {
+            userId = req.session.user.id; // Normal login user ID
+        } else if (req.session.user.googleId) {
+            const user = await User.findOne({ googleId: req.session.user.googleId });
+            if (!user) {
+                return res.redirect('/login');
+            }
+            userId = user._id; // Convert Google user ID to database ID
+        } else {
+            return res.redirect('/login');
+        }
+
         const page = parseInt(req.query.page) || 1;
         const limit = 5; 
         const totalOrders = await Order.countDocuments({ user: userId });
         const totalPages = Math.ceil(totalOrders / limit);
-        if (!userId) {
-            return res.redirect('/login')
-        }
+
         const orders = await Order.find({ 
             user: userId, 
             orderStatus: { $ne: "Pending" }  
@@ -161,6 +233,7 @@ exports.getAllOrdersForUser = async (req, res) => {
         .sort({ orderedAt: -1 }) 
         .skip((page - 1) * limit)
         .limit(limit);        
+
         res.render('user/orders', {
             orders,
             currentPage: page,

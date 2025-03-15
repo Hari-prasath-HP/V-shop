@@ -33,14 +33,14 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-    done(null, user.id);
+    done(null, user.id|| user.googleId); 
   });
   
   passport.deserializeUser(async (id, done) => {
     try {
-      const user = await User.findById(id);
-      done(null, user);
+        const user = await User.findOne({ _id: id }) || await User.findOne({ googleId: id });
+        done(null, user);
     } catch (err) {
-      done(err, null);
+        done(err, null);
     }
-  });
+});

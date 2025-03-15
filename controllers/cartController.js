@@ -18,48 +18,62 @@ exports.addToCart = async (req, res) => {
     if (!req.session.user) {
       return res.redirect('/login');
     }
-    
+
+    // Get user ID for normal and Google users
+    const userId = req.session.user.id || req.session.user.googleId;
+    if (!userId) {
+      return res.redirect('/login');
+    }
+
     const { productId, quantity } = req.body;
-    const userId = req.session.user.id;
+
+    // Validate quantity
+    const requestedQuantity = parseInt(quantity, 10);
+    if (isNaN(requestedQuantity) || requestedQuantity <= 0) {
+      return res.redirect(`/product/${productId}?error=Invalid quantity`);
+    }
+
+    // Fetch product and check stock availability
     const product = await Product.findById(productId);
-    
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    const requestedQuantity = parseInt(quantity, 10);
 
-    if (product.stock < requestedQuantity) {
-      req.session.errorMessage = "Insufficient stock available!";
-      return res.redirect(`/product/${productId}`); 
-    }
-    const existingCartItem = await Cart.findOne({ userId, productId });
-    
-    if (existingCartItem) {
-      existingCartItem.quantity = parseInt(quantity);
-      await existingCartItem.save();
-      return res.redirect('/cart');
+    // Check if cart item already exists
+    let cartItem = await Cart.findOne({ userId, productId });
+
+    if (cartItem) {
+      const newTotalQuantity = cartItem.quantity + requestedQuantity;
+
+      if (newTotalQuantity > product.stock) {
+        return res.redirect(`/product/${productId}?error=Insufficient stock available!`);
+      }
+
+      cartItem.quantity = newTotalQuantity;
+      await cartItem.save();
     } else {
-      const newCartItem = new Cart({
-        userId,
-        productId,
-        quantity: parseInt(quantity),
-      });
-      await newCartItem.save();
-      return res.redirect('/cart');
+      if (requestedQuantity > product.stock) {
+        return res.redirect(`/product/${productId}?error=Insufficient stock available!`);
+      }
+
+      cartItem = new Cart({ userId, productId, quantity: requestedQuantity });
+      await cartItem.save();
     }
-    
+
+    return res.redirect('/cart');
   } catch (error) {
-    console.error(error);
+    console.error("Error adding to cart:", error);
     res.status(500).render("user/404");
   }
 };
+
   exports.viewCart = async (req, res) => {
     if (!req.session.user) {
       return res.redirect('/login');
     }
   
     try {
-      const userId = req.session.user.id;
+      const userId = req.session.user.id || req.session.user.googleId;
       const user = await User.findById(userId); 
   
       if (!user) {
@@ -95,34 +109,53 @@ exports.addToCart = async (req, res) => {
       res.status(500).render("user/404");
     }
   };  
-exports.updateQuantity = async (req, res) => {
-    if (!req.session.user) {
-        return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
-    const { cartItemId, quantity } = req.body;
+  exports.updateQuantity = async (req, res) => {
     try {
-        let cartItem = await Cart.findOne({ userId: req.session.user.id, productId: cartItemId });
+        if (!req.session.user) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        }
+
+        // Support both regular and Google users
+        const userId = req.session.user.id || req.session.user.googleId;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        }
+
+        const { cartItemId, quantity } = req.body;
+
+        // Validate quantity
+        const updatedQuantity = parseInt(quantity, 10);
+        if (isNaN(updatedQuantity) || updatedQuantity <= 0) {
+            return res.status(400).json({ success: false, message: "Invalid quantity" });
+        }
+
+        // Find the cart item by its ID (not product ID)
+        const cartItem = await Cart.findOne({ _id: cartItemId, userId }).populate("productId");
+
         if (!cartItem) {
             return res.status(404).json({ success: false, message: "Cart item not found" });
         }
-        let product = await Product.findById(cartItem.productId);
+
+        const product = cartItem.productId;
         if (!product) {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
-        if (quantity > 0) {
-          if (quantity > cartItem.quantity && quantity > product.stock) {
-              return res.status(400).json({ success: false, message: "Stock limit reached" });
-          }
-          cartItem.quantity = quantity;
-          await cartItem.save();
-          return res.json({
-              success: true,
-              updatedQuantity: cartItem.quantity,
-              updatedSubTotal: (cartItem.quantity * product.offerPrice).toFixed(2),
-          });
-      } else {
-          return res.status(400).json({ success: false, message: "Invalid quantity" });
-      }
+
+        // Check if requested quantity exceeds stock
+        if (updatedQuantity > product.stock) {
+            return res.status(400).json({ success: false, message: "Stock limit reached" });
+        }
+
+        // Update cart quantity
+        cartItem.quantity = updatedQuantity;
+        await cartItem.save();
+
+        return res.json({
+            success: true,
+            updatedQuantity: cartItem.quantity,
+            updatedSubTotal: (cartItem.quantity * product.offerPrice).toFixed(2),
+        });
+
     } catch (err) {
         console.error("Error updating cart quantity:", err);
         res.status(500).json({ success: false, message: "Server error" });
@@ -134,7 +167,7 @@ exports.removeFromCart = async (req, res) => {
       return res.redirect('/login');
     }
 
-    const userId = req.session.user.id;
+    const userId = req.session.user.id || req.session.user.googleId;
     const productId = req.params.productId;
 
     const result = await Cart.findOneAndDelete({ userId, productId });
@@ -155,7 +188,7 @@ exports.getCheckoutPage = async (req, res) => {
           return res.redirect('/login');
       }
 
-      const userId = req.session.user.id;
+      const userId = req.session.user.id || req.session.user.googleId;
       const user = await User.findById(userId);
       if (!user) {
           return res.status(404).send('User not found');
@@ -182,7 +215,7 @@ exports.changeaddress = async (req, res) => {
           return res.redirect('/login');
       }
 
-      const userId = req.session.user.id;
+      const userId = req.session.user.id || req.session.user.googleId;
       const user = await User.findById(userId);
       if (!user) {
           return res.status(404).send('User not found');
@@ -203,7 +236,7 @@ exports.selectAddress = async (req, res) => {
       }
 
       const { selectedAddress, totalAmount = 0, paymentMethod = 'COD' } = req.body;
-      const userId = req.session.user.id;
+      const userId = req.session.user.id || req.session.user.googleId;
 
       if (!selectedAddress) {
           req.flash('error', 'Please select an address.');
@@ -254,7 +287,7 @@ exports.selectAddress = async (req, res) => {
 };
 exports.proceedToPayment = async (req, res) => {
   try {
-      const userId = req.session.user.id;
+    const userId = req.session.user.id || req.session.user.googleId;
       const paymentMethod = req.body.paymentMethod || 'COD';
       if (!userId) {
           return res.redirect('/login'); 
@@ -307,7 +340,7 @@ exports.proceedToPayment = async (req, res) => {
 };
 exports.getCheckoutPage2 = async (req, res) => {
   try {
-    const userId = req.session.user.id;
+    const userId = req.session.user.id || req.session.user.googleId;
     if (!userId) {
       return res.redirect('/login');
     }
@@ -326,7 +359,7 @@ exports.getCheckoutPage2 = async (req, res) => {
 exports.savePaymentMethod = async (req, res) => {
   try {
     const { paymentMethod } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.session.user.id || req.session.user.googleId;
     
     if (!paymentMethod) {
       return res.redirect('/checkout-1');
@@ -350,7 +383,7 @@ exports.savePaymentMethod = async (req, res) => {
 exports.getOrderSummary = async (req, res) => {
   try {
     const user = req.session.user;
-    const userId = req.session.user.id;
+    const userId = req.session.user.id || req.session.user.googleId;
     const cartItems = await Cart.find({ userId }).populate('productId');
     if (!cartItems || cartItems.length === 0) {
       return res.redirect('/cart'); 
@@ -653,7 +686,7 @@ exports.placeOrder = async (req, res) => {
 exports.verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId, couponCode } = req.body;
-    const userId = req.session.user.id
+    const userId = req.session.user.id || req.session.user.googleId;
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ message: "Order not found." });
     const expectedSignature = crypto
@@ -703,20 +736,31 @@ exports.verifyPayment = async (req, res) => {
   }
 };
 exports.getSuccessPage = async (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/login');
-  }
   try {
-    const latestOrder = await Order.findOne({ user: req.session.user.id })
+    if (!req.session.user) {
+      return res.redirect('/login');
+    }
+
+    // Support both regular and Google users
+    const userId = req.session.user.id || req.session.user.googleId;
+    if (!userId) {
+      return res.redirect('/login');
+    }
+
+    // Find the latest order of the user
+    const latestOrder = await Order.findOne({ user: userId })
       .sort({ createdAt: -1 }) 
       .select('_id');
+
     if (!latestOrder) {
       return res.status(404).send("No recent orders found.");
     }
+
     res.render('user/success', { 
-      user: req.session.user.id, 
+      user: userId, 
       orderId: latestOrder._id 
     });
+
   } catch (error) {
     console.error("Error fetching order:", error);
     res.status(500).render("user/404");
@@ -913,7 +957,17 @@ exports.returnOrder = async (req, res) => {
 };
 exports.getWallet = async (req, res) => {
   try {
-      const wallet = await Wallet.findOne({ userId: req.session.user.id })
+      if (!req.session.user) {
+          return res.redirect('/login');
+      }
+
+      // Support both normal and Google users
+      const userId = req.session.user.id || req.session.user.googleId;
+      if (!userId) {
+          return res.redirect('/login');
+      }
+
+      const wallet = await Wallet.findOne({ userId })
           .populate('userId', 'username')
           .populate('transactions.orderId', 'totalAmount orderStatus orderedAt'); // Populate order details
 

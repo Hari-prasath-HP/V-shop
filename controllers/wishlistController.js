@@ -91,13 +91,27 @@ exports.getWishlist = async (req, res) => {
     }
 };
 exports.renderWishlistPage = async (req, res) => {
-    const userId = req.session.user.id;
-    if (!userId) {
-        return res.redirect("/login");
-    }
     try {
+        if (!req.session.user) {
+            return res.redirect("/login");
+        }
+
+        let userId;
+        if (req.session.user.id) {
+            userId = req.session.user.id; // Regular login user
+        } else if (req.session.user.googleId) {
+            const user = await User.findOne({ googleId: req.session.user.googleId });
+            if (!user) {
+                return res.redirect("/login");
+            }
+            userId = user._id;
+        } else {
+            return res.redirect("/login");
+        }
+
         const wishlist = await Wishlist.findOne({ userId }).populate("products");
-        res.render("user/wishlist", { wishlist: wishlist ? wishlist.products : [] });
+
+        res.render("user/wishlist", { wishlist: wishlist?.products || [] });
     } catch (error) {
         console.error("Error rendering wishlist page:", error);
         res.status(500).send("Error loading wishlist page");
@@ -107,27 +121,51 @@ exports.renderWishlistPage = async (req, res) => {
 exports.createWalletOrder = async (req, res) => {
     try {
         const { amount } = req.body;
-        console.log(amount)
+        console.log("Requested Amount:", amount);
+
         if (!amount || amount <= 0) {
             return res.status(400).json({ success: false, message: "Invalid amount" });
         }
-        if(amount >10000){
-            return res.status(400).json({success: false,message:"Amount should be less than 10,000"})
+
+        if (amount > 10000) {
+            return res.status(400).json({ success: false, message: "Amount should be less than 10,000" });
         }
-        const userId = req.session.user.id;
-        console.log(userId)
+
+        // ✅ Handle both normal login and Google login users
+        let userId;
+        if (req.session.user?.id) {
+            userId = req.session.user.id;
+        } else if (req.session.user?.googleId) {
+            const user = await User.findOne({ googleId: req.session.user.googleId });
+            if (!user) {
+                return res.status(401).json({ success: false, message: "User not found" });
+            }
+            userId = user._id;
+        } else {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        }
+
+        console.log("User ID:", userId);
+
         let wallet = await Wallet.findOne({ userId });
         if (!wallet) {
             wallet = new Wallet({ userId, balance: 0, transactions: [] });
             await wallet.save();
         }
 
+        // ✅ Validate `razorpay` is initialized properly
+        if (!razorpay) {
+            return res.status(500).json({ success: false, message: "Payment gateway is not configured" });
+        }
+
         const razorpayOrder = await razorpay.orders.create({
-            amount: amount*100,
+            amount: amount * 100, // Convert to paisa
             currency: "INR",
-            receipt: `wallet_${userId.slice(-6)}_${Date.now().toString().slice(-6)}` // ✅ Shortened
-        });        
-        console.log(razorpayOrder)
+            receipt: `wallet_${userId.toString().slice(-6)}_${Date.now().toString().slice(-6)}`
+        });
+
+        console.log("Razorpay Order:", razorpayOrder);
+
         return res.json({
             success: true,
             razorpayOrderId: razorpayOrder.id,
@@ -139,14 +177,30 @@ exports.createWalletOrder = async (req, res) => {
         return res.status(500).json({ message: "Failed to create wallet order" });
     }
 };
-
 // Verify Razorpay Payment and Update Wallet
 exports.verifyWalletPayment = async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
-        console.log(req.body)
-        const userId = req.session.user.id;
+        console.log("Received Payment Details:", req.body);
 
+        if (!req.session.user) {
+            return res.status(401).json({ message: "User not authenticated." });
+        }
+
+        let userId;
+        if (req.session.user.id) {
+            userId = req.session.user.id;  // Regular login
+        } else if (req.session.user.googleId) {
+            const user = await User.findOne({ googleId: req.session.user.googleId });
+            if (!user) {
+                return res.status(404).json({ message: "User not found." });
+            }
+            userId = user._id;
+        } else {
+            return res.status(401).json({ message: "Invalid session data." });
+        }
+
+        // Verify Razorpay Signature
         const expectedSignature = crypto
             .createHmac("sha256", process.env.RAZORPAY_SECRET)
             .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -156,16 +210,22 @@ exports.verifyWalletPayment = async (req, res) => {
             return res.status(400).json({ message: "Payment verification failed." });
         }
 
+        // Ensure valid amount
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            return res.status(400).json({ message: "Invalid payment amount." });
+        }
+
         let wallet = await Wallet.findOne({ userId });
         if (!wallet) {
             wallet = new Wallet({ userId, balance: 0, transactions: [] });
         }
 
-        wallet.balance += parseFloat(amount);
+        wallet.balance += parsedAmount;
         wallet.transactions.push({
             transactionType: "credit",
-            amount,
-            description: "online_added",
+            amount: parsedAmount,
+            description: "Online Wallet Top-up",
             createdAt: new Date()
         });
 
