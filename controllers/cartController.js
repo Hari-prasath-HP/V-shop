@@ -382,7 +382,7 @@ exports.savePaymentMethod = async (req, res) => {
 };
 exports.getOrderSummary = async (req, res) => {
   try {
-    const user = req.session.user;
+    let user = req.session.logstate ? req.session.user : null;
     const userId = req.session.user.id || req.session.user.googleId;
     const cartItems = await Cart.find({ userId }).populate('productId');
     if (!cartItems || cartItems.length === 0) {

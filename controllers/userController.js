@@ -338,7 +338,7 @@ exports.verifyOtp = async (req, res) => {
 
 exports.renderhome = async (req, res) => {
   try {
-    let user = req.user || null;
+    let user = req.session.logstate ? req.session.user : null;
     let username = user ? user.username : "";
 
     const categories = await Category.find({ isDeleted: { $ne: true } });
@@ -376,7 +376,7 @@ exports.renderhome = async (req, res) => {
 };
 exports.getShopProducts = async (req, res) => {
   try {
-    let user = req.session.user || null;
+    let user = req.session.logstate ? req.session.user : null;
     let username = "";
 
     if (req.session.user) {
@@ -453,7 +453,7 @@ exports.getShopProducts = async (req, res) => {
   }
 };
 exports.viewProduct = async (req, res) => {
-  let user = req.session.user || null;
+  let user = req.session.logstate ? req.session.user : null;
   let username = "";
   if (req.session.user) {
     const user = await User.findOne({ email: req.session.user.email });
