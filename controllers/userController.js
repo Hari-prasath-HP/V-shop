@@ -127,12 +127,20 @@ exports.handleSignup = async (req, res) => {
     });
   }
 };
-
-exports.googleAuthCallback = async(req, res) => {
-  if (req.user) {
-    req.session.user = req.user;
-    res.redirect("/"); 
-  } else {
+exports.googleAuthCallback = async (req, res) => {
+  try {
+    if (req.user) {
+      req.session.user = {
+        id: req.user._id,
+        googleId: req.user.googleId || null,
+        email: req.user.email,
+        username: req.user.username
+      };
+      req.session.logstate = true; // ✅ Mark user as logged in
+    }
+    res.redirect("/"); // Redirect to homepage or dashboard
+  } catch (error) {
+    console.error("Error in Google authentication:", error);
     res.redirect("/login");
   }
 };
