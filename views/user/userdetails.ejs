@@ -215,16 +215,26 @@
                     </div>
                     <div class="mb-3">
                         <label for="mobile" class="form-label">Mobile Number</label>
-                        <input type="text" class="form-control" id="mobile" name="mobile" value="<%= user.phone %>" required>
+                        <% if (user.phone) { %>
+                            <input type="text" class="form-control" id="mobile" name="mobile" value="<%= user.phone %>" required>
+                        <% } else { %>
+                            <input type="text" class="form-control" id="mobile" name="mobile" placeholder="Not Provided" required>
+                        <% } %>
                     </div>
+                    
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" class="form-control" id="email" value="<%= user.email %>" readonly>
                     </div>
+                    
                     <div class="mb-3">
                         <label for="referral" class="form-label">Referral Code</label>
-                        <input type="text" class="form-control" id="email" value="<%= user.refferalcode %>" readonly>
-                    </div>
+                        <% if (user.refferalcode) { %>
+                            <input type="text" class="form-control" id="referral" value="<%= user.refferalcode %>" readonly>
+                        <% } else { %>
+                            <input type="text" class="form-control" id="referral" placeholder="Not Available" readonly>
+                        <% } %>
+                    </div>                    
                     <button type="submit" class="btn btn-dark btn-sm" style="width: auto;">Save Changes</button>
                 </form>
             </div>
