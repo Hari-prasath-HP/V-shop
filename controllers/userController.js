@@ -134,7 +134,7 @@ exports.googleAuthCallback = async (req, res) => {
         id: req.user._id,
         googleId: req.user.googleId || null,
         email: req.user.email,
-        username: req.user.username
+        username: req.user.username || req.user.displayName, // Use displayName if username is missing
       };
       req.session.logstate = true; // ✅ Mark user as logged in
     }
@@ -338,9 +338,15 @@ exports.verifyOtp = async (req, res) => {
 
 exports.renderhome = async (req, res) => {
   try {
-    let user = req.session.logstate ? req.session.user : null;
-    let username = user ? user.username : "";
-
+    let user = req.session.user ? req.session.user : null;
+    let username = "";
+    if (user && user.id) {
+      // Fetch user from the database using the stored user ID
+      const dbUser = await User.findById(user.id);
+      if (dbUser) {
+        username = dbUser.username; // Get the username from the database
+      }
+    }
     const categories = await Category.find({ isDeleted: { $ne: true } });
     const products = await Product.find({ isDeleted: { $ne: true } }).populate('category');
 

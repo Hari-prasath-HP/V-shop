@@ -493,8 +493,8 @@ h1, h2, h3, p {
               <ul class="navbar-nav">
                 <% if (user) { %>  <!-- Check if user is logged in -->
                   <li class="nav-item">
-                    <a href="/userdetails" class="nav-link text-success" style="font-size: 16px;font-weight: bold;">
-                      <i class="icofont-user"></i> <%= user.name || user.username %>
+                    <a href="/userdetails" class="nav-link text-white" style="font-size: 20px;font-weight: bold;">
+                      <i class="icofont-user"></i> <%= user.name || username %>
                     </a>
                   </li>
                   <!-- Show Signout button when the user is logged in -->
