@@ -229,8 +229,8 @@
                     
                     <div class="mb-3">
                         <label for="referral" class="form-label">Referral Code</label>
-                        <% if (user.refferalcode) { %>
-                            <input type="text" class="form-control" id="referral" value="<%= user.refferalcode %>" readonly>
+                        <% if (user.referralCode) { %>
+                            <input type="text" class="form-control" id="referral" value="<%= user.referralCode %>" readonly>
                         <% } else { %>
                             <input type="text" class="form-control" id="referral" placeholder="Not Available" readonly>
                         <% } %>

@@ -86,13 +86,20 @@
             <!-- Verify OTP Form -->
             <form action="/verifyOtp" method="POST" id="verifyOtpForm">
               <input type="hidden" name="email" value="<%= email %>" />
+              
               <div class="mb-3">
-                <label for="otp" class="form-label">Enter OTP</label>
-                <input type="text" id="otp" class="form-control" name="otp" id="otp" required />
+                  <label for="otp" class="form-label">Enter OTP</label>
+                  <input type="text" id="otp" class="form-control" name="otp" 
+                         placeholder="Enter 6-digit OTP"
+                         maxlength="6"
+                         pattern="[0-9]{6}"
+                         oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,6);" 
+                         required />
+                  <span id="otpError" class="error text-danger"></span>
               </div>
+              
               <button type="submit" id="verifyBtn" class="btn btn-custom btn-block w-100">Verify OTP</button>
-            </form>
-
+          </form>
             <!-- Resend OTP Form -->
             <form action="/resendOtp" method="POST" id="resendOtpForm" style="display: none;">
               <input type="hidden" name="email" value="<%= email %>">
@@ -221,7 +228,27 @@
       }
     });
   </script>
-  
+  <script>
+    document.getElementById("verifyOtpForm").addEventListener("submit", function(event) {
+        const otp = document.getElementById("otp").value.trim();
+        const otpError = document.getElementById("otpError");
+        let isValid = true;
+
+        if (otp === "") {
+            otpError.textContent = "OTP is required.";
+            isValid = false;
+        } else if (otp.length < 6) {
+            otpError.textContent = "OTP must be 6 digits.";
+            isValid = false;
+        } else {
+            otpError.textContent = "";
+        }
+
+        if (!isValid) {
+            event.preventDefault(); // Prevent form submission if validation fails
+        }
+    });
+</script>
   <!-- Toastify CSS -->
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   

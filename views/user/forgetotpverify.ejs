@@ -111,20 +111,25 @@
             <p>Enter the OTP sent to your email</p>
             <form id="verifyOtpForm" action="/verify-otp" method="post">
                 <input type="hidden" name="email" value="<%= email %>">
-            
+                
                 <div class="mb-3">
                     <label for="otp" class="form-label">OTP:</label>
-                    <input type="text" id="otp" name="otp" class="form-control" placeholder="Enter OTP" required>
-                    <span id="otpError" class="error"></span>
+                    <input type="text" id="otp" class="form-control" name="otp" 
+                           placeholder="Enter 6-digit OTP"
+                           maxlength="6"
+                           pattern="[0-9]{6}"
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,6);" 
+                            />
+                    <span id="otpError" class="error text-danger"></span>
                 </div>
-            
+                
                 <button type="submit" class="btn btn-custom">Verify OTP</button>
             
                 <div class="d-flex justify-content-between pt-3">
                     <span class="timer" id="timer">60</span> seconds remaining
                     <button type="button" id="resendOtp" class="btn btn-link" disabled onclick="resendOtp()">Resend OTP</button>
                 </div>
-            </form>          
+            </form>         
         </div>
     </div>
 
@@ -170,6 +175,27 @@
         }
 
         startTimer(); // Start countdown on page load
+    </script>
+    <script>
+        document.getElementById("verifyOtpForm").addEventListener("submit", function(event) {
+            const otp = document.getElementById("otp").value.trim();
+            const otpError = document.getElementById("otpError");
+            let isValid = true;
+    
+            if (otp === "") {
+                otpError.textContent = "OTP is required.";
+                isValid = false;
+            } else if (otp.length < 6) {
+                otpError.textContent = "OTP must be 6 digits.";
+                isValid = false;
+            } else {
+                otpError.textContent = "";
+            }
+    
+            if (!isValid) {
+                event.preventDefault(); // Prevent form submission if validation fails
+            }
+        });
     </script>
 </body>
 </html>

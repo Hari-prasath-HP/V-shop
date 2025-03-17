@@ -242,34 +242,41 @@
     <!-- Address Form Section -->
     <div class="address-form-container">
         <h3>Add Address</h3>
-        <form action="/add-address" method="POST">
+        <form action="/add-address" method="POST" onsubmit="return validateForm()">
             <div class="mb-3">
                 <label for="name" class="form-label">Name</label>
-                <input type="text" class="form-control" id="name" name="name" required>
+                <input type="text" class="form-control" id="name" name="name" >
+                <span id="nameError" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <label for="phone" class="form-label">Phone</label>
-                <input type="text" class="form-control" id="phone" name="phone">
+                <input type="text" class="form-control" id="phone" name="phone" maxlength="10" oninput="validatePhoneInput(this)">
+                <span id="phoneError" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <label for="houseNo" class="form-label">House No.</label>
                 <input type="text" class="form-control" id="houseNo" name="houseNo">
+                <span id="houseNoError" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <label for="area" class="form-label">Area</label>
                 <input type="text" class="form-control" id="area" name="area">
+                <span id="areaError" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <label for="city" class="form-label">City</label>
                 <input type="text" class="form-control" id="city" name="city">
+                <span id="cityError" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <label for="state" class="form-label">State</label>
                 <input type="text" class="form-control" id="state" name="state">
+                <span id="stateError" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <label for="pincode" class="form-label">Pincode</label>
-                <input type="text" class="form-control" id="pincode" name="pincode" required>
+                <input type="text" class="form-control" id="pincode" name="pincode" maxlength="6">
+                <span id="pincodeError" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <label for="title" class="form-label">Title</label>
@@ -297,5 +304,104 @@
         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function validateForm() {
+            let valid = true;
+    
+            const name = document.getElementById("name");
+            const phone = document.getElementById("phone");
+            const houseNo = document.getElementById("houseNo");
+            const area = document.getElementById("area");
+            const city = document.getElementById("city");
+            const state = document.getElementById("state");
+            const pincode = document.getElementById("pincode");
+    
+            const nameError = document.getElementById("nameError");
+            const phoneError = document.getElementById("phoneError");
+            const houseNoError = document.getElementById("houseNoError");
+            const areaError = document.getElementById("areaError");
+            const cityError = document.getElementById("cityError");
+            const stateError = document.getElementById("stateError");
+            const pincodeError = document.getElementById("pincodeError");
+    
+            const namePattern = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
+            const phonePattern = /^\d{10}$/;
+            const houseNoPattern = /^[0-9/]+$/;
+            const areaPattern = /^[A-Za-z\s]+$/;
+            const cityPattern = /^[A-Za-z\s]+$/;
+            const statePattern = /^[A-Za-z\s]+$/;
+            const pincodePattern = /^\d{6}$/;
+    
+            // Reset error messages
+            nameError.innerText = phoneError.innerText = houseNoError.innerText = 
+            areaError.innerText = cityError.innerText = stateError.innerText = pincodeError.innerText = "";
+    
+            // Name validation
+            if (name.value.trim() === "") {
+                nameError.innerText = "Name is required.";
+                valid = false;
+            } else if (!namePattern.test(name.value.trim())) {
+                nameError.innerText = "Name must contain only alphabets and can have spaces in between but not at the start or end.";
+                valid = false;
+            }
+    
+            // Phone validation
+            if (phone.value.trim() === "") {
+                phoneError.innerText = "Phone number is required.";
+                valid = false;
+            } else if (!phonePattern.test(phone.value.trim())) {
+                phoneError.innerText = "Phone number must be exactly 10 digits.";
+                valid = false;
+            }
+    
+            // House Number validation
+            if (houseNo.value.trim() === "") {
+                houseNoError.innerText = "House number is required.";
+                valid = false;
+            } else if (!houseNoPattern.test(houseNo.value.trim())) {
+                houseNoError.innerText = "House number must contain numbers and `/` only.";
+                valid = false;
+            }
+    
+            // Area validation
+            if (area.value.trim() === "") {
+                areaError.innerText = "Area is required.";
+                valid = false;
+            } else if (!areaPattern.test(area.value.trim())) {
+                areaError.innerText = "Enter a valid area name.";
+                valid = false;
+            }
+    
+            // City validation
+            if (city.value.trim() === "") {
+                cityError.innerText = "City is required.";
+                valid = false;
+            } else if (!cityPattern.test(city.value.trim())) {
+                cityError.innerText = "City must contain only alphabets.";
+                valid = false;
+            }
+    
+            // State validation
+            if (state.value.trim() === "") {
+                stateError.innerText = "State is required.";
+                valid = false;
+            } else if (!statePattern.test(state.value.trim())) {
+                stateError.innerText = "State must contain only alphabets.";
+                valid = false;
+            }
+    
+            // Pincode validation
+            if (pincode.value.trim() === "") {
+                pincodeError.innerText = "Pincode is required.";
+                valid = false;
+            } else if (!pincodePattern.test(pincode.value.trim())) {
+                pincodeError.innerText = "Pincode must be exactly 6 digits.";
+                valid = false;
+            }
+    
+            return valid;
+        }
+    </script>
+    
 </body>
 </html>

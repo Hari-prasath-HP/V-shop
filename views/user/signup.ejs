@@ -139,9 +139,14 @@
               </div>
               <div class="mb-3">
                 <label for="phone" class="form-label">Phone Number:</label>
-                <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter phone number (10 digits)" value="<%= typeof phone !== 'undefined' ? phone : '' %>">
+                <input type="tel" id="phone" name="phone" class="form-control" 
+                       placeholder="Enter phone number (10 digits)" 
+                       value="<%= typeof phone !== 'undefined' ? phone : '' %>" 
+                       maxlength="10" 
+                       pattern="[0-9]{10}"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,10);">
                 <span id="phoneError" class="error"></span>
-              </div>
+            </div>            
               <div class="mb-3">
                 <label for="password" class="form-label">Password:</label>
                 <div class="input-group">
@@ -229,22 +234,58 @@
       passwordError.textContent = "";
       confirmPasswordError.textContent = "";
       formMessage.textContent = "";
+      // Regular expressions for validation
+      const usernameRegex = /^[A-Za-z]+( [A-Za-z]+)*$/; // Only alphabets, no spaces, numbers, or special characters
+      const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/; // Basic email validation
+      const phoneRegex = /^[0-9]{10}$/; // Exactly 10 digits
+      const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/; 
       let isValid = true;
+      // Username validation
+      // username = username.trim();
       if (username === "") {
-        usernameError.textContent = "Username is required.";
-        isValid = false;
+          usernameError.textContent = "Username is required.";
+          isValid = false;
+      } else if (!usernameRegex.test(username)) {
+          usernameError.textContent = "Username should only contain alphabets.";
+          isValid = false;
+      } else {
+          usernameError.textContent = ""; // Clear error message
       }
+
+      // Email validation
       if (email === "") {
-        emailError.textContent = "Email is required.";
-        isValid = false;
+          emailError.textContent = "Email is required.";
+          isValid = false;
+      } else if (!emailRegex.test(email)) {
+          emailError.textContent = "Enter a valid email (e.g., example@domain.com).";
+          isValid = false;
+      } else {
+          emailError.textContent = "";
       }
+
+      // Phone number validation
       if (phone === "") {
-        phoneError.textContent = "Phone number is required.";
-        isValid = false;
+          phoneError.textContent = "Phone number is required.";
+          isValid = false;
+      } else if (!phoneRegex.test(phone)) {
+          phoneError.textContent = "Phone number should be exactly 10 digits.";
+          isValid = false;
+      } else if (/^(\d)\1{9}$/.test(phone)) { // Check if all 10 digits are the same
+          phoneError.textContent = "All digits should not be the same (e.g., 0000000000).";
+          isValid = false;
+      } else {
+          phoneError.textContent = "";
       }
+
+      // Password validation
       if (password === "") {
-        passwordError.textContent = "Password is required.";
-        isValid = false;
+          passwordError.textContent = "Password is required.";
+          isValid = false;
+      } else if (!passwordRegex.test(password)) {
+          passwordError.textContent = "Password must contain at least one uppercase letter, one special character, and one number.";
+          isValid = false;
+      } else {
+          passwordError.textContent = "";
       }
       if (confirmPassword === "") {
         confirmPasswordError.textContent = "Confirm Password is required.";
