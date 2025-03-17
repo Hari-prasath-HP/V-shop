@@ -229,7 +229,7 @@
     <div class="d-flex align-items-center px-1 py-1 border rounded shadow-sm">
         <label for="price-filter" class="form-label fw-semibold me-3 mb-0 small">Price:</label>
         <span class="fw-bold text-muted small">₹0</span>
-        <input type="range" id="price-filter" class="form-range flex-grow-1 mx-2" min="0" max="1000" step="50"
+        <input type="range" id="price-filter" class="form-range flex-grow-1 mx-2" min="0" max="500" step="50"
             value="<%= maxPrice %>" oninput="updatePriceValue(this.value)" onchange="filterProducts()">
         <span id="price-value" class="fw-bold text-primary small">₹<%= maxPrice %></span>
     </div>

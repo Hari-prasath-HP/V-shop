@@ -398,7 +398,7 @@ exports.getShopProducts = async (req, res) => {
     const sortOption = req.query.sort || "";
     const categoryFilter = req.query.category || "";
     const minPrice = Number.isNaN(parseInt(req.query.minPrice)) ? 0 : parseInt(req.query.minPrice);
-    const maxPrice = Number.isNaN(parseInt(req.query.maxPrice)) ? 1000 : parseInt(req.query.maxPrice);
+    const maxPrice = Number.isNaN(parseInt(req.query.maxPrice)) ? 500 : parseInt(req.query.maxPrice);
     const sortOptions = {
       "low-high": { offerPrice: 1 },
       "high-low": { offerPrice: -1 },

@@ -468,9 +468,6 @@ h1, h2, h3, p {
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-              <form class="d-flex me-3" onsubmit="return false;">
-                <input class="form-control me-2" type="text" id="searchInput" placeholder="Search products..." onkeyup="searchProducts()">
-            </form>
               <ul class="navbar-nav ms-auto">
                 <li class="nav-item active">
                     <a class="nav-link" id="HomeLink" href="/" style="font-weight: bold; font-size: 22px;">
@@ -615,21 +612,6 @@ h1, h2, h3, p {
             </div>
         </div>
     </footer>
-    <script>
-      function searchProducts() {
-          let input = document.getElementById("searchInput").value.toLowerCase();
-          let productCards = document.querySelectorAll(".product-card");
-  
-          productCards.forEach((card) => {
-              let productName = card.querySelector(".card-title").textContent.toLowerCase();
-              if (productName.includes(input)) {
-                  card.style.display = "block";
-              } else {
-                  card.style.display = "none";
-              }
-          });
-      }
-  </script>
    <!-- JavaScript to Hide the Loader -->
    <script>
     window.addEventListener('load', function() {
