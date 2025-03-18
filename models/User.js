@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   phone: { type: String},
   password: { type: String},
   isBlocked: { type: Boolean, default: false },
-  referralCode: { type: String, unique: true }
+  referralCode: { type: String, unique: true, sparse: true }
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
