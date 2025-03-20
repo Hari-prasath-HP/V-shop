@@ -225,7 +225,7 @@ exports.verifyWalletPayment = async (req, res) => {
         wallet.transactions.push({
             transactionType: "credit",
             amount: parsedAmount,
-            description: "Online Wallet Top-up",
+            description: "online_added",
             createdAt: new Date()
         });
 
