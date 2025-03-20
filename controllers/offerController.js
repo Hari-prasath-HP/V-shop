@@ -125,15 +125,25 @@ exports.toggleCouponStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const coupon = await Coupon.findById(id);
+
         if (coupon) {
-            coupon.isActive = !coupon.isActive;
+            // Check if the coupon is expired
+            const currentDate = new Date();
+            if (coupon.expiryDate && new Date(coupon.expiryDate) < currentDate) {
+                coupon.isActive = false; // Expired coupons should be inactive
+            } else {
+                coupon.isActive = !coupon.isActive; // Toggle status for non-expired coupons
+            }
+
             await coupon.save();
         }
+
         res.redirect('/admin/coupon');
     } catch (error) {
         console.error('Error toggling coupon status:', error);
         res.status(500).send('Internal Server Error');
     }
 };
+
 
 
