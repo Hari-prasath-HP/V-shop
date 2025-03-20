@@ -111,7 +111,15 @@ exports.handleSignup = async (req, res) => {
     console.log(`✅ New OTP1: ${otp} sent to ${email}, expires at: ${otpExpires}`);
 
     // ✅ Store signup data in session
-    req.session.signupData = { username, email, phone, password, referralCode,generatedReferralCode };
+    req.session.signupData = { 
+      username, 
+      email, 
+      phone, 
+      password, 
+      referralCode, 
+      generatedReferralCode,
+      referredByUser: referredByUser ? referredByUser._id : null // Store ID only
+    };    
 
     res.render("user/verifyOtp", {
       email,
@@ -284,7 +292,7 @@ exports.verifyOtp = async (req, res) => {
 
     // ✅ Continue with user creation
     const { username, phone, password, generatedReferralCode, referredByUser } = req.session.signupData;
-
+    console.log(referredByUser)
     const newUser = new User({
       username,
       email,
@@ -306,13 +314,13 @@ exports.verifyOtp = async (req, res) => {
 
     // ✅ If referred by someone, credit 100 to their wallet
     if (referredByUser) {
-      const referrerWallet = await Wallet.findOne({ userId: referredByUser._id });
+      const referrerWallet = await Wallet.findOne({ userId: referredByUser});
 
       if (referrerWallet) {
         referrerWallet.balance += 150;
         referrerWallet.transactions.push({
           transactionType: "credit",
-          amount: 100,
+          amount: 150,
           description: "referred"
         });
 
