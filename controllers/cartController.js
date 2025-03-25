@@ -493,6 +493,7 @@ exports.cancelCoupon = async (req, res) => {
 exports.placeOrder = async (req, res) => {
   try {
     const { products, paymentMethod, grandTotal, couponCode } = req.body;
+    console.log(req.body)
     const userId = req.session.user?.id;
 
     if (!userId) {
