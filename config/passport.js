@@ -2,6 +2,8 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/User"); 
 
+const generateReferralCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
 passport.use(
   new GoogleStrategy(
     {
@@ -11,15 +13,19 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let user = await User.findOne({ email: profile.emails[0].value });
+        const email = profile.emails?.[0]?.value;
+        if (!email) return done(new Error("No email received from Google"), null);
+
+        let user = await User.findOne({ email });
 
         if (!user) {
-          // Create a new user if not found
           user = new User({
+            googleId: profile.id, // Store Google ID
             username: profile.displayName,
-            email: profile.emails[0].value,
+            email: email,
             phone: "",
             password: null,
+            referralCode: generateReferralCode(), // Ensure unique referral code
           });
           await user.save();
         }
@@ -33,14 +39,14 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-    done(null, user.id|| user.googleId); 
-  });
-  
-  passport.deserializeUser(async (id, done) => {
-    try {
-        const user = await User.findOne({ _id: id }) || await User.findOne({ googleId: id });
-        done(null, user);
-    } catch (err) {
-        done(err, null);
-    }
+  done(null, user.id); // Always use MongoDB `_id`
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
 });
