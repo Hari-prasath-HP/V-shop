@@ -42,7 +42,7 @@ router.post('/select-address',checkUserStatus , cartController.selectAddress);
 router.post('/checkout--2', checkUserStatus ,cartController.proceedToPayment);
 router.get('/checkout-2', checkUserStatus , cartController.getCheckoutPage2);
 router.post('/paymentMethod', cartController.savePaymentMethod)
-router.get('/ordersummary', checkUserStatus ,cartController.getOrderSummary)
+router.get('/ordersummary',cartController.getOrderSummary)
 router.post('/apply-coupon', cartController.applyCoupon);
 router.post('/remove-coupon',cartController.cancelCoupon);
 router.post('/placeorder', cartController.placeOrder)
