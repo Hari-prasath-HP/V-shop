@@ -494,7 +494,6 @@ exports.placeOrder = async (req, res) => {
   try {
     const { products, paymentMethod, grandTotal, couponCode } = req.body;
     const userId = req.session.user?.id;
-    console.log(userId)
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized. Please log in." });
     }
@@ -506,7 +505,6 @@ exports.placeOrder = async (req, res) => {
     if (!wallet) {
       await new Wallet({ userId, balance: 0, transactions: [] }).save();
     }
-    console.log(wallet)
     const totalAmount = parseFloat(grandTotal);
     if (isNaN(totalAmount) || totalAmount <= 0) {
       return res.status(400).json({ message: "Invalid total amount." });
