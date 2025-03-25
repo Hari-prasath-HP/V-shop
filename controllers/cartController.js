@@ -493,9 +493,8 @@ exports.cancelCoupon = async (req, res) => {
 exports.placeOrder = async (req, res) => {
   try {
     const { products, paymentMethod, grandTotal, couponCode } = req.body;
-    console.log(req.body)
     const userId = req.session.user?.id;
-
+    console.log(userId)
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized. Please log in." });
     }
@@ -505,9 +504,9 @@ exports.placeOrder = async (req, res) => {
 
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
-      return res.json({ success: false, message: "Wallet not found. Please contact support." });
+      await new Wallet({ userId, balance: 0, transactions: [] }).save();
     }
-
+    console.log(wallet)
     const totalAmount = parseFloat(grandTotal);
     if (isNaN(totalAmount) || totalAmount <= 0) {
       return res.status(400).json({ message: "Invalid total amount." });
