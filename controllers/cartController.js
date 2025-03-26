@@ -767,7 +767,7 @@ exports.getSuccessPage = async (req, res) => {
 exports.cancelProduct = async (req, res) => {
   try {
       const { orderId, productId, reason } = req.body;
-      const order = await Order.findById(orderId);
+      const order = await Order.findById(orderId).populate('user');
       if (!order) {
           return res.status(404).json({ message: "Order not found" });
       }
@@ -778,21 +778,51 @@ exports.cancelProduct = async (req, res) => {
       if (order.products[productIndex].status !== 'Ordered') {
           return res.status(400).json({ message: "Product cannot be cancelled" });
       }
-      order.products[productIndex].status = 'Cancelled';
-      order.products[productIndex].cancellationReason = reason;
-      const canceledQuantity = order.products[productIndex].quantity;
+
+      // Cancel the product
+      const cancelledProduct = order.products[productIndex];
+      cancelledProduct.status = 'Cancelled';
+      cancelledProduct.cancellationReason = reason;
+
+      // Update stock
       const product = await Product.findById(productId);
       if (product) {
-          product.stock += canceledQuantity; 
+          product.stock += cancelledProduct.quantity;
           await product.save();
       }
+
+      // Refund only if paid via Online Payment or Wallet
+      if (
+          (order.paymentMethod === 'Online Payment' || order.paymentMethod === 'Wallet') &&
+          order.paymentStatus === 'Completed'
+      ) {
+          let wallet = await Wallet.findOne({ userId: order.user._id });
+          if (!wallet) {
+              wallet = new Wallet({ userId: order.user._id, balance: 0, transactions: [] });
+          }
+
+          const refundAmount = cancelledProduct.price * cancelledProduct.quantity;
+          wallet.balance += refundAmount;
+          wallet.transactions.push({
+              transactionType: 'credit',
+              amount: refundAmount,
+              orderId: orderId,
+              description: 'cancel',
+          });
+
+          await wallet.save();
+          order.paymentStatus = 'Refunded';
+      }
+
       await order.save();
-      res.json({ message: "Product cancelled successfully, stock updated." });
+      res.json({ message: "Product cancelled successfully, stock updated, and refund processed if applicable." });
+
   } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Server error" });
   }
 };
+
 exports.returnProduct = async (req, res) => {
   try {
       const { orderId, productId, reason } = req.body;
@@ -804,36 +834,48 @@ exports.returnProduct = async (req, res) => {
       if (productIndex === -1) {
           return res.status(404).json({ message: "Product not found in order" });
       }
-      const productDetails = order.products[productIndex];
-      if (productDetails.status !== 'Delivered') {
+      const returnedProduct = order.products[productIndex];
+      if (returnedProduct.status !== 'Delivered') {
           return res.status(400).json({ message: "Product cannot be returned" });
       }
-      productDetails.status = 'Returned';
-      productDetails.returnReason = reason;
+
+      // Mark product as returned
+      returnedProduct.status = 'Returned';
+      returnedProduct.returnReason = reason;
       order.isReturned = true;
-      await order.save();
+
+      // Update stock
       const product = await Product.findById(productId);
       if (product) {
-          product.stock += productDetails.quantity;
+          product.stock += returnedProduct.quantity;
           await product.save();
       }
-      if (order.paymentMethod === 'COD') {
+
+      // Handle refund for COD and Online Payments
+      if (
+          (order.paymentMethod === 'COD' || order.paymentMethod === 'Online Payment' || order.paymentMethod === 'Wallet') &&
+          order.paymentStatus === 'Completed'
+      ) {
           let wallet = await Wallet.findOne({ userId: order.user._id });
           if (!wallet) {
               wallet = new Wallet({ userId: order.user._id, balance: 0, transactions: [] });
           }
-          const refundAmount = productDetails.price * productDetails.quantity;
+
+          const refundAmount = returnedProduct.price * returnedProduct.quantity;
           wallet.balance += refundAmount;
           wallet.transactions.push({
               transactionType: 'credit',
               amount: refundAmount,
+              orderId: orderId,
               description: 'return',
           });
 
           await wallet.save();
+          order.paymentStatus = 'Refunded';
       }
 
-      res.json({ message: "Product returned successfully and amount credited to wallet if applicable." });
+      await order.save();
+      res.json({ message: "Product returned successfully and refund credited to wallet if applicable." });
 
   } catch (error) {
       console.error(error);
