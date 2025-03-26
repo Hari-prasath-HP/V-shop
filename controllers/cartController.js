@@ -9,6 +9,7 @@ const Wallet = require('../models/wallet');
 require('dotenv').config();
 const Razorpay = require('razorpay');
 const crypto = require("crypto");
+const mongoose = require('mongoose');
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID, 
   key_secret: process.env.RAZORPAY_SECRET  
@@ -122,7 +123,6 @@ exports.addToCart = async (req, res) => {
         }
 
         const { cartItemId, quantity } = req.body;
-
         // Validate quantity
         const updatedQuantity = parseInt(quantity, 10);
         if (isNaN(updatedQuantity) || updatedQuantity <= 0) {
@@ -130,8 +130,10 @@ exports.addToCart = async (req, res) => {
         }
 
         // Find the cart item by its ID (not product ID)
-        const cartItem = await Cart.findOne({ _id: cartItemId, userId }).populate("productId");
-
+        const cartItem = await Cart.findOne({
+          productId: new mongoose.Types.ObjectId(cartItemId),
+          userId: new mongoose.Types.ObjectId(userId) // Convert userId too if needed
+        }).populate("productId");
         if (!cartItem) {
             return res.status(404).json({ success: false, message: "Cart item not found" });
         }
@@ -140,6 +142,7 @@ exports.addToCart = async (req, res) => {
         if (!product) {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
+        
 
         // Check if requested quantity exceeds stock
         if (updatedQuantity > product.stock) {
