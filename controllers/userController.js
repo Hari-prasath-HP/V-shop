@@ -292,7 +292,6 @@ exports.verifyOtp = async (req, res) => {
 
     // ✅ Continue with user creation
     const { username, phone, password, generatedReferralCode, referredByUser } = req.session.signupData;
-    console.log(referredByUser)
     const newUser = new User({
       username,
       email,
@@ -366,7 +365,7 @@ exports.renderhome = async (req, res) => {
     };
 
     products.forEach(product => {
-      product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
+      product.imagePaths = product.images;
       product.discountedPrice = product.offerPrice > 0 ? product.offerPrice : product.price;
       product.offerPercentage = calculateOfferPercentage(product.price, product.offerPrice);
       product.quantityValue = product.quantity.value;
@@ -432,8 +431,7 @@ exports.getShopProducts = async (req, res) => {
       .limit(itemsPerPage)
       .populate("category");
     products.forEach((product) => {
-      product.imagePaths = product.images.map((image) => `/uploads/products/${image}`);
-      
+      product.imagePaths = product.images;
       if (product.offerPrice > 0) {
         const discountPercentage = ((product.price - product.offerPrice) / product.price) * 100;
         product.offerPercentage = parseFloat(discountPercentage.toFixed(2));
@@ -482,7 +480,7 @@ exports.viewProduct = async (req, res) => {
     if (!product) {
       return res.status(404).send('Product not found');
     }
-    product.imagePaths = product.images.map(image => `/uploads/products/${image}`);
+    product.imagePaths = product.images;
     if (product.offerPrice > 0) {
       const discountPercentage = ((product.price - product.offerPrice) / product.price) * 100;
       product.offerPercentage = discountPercentage.toFixed(2);
@@ -501,7 +499,7 @@ exports.viewProduct = async (req, res) => {
       _id: { $ne: productId }
     }).limit(3);
     relatedProducts.forEach(relatedProduct => {
-      relatedProduct.imagePaths = relatedProduct.images.map(image => `/uploads/products/${image}`);
+      relatedProduct.imagePaths = relatedProduct.images
       if (relatedProduct.offerPrice > 0) {
         const relatedDiscountPercentage = ((relatedProduct.price - relatedProduct.offerPrice) / relatedProduct.price) * 100;
         relatedProduct.offerPercentage = relatedDiscountPercentage.toFixed(2);

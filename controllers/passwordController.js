@@ -100,8 +100,11 @@ exports.setNewPassword = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        // Compare new password with the old password
-        const isSamePassword = await bcrypt.compare(newPassword, user.password);
+        // Compare new password with old password (if it exists)
+        const isSamePassword = user.password 
+            ? await bcrypt.compare(newPassword, user.password) 
+            : false;
+
         if (isSamePassword) {
             return res.status(400).json({ success: false, message: "New password cannot be the same as the old password" });
         }
@@ -120,4 +123,5 @@ exports.setNewPassword = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
 

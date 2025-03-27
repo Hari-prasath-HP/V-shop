@@ -9,6 +9,7 @@ const moment = require('moment');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const PdfPrinter = require('pdfmake');
+const cloudinary = require('cloudinary').v2;
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -431,7 +432,11 @@ exports.manageCategoryPage = async (req, res) => {
 
     const updatedCategories = categories.map(category => ({
       ...category._doc,
-      imageURL: category.image ? `/uploads/categories/${category.image}` : null,
+      imageURL: category.image 
+  ? category.image.includes("cloudinary.com") 
+    ? category.image  // If it's already a full Cloudinary URL, use it
+    : `https://res.cloudinary.com/dzbmwcgol/image/upload/v1743051548/categories/${category.image}` 
+  : 'https://res.cloudinary.com/dzbmwcgol/image/upload/v123456789/default-image.jpg',
     }));
 
     const totalPages = Math.ceil(totalCategories / limit);
@@ -461,9 +466,12 @@ exports.addCategory = async (req, res) => {
   if (!req.file) {
     return res.status(400).send('Category image is required!');
   }
+
   try {
     const { name, description } = req.body;
     const categoryNameLower = name.toLowerCase(); 
+    
+    // Check if category already exists (case insensitive)
     const existingCategory = await Category.findOne({ 
       name: { $regex: new RegExp(`^${name}$`, 'i') }, 
       isDeleted: { $ne: true }
@@ -473,12 +481,17 @@ exports.addCategory = async (req, res) => {
       req.session.errorMessage = 'Category with this name already exists and is not deleted!';
       return res.redirect('/admin/addCategory'); 
     }
-    const image = `/uploads/categories/${req.file.filename}`;
+
+    // Get Cloudinary Image URL
+    const image = req.file.path;  
+
+    // Save Category with Cloudinary Image URL
     const newCategory = new Category({
       name,
       description,
       image,
     });
+
     await newCategory.save();
     res.redirect('/admin/categories');
   } catch (error) {
@@ -510,25 +523,23 @@ exports.updateCategory = async (req, res) => {
       return res.status(404).send('Category not found');
     }
 
-    let imagePath = category.image;
+    let imagePath = category.image; // Keep the existing image if no new upload
+
     if (req.file) {
+      // Delete old image from Cloudinary (if exists)
       if (category.image) {
-        const existingImagePath = path.join(__dirname, '../uploads/categories', path.basename(category.image));
-        if (fs.existsSync(existingImagePath)) {
-          fs.unlinkSync(existingImagePath);
-        }
+        const publicId = category.image.split('/').pop().split('.')[0]; // Extract public_id from URL
+        await cloudinary.uploader.destroy(publicId);
       }
-      imagePath = `/uploads/categories/${req.file.filename}`;
+
+      // Get new Cloudinary image URL
+      imagePath = req.file.path;
     }
 
+    // Update the category with new data
     const updatedCategory = await Category.findByIdAndUpdate(
       categoryId,
-      { 
-        name, 
-        description, 
-        isListed: isListedBool, 
-        image: imagePath 
-      },
+      { name, description, isListed: isListedBool, image: imagePath },
       { new: true }
     );
 
@@ -542,7 +553,6 @@ exports.updateCategory = async (req, res) => {
     res.status(500).send('An error occurred while updating the category');
   }
 };
-
 exports.softDeleteCategory = async (req, res) => {
   const categoryId = req.params.id;
   try {
@@ -586,27 +596,35 @@ exports.unlistCategory = async (req, res) => {
 };
 exports.manageProductPage = async (req, res) => {
   try {
-    const searchQuery = req.query.search || '';
+    const searchQuery = req.query.search ? req.query.search.trim() : '';
     const page = parseInt(req.query.page) || 1; 
     const limit = 3;
     const skip = (page - 1) * limit;
-    const totalProducts = await Product.countDocuments({ isDeleted: { $ne: true } });
-    const products = await Product.find({ isDeleted: { $ne: true } })
-      .populate("category", "name description image isListed")
+
+    // Dynamic filtering (if search query is present)
+    const filter = {
+      isDeleted: { $ne: true },
+      ...(searchQuery && { name: { $regex: searchQuery, $options: "i" } }),
+    };
+
+    const totalProducts = await Product.countDocuments(filter);
+    const products = await Product.find(filter)
+      .populate("category", "name")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
+
+    // Formatting products for rendering
     const updatedProducts = products.map(product => {
       const finalPrice = product.offerPrice || product.price;
-
       return {
         ...product._doc,
         category: product.category ? { name: product.category.name } : { name: "Uncategorized" },
-        imageURLs: product.images.map(image => `/uploads/products/${image}`),
+        imageURLs: product.images, // Cloudinary URLs are already stored in DB
         offerPrice: finalPrice,
         discountPrice: product.price - finalPrice,
-        quantity: product.quantity ? product.quantity.value : null,
-        unit: product.quantity ? product.quantity.unit : null
+        quantity: product.quantity?.value || null,
+        unit: product.quantity?.unit || null
       };
     });
 
@@ -618,11 +636,13 @@ exports.manageProductPage = async (req, res) => {
       totalPages,
       searchQuery, 
     });
+
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("❌ Error fetching products:", error);
     res.status(500).send("Server Error");
   }
 };
+
 exports.addProductPage = async (req, res) => {
   try {
     const categories = await Category.find();
@@ -667,20 +687,23 @@ exports.addProduct = async (req, res) => {
       return res.redirect('/admin/addProduct');
     }
 
-    if (!category) {
-      req.session.error = 'Category is required';
-      return res.redirect('/admin/addProduct');
-    }
-
     if (!req.files || req.files.length < 3) {
       req.session.error = 'You must upload at least 3 cropped images';
       return res.redirect('/admin/addProduct');
     }
 
-    const images = req.files.map(file => file.filename);
+    // Upload images to Cloudinary and get their URLs
+    const imageUploads = await Promise.all(
+      req.files.map(async (file) => {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: 'products',
+        });
+        return result.secure_url; // Store only the Cloudinary URL
+      })
+    );
 
-    if (images.length === 0) {
-      req.session.error = 'No cropped images were uploaded';
+    if (imageUploads.length === 0) {
+      req.session.error = 'No images were uploaded to Cloudinary';
       return res.redirect('/admin/addProduct');
     }
 
@@ -690,7 +713,7 @@ exports.addProduct = async (req, res) => {
       price: validPrice,
       category,
       stock: validStock,
-      images, 
+      images: imageUploads, // Cloudinary URLs
       offerPrice: validOfferPrice,
       isListed: true,
       quantity: {
@@ -706,8 +729,6 @@ exports.addProduct = async (req, res) => {
     res.status(500).send('Server Error');
   }
 };
-
-
 exports.editProductPage = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -728,20 +749,38 @@ exports.updateProduct = async (req, res) => {
     const productId = req.params.id;
     const { name, description, price, category, stock, isListed, offerPrice, quantity, unit } = req.body;
     const isListedBool = isListed === 'true';
+
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).send('Product not found');
     }
+
     let images = product.images;
+
+    // Handle new images if uploaded
     if (req.files && req.files.length > 0) {
-      product.images.forEach(image => {
-        const imagePath = path.join(__dirname, '../uploads/products', image);
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-        }
-      });
-      images = req.files.map(file => file.filename);
+      // Delete old images from Cloudinary
+      if (product.images.length > 0) {
+        await Promise.all(
+          product.images.map(async (imageUrl) => {
+            const publicId = imageUrl.split('/').pop().split('.')[0]; // Extract public_id from URL
+            await cloudinary.uploader.destroy(`products/${publicId}`);
+          })
+        );
+      }
+
+      // Upload new images to Cloudinary
+      images = await Promise.all(
+        req.files.map(async (file) => {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: 'products',
+          });
+          return result.secure_url; // Store only Cloudinary URLs
+        })
+      );
     }
+
+    // Calculate discount
     let updatedOfferPrice = parseFloat(offerPrice) || product.offerPrice || price;
     let discount = 0;
     if (updatedOfferPrice < price) {
@@ -749,31 +788,35 @@ exports.updateProduct = async (req, res) => {
     } else {
       updatedOfferPrice = price;
     }
+
+    // Update product in the database
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
-      { 
-        name, 
-        description, 
-        price, 
-        category, 
-        stock, 
-        isListed: isListedBool, 
-        images, 
+      {
+        name,
+        description,
+        price,
+        category,
+        stock,
+        isListed: isListedBool,
+        images,
         offerPrice: updatedOfferPrice,
         discount,
         quantity: {
-          value: quantity,
-          unit: unit
+          value: parseFloat(quantity),
+          unit: unit.trim(),
         }
       },
       { new: true }
     );
+
     if (!updatedProduct) {
       return res.status(404).send('Product not found');
     }
+
     res.redirect('/admin/product');
   } catch (error) {
-    console.error("Error updating product:", error);
+    console.error("❌ Error updating product:", error);
     res.status(500).send('Internal Server Error');
   }
 };

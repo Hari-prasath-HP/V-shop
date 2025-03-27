@@ -1,8 +1,8 @@
 const express = require('express');
 const adminrouter = express.Router();
 const adminController = require('../controllers/adminController');
-const { productUpload} = require('../config/multerConfig');
-const { categoryUpload } = require('../config/multerConfig');
+const { productUpload} = require('../config/cloudinaryConfig');
+const { categoryUpload } = require('../config/cloudinaryConfig');
 const { adminAuth } = require("../middlewares/authMiddleware");
 const offerController = require("../controllers/offerController")
 // Admin Login Route

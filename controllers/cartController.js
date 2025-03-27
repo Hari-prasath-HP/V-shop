@@ -68,48 +68,54 @@ exports.addToCart = async (req, res) => {
   }
 };
 
-  exports.viewCart = async (req, res) => {
-    if (!req.session.user) {
-      return res.redirect('/login');
+exports.viewCart = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
+  try {
+    const userId = req.session.user.id || req.session.user.googleId;
+    const user = await User.findById(userId); 
+
+    if (!user) {
+      return res.redirect('/login'); 
     }
-  
-    try {
-      const userId = req.session.user.id || req.session.user.googleId;
-      const user = await User.findById(userId); 
-  
-      if (!user) {
-        return res.redirect('/login'); 
-      }
-  
-      const cartItems = await Cart.find({ userId: userId }).populate('productId');
-      if (!cartItems || cartItems.length === 0) {
-        return res.render('user/cart', { cart: [], user }); 
-      }
-  
-      const cart = cartItems.map(item => {
-        if (!item.productId) {
-          return null; 
-        }
-        return {
-          _id: item._id,
-          productId: item.productId._id,
-          name: item.productId.name,
-          description: item.productId.description,
-          price: item.productId.price,
-          offerPrice: item.productId.offerPrice,
-          image: item.productId.images[0],
-          quantity: item.quantity,
-          subtotal: item.quantity * item.productId.offerPrice,
-        };
-      }).filter(item => item !== null);
-  
-      res.render('user/cart', { cart, user });
-  
-    } catch (err) {
-      console.error('Error viewing cart:', err);
-      res.status(500).render("user/404");
+
+    const cartItems = await Cart.find({ userId: userId }).populate('productId');
+    if (!cartItems || cartItems.length === 0) {
+      return res.render('user/cart', { cart: [], user }); 
     }
-  };  
+
+    const cart = cartItems.map(item => {
+      if (!item.productId) {
+        return null; 
+      }
+    
+      // Check if images exist
+      const imageUrl = item.productId.images && item.productId.images.length > 0 
+  ? item.productId.images[0]  // Directly use the stored URL
+  : 'https://res.cloudinary.com/dzbmwcgol/image/upload/v123456789/default-image.jpg';
+    
+      return {
+        _id: item._id,
+        productId: item.productId._id,
+        name: item.productId.name,
+        description: item.productId.description,
+        price: item.productId.price,
+        offerPrice: item.productId.offerPrice || item.productId.price, 
+        image: imageUrl,
+        quantity: item.quantity,
+        subtotal: item.quantity * (item.productId.offerPrice || item.productId.price),
+      };
+    }).filter(item => item !== null);    
+
+    res.render('user/cart', { cart, user });
+
+  } catch (err) {
+    console.error('Error viewing cart:', err);
+    res.status(500).render("user/404");
+  }
+};
   exports.updateQuantity = async (req, res) => {
     try {
         if (!req.session.user) {
@@ -936,7 +942,6 @@ exports.cancelOrder = async (req, res) => {
       });
     
       await wallet.save();
-      console.log("Wallet updated successfully:", wallet);
     
       order.paymentStatus = 'Refunded';
     }    

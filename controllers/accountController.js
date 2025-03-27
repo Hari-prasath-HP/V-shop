@@ -272,7 +272,9 @@ exports.getOrderDetails = async (req, res) => {
         }
 
         const orderProducts = order.products.map(item => ({
-            image: item.product && item.product.images.length > 0 ? item.product.images[0] : '/images/default.jpg',
+            image: item.product && item.product.images.length > 0 
+  ? item.product.images[0] 
+  : 'https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/default-image.jpg',
             name: item.product ? item.product.name : 'Unknown',
             price: item.price,
             offerPrice: item.offerPrice,

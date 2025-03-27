@@ -181,7 +181,6 @@ exports.createWalletOrder = async (req, res) => {
 exports.verifyWalletPayment = async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
-        console.log("Received Payment Details:", req.body);
 
         if (!req.session.user) {
             return res.status(401).json({ message: "User not authenticated." });

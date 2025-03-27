@@ -239,7 +239,9 @@
                       <% let subTotal = item.offerPrice * item.quantity; %>
                       <% grandTotal += subTotal; %>
                       <tr data-id="<%= item.productId %>" data-price="<%= item.offerPrice %>" data-stock="<%= item.stock %>">
-                          <td><img src="/uploads/products/<%= item.image %>" class="cart-image" alt="<%= item.name %>"></td>
+                          <td><img src="<%= item.image %>" class="cart-image" alt="<%= item.name %>"
+                            onerror="this.onerror=null;this.src='https://res.cloudinary.com/dzbmwcgol/image/upload/v123456789/default-image.jpg';">
+                       </td>
                           <td><%= item.name %></td>
                           <td>₹<%= item.offerPrice %></td>
                           <td class="quantity-control">
