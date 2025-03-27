@@ -936,9 +936,11 @@ exports.updateOrderStatus = async (req, res) => {
     // Update order status
     order.orderStatus = status;
 
-    // Update product statuses
+    // Update product statuses, excluding cancelled or returned products
     order.products.forEach(product => {
-      product.status = status;
+      if (product.status !== 'Cancelled' && product.status !== 'Returned') {
+        product.status = status;
+      }
     });
 
     // Update payment status based on order status
@@ -955,13 +957,9 @@ exports.updateOrderStatus = async (req, res) => {
       order.deliveredAt = null;
     }
 
-    // Reset isCancelled and isReturned to false if they were true
-    if (order.isCancelled) {
-      order.isCancelled = false;
-    }
-    if (order.isReturned) {
-      order.isReturned = false;
-    }
+    // Reset isCancelled and isReturned flags
+    order.isCancelled = false;
+    order.isReturned = false;
 
     await order.save();
     res.json({ message: 'Order and product statuses updated successfully', order });

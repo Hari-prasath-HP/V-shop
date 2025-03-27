@@ -432,8 +432,9 @@
                 <% products.forEach(product => { %>
                     <tr>
                         <td>
-                            <img src="/uploads/products/<%= product.image %>" class="product-img" alt="<%= product.name %>">
-                          </td>                          
+                            <img src="<%= product.image %>" class="product-img" alt="<%= product.name %>"
+                              onerror="this.onerror=null;this.src='https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/default-image.jpg';">
+                          </td>                                                  
                         <td><%= product.name %></td>
                         <td>₹<%= product.price %></td>
                         <td><%= product.quantity %></td>
