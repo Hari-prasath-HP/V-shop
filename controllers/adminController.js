@@ -933,28 +933,39 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Update order status
-    order.orderStatus = status;
+    // Check if all products are either Cancelled or Returned
+    const allProductsCancelledOrReturned = order.products.every(
+      product => product.status === 'Cancelled' || product.status === 'Returned'
+    );
+
+    if (allProductsCancelledOrReturned) {
+      return res.status(400).json({ message: "Cannot update order status as all products are either cancelled or returned" });
+    }
 
     // Update product statuses, excluding cancelled or returned products
+    let hasActiveProduct = false;
     order.products.forEach(product => {
       if (product.status !== 'Cancelled' && product.status !== 'Returned') {
         product.status = status;
+        hasActiveProduct = true;
       }
     });
 
-    // Update payment status based on order status
-    if (status === 'Ordered') {
-      if (order.paymentStatus === 'Refunded') {
-        order.paymentStatus = 'Completed';
-      }
-    } else if (status === 'Cancelled') {
-      order.paymentStatus = 'Refunded';
-    } else if (status === 'Delivered') {
+    // Check if all products are delivered
+    const allProductsDelivered = order.products.every(product => product.status === 'Delivered');
+    if (allProductsDelivered) {
+      order.orderStatus = 'Delivered';
       order.deliveredAt = new Date();
       order.paymentStatus = 'Completed';
-    } else {
-      order.deliveredAt = null;
+    } else if (hasActiveProduct) {
+      order.orderStatus = status;
+    }
+
+    // Update payment status based on order status
+    if (status === 'Ordered' && order.paymentStatus === 'Refunded') {
+      order.paymentStatus = 'Completed';
+    } else if (status === 'Cancelled') {
+      order.paymentStatus = 'Refunded';
     }
 
     // Reset isCancelled and isReturned flags
@@ -1001,9 +1012,37 @@ exports.viewOrder = async (req, res) => {
       res.status(500).send("Internal Server Error");
   }
 };
+exports.updateorderStatus = async (req, res) => {
+  try {
+      const { orderId, productId } = req.params;
+      const { status, reason } = req.body;
+
+      const validStatuses = ["Ordered", "Shipped", "Delivered", "Cancelled", "Returned"];
+      if (!validStatuses.includes(status)) {
+          return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const order = await Order.findById(orderId);
+      if (!order) return res.status(404).json({ message: "Order not found" });
+
+      const product = order.products.find(p => p.product.toString() === productId);
+      if (!product) return res.status(404).json({ message: "Product not found in order" });
+
+      product.status = status;
+      if (status === "Cancelled") product.cancellationReason = reason || "No reason provided";
+      if (status === "Returned") product.returnReason = reason || "No reason provided";
+
+      await order.save();
+      res.status(200).json({ message: "Product status updated", updatedProduct: product });
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 exports.getSalesReport = async (req, res) => {
   try {
-      const orders = await Order.find({ orderStatus: "Delivered" })
+      const orders = await Order.find({ orderStatus: "Delivered", "products.status": "Delivered" })
         .populate('user', 'name') 
         .populate('products.product')
         .sort({ createdAt: -1 });
@@ -1011,18 +1050,21 @@ exports.getSalesReport = async (req, res) => {
         orders.map(async (order) => {
           const items = await Promise.all(
             order.products.map(async (item) => {
-              const product = await Product.findById(item.product).select('name');
-              return {
-                productName: product ? product.name : 'Unknown Product',
-                quantity: item.quantity
-              };
+              if (item.status === 'Delivered') {
+                const product = await Product.findById(item.product).select('name');
+                return {
+                  productName: product ? product.name : 'Unknown Product',
+                  quantity: item.quantity,
+                  status: item.status
+                };
+              }
             })
           );
 
           return {
             userName: order.shippingAddress.name, 
             orderDate: order.createdAt.toISOString().split('T')[0],
-            items,
+            items: items.filter(Boolean),
             price: order.totalAmount,
             offerPrice: order.products.reduce((sum, item) => sum + (item.offerPrice * item.quantity), 0), 
             paymentMethod: order.paymentMethod,
@@ -1039,6 +1081,7 @@ exports.getSalesReport = async (req, res) => {
       res.status(500).send('Internal Server Error');
   }
 };
+
 exports.filterOrders = async (req, res) => {
     try {
         const { from, to } = req.query;
@@ -1054,7 +1097,7 @@ exports.filterOrders = async (req, res) => {
         endDate.setHours(23, 59, 59, 999);
 
         const orders = await Order.find({
-          orderStatus: "Delivered",orderedAt: { $gte: startDate, $lte: endDate }
+          orderStatus: "Delivered", "products.status": "Delivered", orderedAt: { $gte: startDate, $lte: endDate }
         }).populate('products.product', 'name') 
         .lean().sort({ createdAt: -1 });
         const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
@@ -1064,9 +1107,10 @@ exports.filterOrders = async (req, res) => {
         res.json({ success: false, message: "Server error" });
     }
 };
+
 exports.getAllOrders = async (req, res) => {
   try {
-      const orders = await Order.find({ orderStatus: "Delivered" }).populate('products.product', 'name')
+      const orders = await Order.find({ orderStatus: "Delivered", "products.status": "Delivered" }).populate('products.product', 'name')
       .lean().sort({ createdAt: -1 });
       const totalSales = orders.reduce((sum, order) => sum + order.totalAmount, 0);
       res.json({ success: true, orders , totalSales});
@@ -1075,6 +1119,7 @@ exports.getAllOrders = async (req, res) => {
       res.json({ success: false, message: "Server error" });
   }
 };
+
 exports.filterOrdersByTime = async (req, res) => {
   try {
       const { filterType } = req.query;
@@ -1100,7 +1145,7 @@ exports.filterOrdersByTime = async (req, res) => {
           return res.json({ success: false, message: "Invalid filter type" });
       }
 
-      const orders = await Order.find({orderStatus: "Delivered",
+      const orders = await Order.find({orderStatus: "Delivered", "products.status": "Delivered",
           orderedAt: { $gte: startDate, $lte: endDate }
       }).populate('products.product', 'name')
       .lean().sort({ createdAt: -1 });

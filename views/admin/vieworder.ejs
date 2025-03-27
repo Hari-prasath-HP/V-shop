@@ -57,11 +57,13 @@
                 </thead>
                 <tbody>
                     <% products.forEach(product => { %>
-                        <tr>
-                            <td><img src="/uploads/products/<%= product.image %>" class="product-img" alt="<%= product.name %>"></td>
+                        <tr data-product-id="<%= product.productId.toString() %>">
+                            <td>
+                                <img src="<%= product.image %>" class="product-img" alt="<%= product.name %>">
+                            </td>                            
                             <td><%= product.name %></td>
                             <td><%= product.quantity %></td>
-                            <td>₹<%= product.offerPrice %></td>
+                            <td>₹<%= product.price %></td>
                             <td><%= product.status %></td>
                             <td>
                                 <select class="status-dropdown">
@@ -78,12 +80,12 @@
                                 <% } else if (product.status === 'Returned') { %>
                                     <p><%= product.returnReason %></p>
                                 <% } else { %>
-                                    <p>-</p> <!-- Default if no reason is applicable -->
+                                    <p>-</p>
                                 <% } %>
                             </td>
-                        </tr>
+                        </tr>                        
                     <% }) %>
-                </tbody>
+                </tbody>                
             </table>
         </div>
         
@@ -91,5 +93,52 @@
             <h3>Grand Total: ₹<%= order.totalAmount %></h3>
         </div>
     </div>
+    <!-- Include SweetAlert2 from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.querySelectorAll('.status-dropdown').forEach(dropdown => {
+    dropdown.addEventListener('change', async function () {
+        const productId = this.closest('tr').dataset.productId;
+        const orderId = "<%= order._id %>";
+        const status = this.value;
+
+        let reason = "";
+
+        try {
+            const response = await fetch(`/admin/order/${orderId}/product/${productId}/status`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status, reason })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Success",
+                    text: "Status updated successfully!",
+                    showConfirmButton: false,
+                    timer: 2000
+                }).then(() => location.reload()); // Reload after message disappears
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: data.message
+                });
+                this.value = this.dataset.previousValue || "Processing"; // Reset to previous value
+            }
+        } catch (error) {
+            console.error("Update failed:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: "Something went wrong. Please try again."
+            });
+        }
+    });
+});
+</script>
 </body>
 </html>
