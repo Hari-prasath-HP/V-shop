@@ -733,17 +733,30 @@ exports.editProductPage = async (req, res) => {
   try {
     const productId = req.params.id;
     const product = await Product.findById(productId);
-    const categories = await Category.find();
+
     if (!product) {
-      return res.status(404).send('Product not found');
+      return res.status(404).send("Product not found");
     }
-    res.render('admin/editProduct', { product, categories,quantity: product.quantity.value,
-      unit: product.quantity.unit, });  
+
+    const categories = await Category.find();
+
+    // Convert Cloudinary public IDs to full URLs (handling empty/null cases)
+    const imageURLs = (product.images || []).map(imageId => 
+      imageId.startsWith("http") ? imageId : `https://res.cloudinary.com/dzbmwcgol/image/upload/${imageId}`
+    );      
+    console.log("Generated Image URLs:", imageURLs);
+    res.render("admin/editProduct", {
+      product: { ...product.toObject(), imageURLs },
+      categories,
+      quantity: product.quantity?.value || 0, // Prevents undefined error
+      unit: product.quantity?.unit || "N/A",  // Prevents undefined error
+    });
   } catch (error) {
-    console.error('Error fetching product or categories:', error);
-    res.status(500).send('Internal Server Error');
+    console.error("❌ Error fetching product or categories:", error);
+    res.status(500).send("Internal Server Error");
   }
 };
+
 exports.updateProduct = async (req, res) => {
   try {
     const productId = req.params.id;
